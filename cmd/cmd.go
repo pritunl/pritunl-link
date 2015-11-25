@@ -20,7 +20,7 @@ func getOptions() (opts *options) {
 		id = utils.RandName()
 	}
 
-	constants.Host = id
+	constants.Id = id
 
 	opts = &options{
 		Id:     id,
