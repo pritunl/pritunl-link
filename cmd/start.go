@@ -11,6 +11,7 @@ func Start() {
 	logrus.WithFields(logrus.Fields{
 		"id":      opts.Id,
 		"host":    opts.Host,
+		"token":   opts.Token,
 		"version": constants.Version,
 	}).Info("cmd.app: Starting app node")
 }
