@@ -1,5 +1,5 @@
 package constants
 
 var (
-	Host string
+	Id string
 )
