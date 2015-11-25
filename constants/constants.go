@@ -1,5 +1,6 @@
 package constants
 
 var (
-	Id string
+	Id      string
+	Version string
 )
