@@ -62,18 +62,3 @@ func Write(path string, data string) (err error) {
 
 	return
 }
-
-func GetTempDir() (path string, err error) {
-	path = filepath.Join(
-		constants.TempDir,
-		string(filepath.Separator),
-		RandStr(16),
-	)
-
-	err = MkdirAll(path)
-	if err != nil {
-		return
-	}
-
-	return
-}
