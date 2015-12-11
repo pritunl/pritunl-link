@@ -3,12 +3,12 @@ package profile
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/errortypes"
-	"strings"
-	"log"
-	"github.com/Sirupsen/logrus"
 	"io/ioutil"
+	"log"
+	"strings"
 )
 
 var (
