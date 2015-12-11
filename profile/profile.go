@@ -26,6 +26,41 @@ type Profile struct {
 	Conf           string   `json:"conf"`
 }
 
+func (p *Profile) update(data string) (err error) {
+	keyData := ""
+
+	if strings.Contains(p.Conf, "key-direction") && strings.Contains(
+		data, "key-direction") {
+
+		keyData += "key-direction 1\n"
+	}
+
+	sIndex := strings.Index(p.Conf, "<tls-auth>")
+	eIndex := strings.Index(p.Conf, "</tls-auth>")
+	if sIndex != 0 && eIndex != 0 {
+		keyData += p.Conf[sIndex:eIndex+11] + "\n"
+	}
+
+	sIndex = strings.Index(p.Conf, "<cert>")
+	eIndex = strings.Index(p.Conf, "</cert>")
+	if sIndex != 0 && eIndex != 0 {
+		keyData += p.Conf[sIndex:eIndex+7] + "\n"
+	}
+
+	sIndex = strings.Index(p.Conf, "<key>")
+	eIndex = strings.Index(p.Conf, "</key>")
+	if sIndex != 0 && eIndex != 0 {
+		keyData += p.Conf[sIndex:eIndex+6] + "\n"
+	}
+
+	err = p.Parse(data + keyData)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func (p *Profile) Parse(data string) (err error) {
 	lines := strings.Split(data, "\n")
 	jsonData := ""
