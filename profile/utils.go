@@ -109,6 +109,14 @@ func GetProfiles() (prfls []*Profile, err error) {
 		return
 	}
 
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		err = errortypes.RequestError{
+			errors.Newf("profile: Bad status code %d from auth",
+				resp.StatusCode),
+		}
+		return
+	}
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
