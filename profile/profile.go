@@ -112,10 +112,12 @@ func (p *Profile) Sync() (err error) {
 			logrus.WithFields(logrus.Fields{
 				"status_code": resp.StatusCode,
 			}).Error("profile: Failed to sync profile, no subscription")
+			return
 		case 404:
 			logrus.WithFields(logrus.Fields{
 				"status_code": resp.StatusCode,
 			}).Error("profile: Failed to sync profile, user not found")
+			return
 		case 200:
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
