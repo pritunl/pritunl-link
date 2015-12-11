@@ -1,4 +1,4 @@
-package constants
+package errortypes
 
 import (
 	"github.com/dropbox/godropbox/errors"
