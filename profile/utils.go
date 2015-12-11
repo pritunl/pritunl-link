@@ -11,11 +11,17 @@ import (
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/utils"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
+
+type authUserData struct {
+	Username     string   `json:"username"`
+	NetworkLinks []string `json:"network_links"`
+}
 
 func AuthReq(token, secret, baseUrl, method, path string, data interface{}) (
 	resp *http.Response, err error) {
@@ -87,6 +93,47 @@ func AuthReq(token, secret, baseUrl, method, path string, data interface{}) (
 			errors.Wrap(err, "profile: Unknown request error"),
 		}
 		return
+	}
+
+	return
+}
+
+func GetProfiles() (prfls []*Profile, err error) {
+	data := authUserData{
+		Username:     Username,
+		NetworkLinks: NetworkLinks,
+	}
+
+	resp, err := AuthReq(Token, Secret, Host, "POST", "/auth/user", data)
+	if err != nil {
+		return
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	prfls = []*Profile{}
+	prflsData := map[string]string{}
+
+	err = json.Unmarshal(body, &prflsData)
+	if err != nil {
+		err = errortypes.ParseError{
+			errors.Wrap(err, "profile: Failed to parse response data"),
+		}
+		return
+	}
+
+	for _, prflData := range prflsData {
+		prfl := &Profile{}
+
+		err = prfl.Parse(prflData)
+		if err != nil {
+			return
+		}
+
+		prfls = append(prfls, prfl)
 	}
 
 	return
