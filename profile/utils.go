@@ -128,7 +128,7 @@ func GetProfiles() (prfls []*Profile, err error) {
 	err = json.Unmarshal(body, &prflsData)
 	if err != nil {
 		err = errortypes.ParseError{
-			errors.Wrap(err, "profile: Failed to parse response data"),
+			errors.Wrap(err, "profile: Failed to parse auth response"),
 		}
 		return
 	}
