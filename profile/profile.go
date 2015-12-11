@@ -2,9 +2,13 @@ package profile
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"strings"
+	"log"
+	"github.com/Sirupsen/logrus"
+	"io/ioutil"
 )
 
 var (
@@ -84,6 +88,44 @@ func (p *Profile) Parse(data string) (err error) {
 	}
 
 	p.Conf = conf
+
+	return
+}
+
+func (p *Profile) Sync() (err error) {
+	path := fmt.Sprintf("/key/%s/%s/%s/%s",
+		p.OrganizationId,
+		p.UserId,
+		p.ServerId,
+		p.SyncHash,
+	)
+
+	resp, err := AuthReq(p.SyncToken, p.SyncSecret, Host, "GET", path, nil)
+	if err != nil {
+		return
+	}
+
+	switch resp.StatusCode {
+	case 480:
+		logrus.WithFields(logrus.Fields{
+			"status_code": resp.StatusCode,
+		}).Error("profile: Failed to sync profile, no subscription")
+	case 404:
+		logrus.WithFields(logrus.Fields{
+			"status_code": resp.StatusCode,
+		}).Error("profile: Failed to sync profile, user not found")
+	case 200:
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			panic(err)
+		}
+		bodyStr := string(body)
+
+		err = p.update(bodyStr)
+		if err != nil {
+			return
+		}
+	}
 
 	return
 }
