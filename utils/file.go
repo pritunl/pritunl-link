@@ -5,7 +5,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 )
 
 func Read(path string) (data string, err error) {
