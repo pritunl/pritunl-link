@@ -100,30 +100,40 @@ func (p *Profile) Sync() (err error) {
 		p.SyncHash,
 	)
 
-	resp, err := AuthReq(p.SyncToken, p.SyncSecret, Host, "GET", path, nil)
-	if err != nil {
-		return
-	}
-
-	switch resp.StatusCode {
-	case 480:
-		logrus.WithFields(logrus.Fields{
-			"status_code": resp.StatusCode,
-		}).Error("profile: Failed to sync profile, no subscription")
-	case 404:
-		logrus.WithFields(logrus.Fields{
-			"status_code": resp.StatusCode,
-		}).Error("profile: Failed to sync profile, user not found")
-	case 200:
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-		bodyStr := string(body)
-
-		err = p.update(bodyStr)
+	for i, host := range p.SyncHosts {
+		resp, err := AuthReq(p.SyncToken, p.SyncSecret, host,
+			"GET", path, nil)
 		if err != nil {
 			return
+		}
+
+		switch resp.StatusCode {
+		case 480:
+			logrus.WithFields(logrus.Fields{
+				"status_code": resp.StatusCode,
+			}).Error("profile: Failed to sync profile, no subscription")
+		case 404:
+			logrus.WithFields(logrus.Fields{
+				"status_code": resp.StatusCode,
+			}).Error("profile: Failed to sync profile, user not found")
+		case 200:
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				panic(err)
+			}
+			bodyStr := string(body)
+
+			err = p.update(bodyStr)
+			if err != nil {
+				return
+			}
+		default:
+			if i == len(p.SyncHosts)-1 {
+				logrus.WithFields(logrus.Fields{
+					"status_code": resp.StatusCode,
+				}).Error("profile: Failed to sync profile, unknown error")
+				return
+			}
 		}
 	}
 
