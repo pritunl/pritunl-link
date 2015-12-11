@@ -8,10 +8,11 @@ import (
 )
 
 type options struct {
-	Id     string
-	Host   string
-	Token  string
-	Secret string
+	Id      string
+	Host    string
+	Token   string
+	Secret  string
+	ConfDir string
 }
 
 func getOptions() (opts *options) {
@@ -23,10 +24,11 @@ func getOptions() (opts *options) {
 	constants.Id = id
 
 	opts = &options{
-		Id:     id,
-		Host:   os.Getenv("HOST"),
-		Token:  os.Getenv("TOKEN"),
-		Secret: os.Getenv("SECRET"),
+		Id:      id,
+		Host:    os.Getenv("HOST"),
+		Token:   os.Getenv("TOKEN"),
+		Secret:  os.Getenv("SECRET"),
+		ConfDir: os.Getenv("CONF_DIR"),
 	}
 
 	return
