@@ -101,9 +101,10 @@ func (p *Profile) Sync() (err error) {
 	)
 
 	for i, host := range p.SyncHosts {
-		resp, err := AuthReq(p.SyncToken, p.SyncSecret, host,
+		resp, e := AuthReq(p.SyncToken, p.SyncSecret, sha512.New, host,
 			"GET", path, nil)
-		if err != nil {
+		if e != nil {
+			err = e
 			return
 		}
 
@@ -119,8 +120,9 @@ func (p *Profile) Sync() (err error) {
 			}).Error("profile: Failed to sync profile, user not found")
 			return
 		case 200:
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
+			body, e := ioutil.ReadAll(resp.Body)
+			if e != nil {
+				err = e
 				return
 			}
 			bodyStr := string(body)
