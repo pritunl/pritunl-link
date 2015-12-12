@@ -133,9 +133,11 @@ func (p *Profile) Sync() (err error) {
 			}
 			bodyStr := string(body)
 
-			err = p.update(bodyStr)
-			if err != nil {
-				return
+			if bodyStr != "" {
+				err = p.update(bodyStr)
+				if err != nil {
+					return
+				}
 			}
 		default:
 			if i == len(p.SyncHosts)-1 {
