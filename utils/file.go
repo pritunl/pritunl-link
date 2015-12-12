@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"github.com/pritunl/pritunl-auth/errortypes"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-auth/errortypes"
 	"io/ioutil"
 	"os"
 )
