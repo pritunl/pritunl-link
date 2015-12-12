@@ -110,6 +110,11 @@ func (p *Profile) Sync() (err error) {
 		}
 
 		switch resp.StatusCode {
+		case 401:
+			logrus.WithFields(logrus.Fields{
+				"status_code": resp.StatusCode,
+			}).Error("profile: Failed to sync profile, auth failed")
+			return
 		case 404:
 			logrus.WithFields(logrus.Fields{
 				"status_code": resp.StatusCode,
