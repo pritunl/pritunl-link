@@ -11,6 +11,7 @@ import (
 )
 
 var (
+	ConfDir      string
 	Host         string
 	Token        string
 	Secret       string
