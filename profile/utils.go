@@ -162,7 +162,7 @@ func ExportProfiles(prfls []*Profile) (err error) {
 		return
 	}
 
-	path := filepath.Join(ConfDir, Username)
+	path := filepath.Join(ConfDir, Username) + ".json"
 
 	err = utils.Write(path, string(data))
 	if err != nil {
