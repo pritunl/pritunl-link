@@ -7,7 +7,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"io/ioutil"
-	"log"
 	"strings"
 )
 
