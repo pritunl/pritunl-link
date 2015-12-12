@@ -27,6 +27,7 @@ type authUserData struct {
 
 func AuthReq(token, secret string, hash func() hash.Hash, baseUrl, method,
 	path string, data interface{}) (
+
 	resp *http.Response, err error) {
 
 	method = strings.ToUpper(method)
