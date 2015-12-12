@@ -121,7 +121,7 @@ func (p *Profile) Sync() (err error) {
 		case 200:
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				panic(err)
+				return
 			}
 			bodyStr := string(body)
 
