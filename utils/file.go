@@ -20,6 +20,22 @@ func Read(path string) (data string, err error) {
 	return
 }
 
+func Exists(path string) (exists bool, err error) {
+	_, err = os.Stat(path)
+	if os.IsNotExist(err) {
+		err = nil
+	} else if err != nil {
+		err = errortypes.ReadError{
+			errors.Wrapf(err, "utils: Failed to stat file '%s'", path),
+		}
+		return
+	} else {
+		exists = true
+	}
+
+	return
+}
+
 func Create(path string) (file *os.File, err error) {
 	file, err = os.Create(path)
 	if err != nil {
