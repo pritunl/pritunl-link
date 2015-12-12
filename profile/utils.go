@@ -145,6 +145,11 @@ func GetProfiles() (prfls []*Profile, err error) {
 		prfls = append(prfls, prfl)
 	}
 
+	err = ExportProfiles(prfls)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
