@@ -112,7 +112,8 @@ func GetProfiles() (prfls []*Profile, err error) {
 		NetworkLinks: NetworkLinks,
 	}
 
-	resp, err := AuthReq(Token, Secret, Host, "POST", "/auth/user", data)
+	resp, err := AuthReq(Token, Secret, sha256.New, Host,
+		"POST", "/auth/user", data)
 	if err != nil {
 		return
 	}
