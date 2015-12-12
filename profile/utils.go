@@ -10,6 +10,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/utils"
+	"hash"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -24,7 +25,8 @@ type authUserData struct {
 	NetworkLinks []string `json:"network_links"`
 }
 
-func AuthReq(token, secret, baseUrl, method, path string, data interface{}) (
+func AuthReq(token, secret string, hash func() hash.Hash, baseUrl, method,
+	path string, data interface{}) (
 	resp *http.Response, err error) {
 
 	method = strings.ToUpper(method)
@@ -74,7 +76,7 @@ func AuthReq(token, secret, baseUrl, method, path string, data interface{}) (
 	}
 	authStr := strings.Join(auth, "&")
 
-	hashFunc := hmac.New(sha256.New, []byte(secret))
+	hashFunc := hmac.New(hash, []byte(secret))
 	hashFunc.Write([]byte(authStr))
 	rawSignature := hashFunc.Sum(nil)
 	sig := base64.StdEncoding.EncodeToString(rawSignature)
