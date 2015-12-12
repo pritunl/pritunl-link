@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -142,6 +143,25 @@ func GetProfiles() (prfls []*Profile, err error) {
 		}
 
 		prfls = append(prfls, prfl)
+	}
+
+	return
+}
+
+func ExportProfiles(prfls []*Profile) (err error) {
+	data, err := json.Marshal(prfls)
+	if err != nil {
+		err = errortypes.ParseError{
+			errors.Wrap(err, "profile: Failed to parse profiles"),
+		}
+		return
+	}
+
+	path := filepath.Join(ConfDir, Username)
+
+	err = utils.Write(path, string(data))
+	if err != nil {
+		return
 	}
 
 	return
