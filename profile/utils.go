@@ -25,6 +25,10 @@ type authUserData struct {
 	NetworkLinks []string `json:"network_links"`
 }
 
+func getPath() string {
+	return filepath.Join(ConfDir, Username) + ".json"
+}
+
 func AuthReq(token, secret string, hash func() hash.Hash, baseUrl, method,
 	path string, data interface{}) (
 
@@ -165,9 +169,7 @@ func ExportProfiles(prfls []*Profile) (err error) {
 		return
 	}
 
-	path := filepath.Join(ConfDir, Username) + ".json"
-
-	err = utils.Write(path, string(data))
+	err = utils.Write(getPath(), string(data))
 	if err != nil {
 		return
 	}
