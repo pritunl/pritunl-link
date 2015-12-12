@@ -1,6 +1,7 @@
 package profile
 
 import (
+	"crypto/sha512"
 	"encoding/json"
 	"fmt"
 	"github.com/Sirupsen/logrus"
