@@ -161,6 +161,35 @@ func GetProfiles() (prfls []*Profile, err error) {
 	return
 }
 
+func ImportProfiles() (prfls []*Profile, err error) {
+	path := getPath()
+
+	exists, err := utils.Exists(path)
+	if err != nil {
+		return
+	}
+
+	if !exists {
+		return
+	}
+	prfls = []*Profile{}
+
+	data, err := utils.Read(path)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal([]byte(data), &prfls)
+	if err != nil {
+		err = errortypes.ParseError{
+			errors.Wrap(err, "profile: Failed to parse profiles"),
+		}
+		return
+	}
+
+	return
+}
+
 func ExportProfiles(prfls []*Profile) (err error) {
 	data, err := json.Marshal(prfls)
 	if err != nil {
