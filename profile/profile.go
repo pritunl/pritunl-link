@@ -105,7 +105,9 @@ func (p *Profile) Sync() (err error) {
 		resp, e := AuthReq(p.SyncToken, p.SyncSecret, sha512.New, host,
 			"GET", path, nil)
 		if e != nil {
-			err = e
+			logrus.WithFields(logrus.Fields{
+				"error": e,
+			}).Error("profile: Failed to sync profile, request error")
 			return
 		}
 
@@ -128,7 +130,9 @@ func (p *Profile) Sync() (err error) {
 		case 200:
 			body, e := ioutil.ReadAll(resp.Body)
 			if e != nil {
-				err = e
+				logrus.WithFields(logrus.Fields{
+					"error": e,
+				}).Error("profile: Failed to sync profile, read error")
 				return
 			}
 			bodyStr := string(body)
