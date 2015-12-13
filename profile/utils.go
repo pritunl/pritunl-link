@@ -107,6 +107,15 @@ func AuthReq(token, secret string, hash func() hash.Hash, baseUrl, method,
 }
 
 func GetProfiles() (prfls []*Profile, err error) {
+	prfls, err = ImportProfiles()
+	if err != nil {
+		return
+	}
+
+	if prfls != nil {
+		return
+	}
+
 	data := authUserData{
 		Username:     Username,
 		NetworkLinks: NetworkLinks,
