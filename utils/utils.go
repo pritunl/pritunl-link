@@ -2,6 +2,7 @@
 package utils
 
 import (
+	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-auth/constants"
 	"math/rand"
@@ -41,6 +42,16 @@ func GetLocalAddress() (addr string, err error) {
 	}
 
 	addr = addrs[0]
+
+	return
+}
+
+func StringSet(items []string) (s set.Set) {
+	s = set.NewSet()
+
+	for _, item := range items {
+		s.Add(item)
+	}
 
 	return
 }
