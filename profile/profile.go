@@ -28,6 +28,7 @@ type Profile struct {
 	SyncToken      string   `json:"sync_token"`
 	SyncSecret     string   `json:"sync_secret"`
 	SyncHosts      []string `json:"sync_hosts"`
+	NetworkLinks   []string `json:"network_links"`
 	Conf           string   `json:"conf"`
 }
 
@@ -89,6 +90,7 @@ func (p *Profile) Parse(data string) (err error) {
 	}
 
 	p.Conf = conf
+	p.NetworkLinks = NetworkLinks
 
 	return
 }
