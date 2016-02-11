@@ -13,5 +13,5 @@ func Start() {
 		"host":    opts.Host,
 		"token":   opts.Token,
 		"version": constants.Version,
-	}).Info("cmd.app: Starting app node")
+	}).Info("cmd.app: Starting client")
 }
