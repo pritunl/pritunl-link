@@ -225,3 +225,24 @@ func ExportProfiles(prfls []*Profile) (err error) {
 
 	return
 }
+
+func LoadExportProfiles() (prfls []*Profile, err error) {
+	prfls, err = GetProfiles()
+	if err != nil {
+		return
+	}
+
+	for _, prfl := range prfls {
+		err = prfl.Sync()
+		if err != nil {
+			return
+		}
+	}
+
+	err = ExportProfiles(prfls)
+	if err != nil {
+		return
+	}
+
+	return
+}
