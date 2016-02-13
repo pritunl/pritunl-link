@@ -112,6 +112,16 @@ func GetProfiles() (prfls []*Profile, err error) {
 		return
 	}
 
+	networkLinks := utils.StringSet(NetworkLinks)
+	for _, prfl := range prfls {
+		prflNetworkLinks := utils.StringSet(prfl.NetworkLinks)
+
+		if !prflNetworkLinks.IsEqual(networkLinks) {
+			prfls = nil
+			break
+		}
+	}
+
 	if prfls != nil {
 		return
 	}
