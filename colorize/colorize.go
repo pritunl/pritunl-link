@@ -1,10 +1,10 @@
-// Create color string for bash output.
 package colorize
 
 type Color string
 
 const (
 	None       = ""
+	Bold       = "\033[1m"
 	Black      = "\033[0;30m"
 	BlackBold  = "\033[1;30m"
 	Red        = "\033[0;31m"
