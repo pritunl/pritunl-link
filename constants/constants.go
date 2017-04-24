@@ -1,6 +1,5 @@
 package constants
 
-var (
-	Id      string
-	Version string
+const (
+	Version = "1.0.0"
 )
