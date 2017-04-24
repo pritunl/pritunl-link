@@ -2,13 +2,15 @@ package cmd
 
 import (
 	"github.com/Sirupsen/logrus"
+	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/utils"
 )
 
 func Start() (err error) {
 	logrus.WithFields(logrus.Fields{
-		"version": constants.Version,
+		"version":     constants.Version,
+		"public_addr": config.Config.PublicAddr,
 	}).Info("cmd.start: Starting link")
 
 	err = utils.NetInit()
