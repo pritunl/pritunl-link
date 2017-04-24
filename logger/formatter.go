@@ -3,7 +3,7 @@ package logger
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/autoabs/autoabs/colorize"
+	"github.com/pritunl/pritunl-link/colorize"
 	"time"
 )
 
