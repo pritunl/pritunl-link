@@ -15,6 +15,9 @@ func main() {
 
 	switch flag.Arg(0) {
 	case "start":
-		cmd.Start()
+		err := cmd.Start()
+		if err != nil {
+			panic(err)
+		}
 	}
 }
