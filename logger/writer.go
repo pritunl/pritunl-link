@@ -12,7 +12,6 @@ func (w *ErrorWriter) Write(input []byte) (n int, err error) {
 	return
 }
 
-// Returns a writer for writing to error log
 func NewErrorWriter() (errWr *ErrorWriter) {
 	errWr = &ErrorWriter{}
 	return
