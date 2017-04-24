@@ -3,11 +3,10 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"github.com/pritunl/pritunl-auth/errortypes"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-auth/errortypes"
 	"math/big"
 	mathrand "math/rand"
-	"time"
 )
 
 func RandBytes(size int) (bytes []byte, err error) {
@@ -33,17 +32,11 @@ func Uuid() (id string) {
 	return
 }
 
-func seedRand() {
+func init() {
 	n, err := rand.Int(rand.Reader, big.NewInt(9223372036854775806))
 	if err != nil {
-		mathrand.Seed(time.Now().UTC().UnixNano())
-		return
+		panic(err)
 	}
 
 	mathrand.Seed(n.Int64())
-	return
-}
-
-func init() {
-	seedRand()
 }
