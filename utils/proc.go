@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"github.com/autoabs/autoabs/errortypes"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/errortypes"
 	"io"
 	"io/ioutil"
 	"os"
