@@ -9,7 +9,7 @@ import (
 func Start() (err error) {
 	logrus.WithFields(logrus.Fields{
 		"version": constants.Version,
-	}).Info("cmd.app: Starting link")
+	}).Info("cmd.start: Starting link")
 
 	err = utils.NetInit()
 	if err != nil {
