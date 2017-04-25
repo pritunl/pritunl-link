@@ -9,6 +9,11 @@ import (
 	mathrand "math/rand"
 )
 
+var (
+	chars = []rune(
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+)
+
 func RandBytes(size int) (bytes []byte, err error) {
 	bytes = make([]byte, size)
 	_, err = rand.Read(bytes)
@@ -19,6 +24,15 @@ func RandBytes(size int) (bytes []byte, err error) {
 		return
 	}
 
+	return
+}
+
+func RandStr(n int) (str string) {
+	strList := make([]rune, n)
+	for i := range strList {
+		strList[i] = chars[mathrand.Intn(len(chars))]
+	}
+	str = string(strList)
 	return
 }
 
