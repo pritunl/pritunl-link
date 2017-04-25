@@ -1,15 +1,15 @@
 package state
 
 type State struct {
-	Id     string
-	Secret string
-	Hosts  []string
-	Links  []*Link
+	Id     string   `json:"id"`
+	Secret string   `json:"secret"`
+	Hosts  []string `json:"hosts"`
+	Links  []*Link  `json:"links"`
 }
 
 type Link struct {
-	PreSharedKey string
-	Right        string
-	LeftSubnets  []string
-	RightSubnets []string
+	PreSharedKey string   `json:"pre_shared_key"`
+	Right        string   `json:"right"`
+	LeftSubnets  []string `json:"left_subnets"`
+	RightSubnets []string `json:"right_subnets"`
 }
