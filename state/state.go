@@ -2,7 +2,7 @@ package state
 
 type State struct {
 	Id     string   `json:"id"`
-	Secret string   `json:"secret"`
+	Secret string   `json:"-"`
 	Hosts  []string `json:"hosts"`
 	Links  []*Link  `json:"links"`
 }
