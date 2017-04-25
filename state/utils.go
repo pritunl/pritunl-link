@@ -32,8 +32,9 @@ var (
 )
 
 type stateData struct {
-	PublicAddress string `json:"public_address"`
-	Tunnels       int    `json:"tunnels"`
+	PublicAddress string   `json:"public_address"`
+	Tunnels       int      `json:"tunnels"`
+	Errors        []string `json:"errors"`
 }
 
 func GetState(uri string) (state *State, err error) {
