@@ -16,10 +16,10 @@ var (
 var Config = &ConfigData{}
 
 type ConfigData struct {
-	path       string   `json:"-"`
-	loaded     bool     `json:"-"`
-	PublicAddr string   `json:"public_addr"`
-	Uris       []string `json:"uris"`
+	path          string   `json:"-"`
+	loaded        bool     `json:"-"`
+	PublicAddress string   `json:"public_address"`
+	Uris          []string `json:"uris"`
 }
 
 func (c *ConfigData) Load(path string) (err error) {

@@ -10,7 +10,7 @@ import (
 func Start() (err error) {
 	logrus.WithFields(logrus.Fields{
 		"version":     constants.Version,
-		"public_addr": config.Config.PublicAddr,
+		"public_addr": config.Config.PublicAddress,
 	}).Info("cmd.start: Starting link")
 
 	err = utils.NetInit()
