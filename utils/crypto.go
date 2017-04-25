@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/pritunl/pritunl-auth/errortypes"
+	"github.com/pritunl/pritunl-link/errortypes"
 	"math/big"
 	mathrand "math/rand"
 )
