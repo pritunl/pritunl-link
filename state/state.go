@@ -3,6 +3,7 @@ package state
 type State struct {
 	Id     string   `json:"id"`
 	Secret string   `json:"-"`
+	Hash   string   `json:"hash"`
 	Hosts  []string `json:"hosts"`
 	Links  []*Link  `json:"links"`
 }
