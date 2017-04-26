@@ -3,9 +3,11 @@ package state
 import (
 	"bytes"
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/sha512"
 	"crypto/tls"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/Sirupsen/logrus"
@@ -13,6 +15,7 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/utils"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -30,6 +33,8 @@ var (
 		Transport: transport,
 		Timeout:   5 * time.Second,
 	}
+	States = []*State{}
+	Hash   = ""
 )
 
 type stateData struct {
@@ -145,4 +150,20 @@ func GetStates() (states []*State) {
 	}
 
 	return
+}
+
+func SyncStates() {
+	states := GetStates()
+	hsh := md5.New()
+
+	for _, stat := range states {
+		io.WriteString(hsh, stat.Hash)
+	}
+
+	newHash := hex.EncodeToString(hsh.Sum(nil))
+
+	if newHash != Hash {
+		Hash = newHash
+		States = states
+	}
 }
