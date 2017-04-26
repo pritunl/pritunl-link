@@ -4,7 +4,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
-	"github.com/pritunl/pritunl-link/ipsec"
 	"github.com/pritunl/pritunl-link/sync"
 	"github.com/pritunl/pritunl-link/utils"
 )
@@ -21,11 +20,6 @@ func Start() (err error) {
 	}
 
 	sync.Init()
-
-	err = ipsec.Deploy()
-	if err != nil {
-		return
-	}
 
 	return
 }
