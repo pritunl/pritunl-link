@@ -132,11 +132,11 @@ func GetStates() (states []*State) {
 	states = []*State{}
 
 	for _, uri := range config.Config.Uris {
-		state, e := GetState(uri)
-		if e != nil {
+		state, err := GetState(uri)
+		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"uri":   uri,
-				"error": e,
+				"error": err,
 			}).Info("sync: Failed to get state")
 			continue
 		}
