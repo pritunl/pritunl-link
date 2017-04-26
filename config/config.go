@@ -16,10 +16,13 @@ var (
 var Config = &ConfigData{}
 
 type ConfigData struct {
-	path          string   `json:"-"`
-	loaded        bool     `json:"-"`
-	PublicAddress string   `json:"public_address"`
-	Uris          []string `json:"uris"`
+	path             string   `json:"-"`
+	loaded           bool     `json:"-"`
+	PublicAddress    string   `json:"public_address"`
+	Uris             []string `json:"uris"`
+	IpsecConfPath    string   `json:"ipsec_conf_path"`
+	IpsecSecretsPath string   `json:"ipsec_secrets_path"`
+	IpsecDirPath     string   `json:"ipsec_dir_path"`
 }
 
 func (c *ConfigData) Load(path string) (err error) {
@@ -56,6 +59,18 @@ func (c *ConfigData) Load(path string) (err error) {
 
 	if c.Uris == nil {
 		c.Uris = []string{}
+	}
+
+	if c.IpsecConfPath == "" {
+		c.IpsecConfPath = "/etc/ipsec.conf"
+	}
+
+	if c.IpsecSecretsPath == "" {
+		c.IpsecSecretsPath = "/etc/ipsec.secrets"
+	}
+
+	if c.IpsecDirPath == "" {
+		c.IpsecDirPath = "/etc/ipsec.d"
 	}
 
 	c.loaded = true
