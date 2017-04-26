@@ -126,3 +126,19 @@ func GetState(uri string) (state *State, err error) {
 
 	return
 }
+
+func GetStates() (states []*State, err error) {
+	states = []*State{}
+
+	for _, uri := range config.Config.Uris {
+		state, e := GetState(uri)
+		if e != nil {
+			err = e
+			return
+		}
+
+		states = append(states, state)
+	}
+
+	return
+}
