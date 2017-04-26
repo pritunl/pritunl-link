@@ -14,6 +14,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/pritunl/pritunl-link/ipsec"
 	"github.com/pritunl/pritunl-link/utils"
 	"io"
 	"net/http"
@@ -150,20 +151,4 @@ func GetStates() (states []*State) {
 	}
 
 	return
-}
-
-func SyncStates() {
-	states := GetStates()
-	hsh := md5.New()
-
-	for _, stat := range states {
-		io.WriteString(hsh, stat.Hash)
-	}
-
-	newHash := hex.EncodeToString(hsh.Sum(nil))
-
-	if newHash != Hash {
-		Hash = newHash
-		States = states
-	}
 }
