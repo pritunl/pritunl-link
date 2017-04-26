@@ -4,6 +4,8 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
+	"github.com/pritunl/pritunl-link/ipsec"
+	"github.com/pritunl/pritunl-link/sync"
 	"github.com/pritunl/pritunl-link/utils"
 )
 
@@ -14,6 +16,13 @@ func Start() (err error) {
 	}).Info("cmd.start: Starting link")
 
 	err = utils.NetInit()
+	if err != nil {
+		return
+	}
+
+	sync.Init()
+
+	err = ipsec.Deploy()
 	if err != nil {
 		return
 	}
