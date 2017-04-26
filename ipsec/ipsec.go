@@ -11,7 +11,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"github.com/pritunl/pritunl-link/utils"
 )
 
 type templateData struct {
