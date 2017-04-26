@@ -23,6 +23,8 @@ func SyncStates() {
 	if newHash != state.Hash {
 		logrus.Info("state: Deploying state")
 
+		state.States = states
+
 		err := ipsec.Deploy()
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
@@ -33,7 +35,6 @@ func SyncStates() {
 		}
 
 		state.Hash = newHash
-		state.States = states
 	}
 }
 
