@@ -3,6 +3,8 @@ package sync
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"github.com/Sirupsen/logrus"
+	"github.com/pritunl/pritunl-link/ipsec"
 	"github.com/pritunl/pritunl-link/state"
 	"io"
 	"time"
@@ -19,6 +21,17 @@ func SyncStates() {
 	newHash := hex.EncodeToString(hsh.Sum(nil))
 
 	if newHash != state.Hash {
+		logrus.Info("state: Deploying state")
+
+		err := ipsec.Deploy()
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err,
+			}).Info("state: Failed to deploy state")
+			time.Sleep(1 * time.Second)
+			return
+		}
+
 		state.Hash = newHash
 		state.States = states
 	}
