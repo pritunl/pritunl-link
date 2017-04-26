@@ -7,6 +7,7 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/state"
+	"github.com/pritunl/pritunl-link/utils"
 	"io/ioutil"
 	"os"
 	"path"
@@ -139,6 +140,11 @@ func Deploy() (err error) {
 	}
 
 	err = writeTemplates()
+	if err != nil {
+		return
+	}
+
+	err = utils.Exec("", "service", "ipsec", "restart")
 	if err != nil {
 		return
 	}
