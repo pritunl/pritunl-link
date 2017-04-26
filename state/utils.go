@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
@@ -127,14 +128,17 @@ func GetState(uri string) (state *State, err error) {
 	return
 }
 
-func GetStates() (states []*State, err error) {
+func GetStates() (states []*State) {
 	states = []*State{}
 
 	for _, uri := range config.Config.Uris {
 		state, e := GetState(uri)
 		if e != nil {
-			err = e
-			return
+			logrus.WithFields(logrus.Fields{
+				"uri":   uri,
+				"error": e,
+			}).Info("sync: Failed to get state")
+			continue
 		}
 
 		states = append(states, state)
