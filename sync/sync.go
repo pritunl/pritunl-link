@@ -6,6 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/ipsec"
 	"github.com/pritunl/pritunl-link/state"
+	"github.com/pritunl/pritunl-link/utils"
 	"io"
 	"time"
 )
@@ -43,5 +44,6 @@ func Init() {
 	for {
 		time.Sleep(1 * time.Second)
 		SyncStates()
+		utils.Exec("", "service", "ipsec", "status")
 	}
 }
