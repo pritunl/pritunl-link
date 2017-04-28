@@ -16,18 +16,25 @@ include /etc/ipsec.d/*.conf
 	secrets = `include /etc/ipsec.d/*.secrets
 `
 	confTemplateStr = `conn {{.Id}}
-	type=tunnel
+	ikelifetime=8h
+	keylife=1h
+	rekeymargin=9m
+	keyingtries=%forever
 	authby=secret
+	keyexchange=ikev2
+	mobike=no
+	dpddelay=10s
+	dpdtimeout=30s
+	dpdaction=restart
 	left=%defaultroute
-	leftid={{.Left}}
-	leftnexthop=%defaultroute
-	leftsubnets={{"{"}}{{.LeftSubnets}}{{"}"}}
+	leftid=@{{.Left}}
+	leftsubnet={{.LeftSubnets}}
 	right={{.Right}}
-	rightsubnets={{"{"}}{{.RightSubnets}}{{"}"}}
-	pfs=yes
+	rightid=@{{.Right}}
+	rightsubnet={{.RightSubnets}}
 	auto=start
 `
-	secretsTemplateStr = `{{.Left}} {{.Right}}: PSK "{{.PreSharedKey}}"
+	secretsTemplateStr = `@{{.Left}} @{{.Right}}: PSK "{{.PreSharedKey}}"
 `
 )
 
