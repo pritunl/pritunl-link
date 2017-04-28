@@ -79,9 +79,9 @@ func writeTemplates() (err error) {
 			data := &templateData{
 				Id:           fmt.Sprintf("%s-%d", stat.Id, i),
 				Left:         config.Config.PublicAddress,
-				LeftSubnets:  strings.Join(link.LeftSubnets, " "),
+				LeftSubnets:  strings.Join(link.LeftSubnets, ","),
 				Right:        link.Right,
-				RightSubnets: strings.Join(link.RightSubnets, " "),
+				RightSubnets: strings.Join(link.RightSubnets, ","),
 				PreSharedKey: link.PreSharedKey,
 			}
 
