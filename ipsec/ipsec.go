@@ -47,7 +47,7 @@ func writeConf() (err error) {
 	data := fmt.Sprintf("include %s/*.conf", config.Config.IpsecDirPath)
 
 	pth := path.Join(config.Config.IpsecConfPath)
-	err = ioutil.WriteFile(pth, []byte(data), 0600)
+	err = ioutil.WriteFile(pth, []byte(data), 0644)
 	if err != nil {
 		err = errortypes.WriteError{
 			errors.Wrap(err, "ipsec: Failed to write conf"),
@@ -96,7 +96,7 @@ func writeTemplates() (err error) {
 
 		pth := path.Join(config.Config.IpsecDirPath,
 			fmt.Sprintf("%s.conf", stat.Id))
-		err = ioutil.WriteFile(pth, confBuf.Bytes(), 0600)
+		err = ioutil.WriteFile(pth, confBuf.Bytes(), 0644)
 		if err != nil {
 			err = errortypes.WriteError{
 				errors.Wrap(err, "ipsec: Failed to write state conf"),
