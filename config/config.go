@@ -65,7 +65,7 @@ func (c *ConfigData) Load(path string) (err error) {
 	}
 
 	if c.IpsecDirPath == "" {
-		c.IpsecDirPath = "/etc/ipsec.d"
+		c.IpsecDirPath = "/etc/ipsec.pritunl"
 	}
 
 	c.loaded = true
