@@ -3,10 +3,10 @@ package sync
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/ipsec"
 	"github.com/pritunl/pritunl-link/state"
-	"github.com/pritunl/pritunl-link/utils"
 	"io"
 	"time"
 )
@@ -44,6 +44,8 @@ func Init() {
 	for {
 		time.Sleep(1 * time.Second)
 		SyncStates()
-		utils.Exec("", "ipsec", "status")
+
+		status, _ := ipsec.GetStatus()
+		fmt.Println(status)
 	}
 }
