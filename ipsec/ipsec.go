@@ -56,24 +56,15 @@ func writeConf() (err error) {
 		return
 	}
 
-	pth = path.Join(config.Config.IpsecSecretsPath)
-	err = ioutil.WriteFile(pth, []byte(secrets), 0600)
-	if err != nil {
-		err = errortypes.WriteError{
-			errors.Wrap(err, "ipsec: Failed to write secrets"),
-		}
-		return
-	}
-
 	return
 }
 
 func writeTemplates() (err error) {
 	states := state.States
+	secretsBuf := &bytes.Buffer{}
 
 	for _, stat := range states {
 		confBuf := &bytes.Buffer{}
-		secretsBuf := &bytes.Buffer{}
 
 		for i, link := range stat.Links {
 			data := &templateData{
@@ -113,16 +104,15 @@ func writeTemplates() (err error) {
 			}
 			return
 		}
+	}
 
-		pth = path.Join(config.Config.IpsecDirPath,
-			fmt.Sprintf("%s.secrets", stat.Id))
-		err = ioutil.WriteFile(pth, secretsBuf.Bytes(), 0600)
-		if err != nil {
-			err = errortypes.WriteError{
-				errors.Wrap(err, "ipsec: Failed to write state secrets"),
-			}
-			return
+	err = ioutil.WriteFile(
+		config.Config.IpsecSecretsPath, secretsBuf.Bytes(), 0600)
+	if err != nil {
+		err = errortypes.WriteError{
+			errors.Wrap(err, "ipsec: Failed to write state secrets"),
 		}
+		return
 	}
 
 	return
