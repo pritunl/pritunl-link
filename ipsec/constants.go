@@ -13,8 +13,6 @@ config setup
 
 include /etc/ipsec.d/*.conf
 `
-	secrets = `include /etc/ipsec.d/*.secrets
-`
 	confTemplateStr = `conn {{.Id}}
 	ikelifetime=8h
 	keylife=1h
