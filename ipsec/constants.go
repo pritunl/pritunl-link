@@ -22,7 +22,7 @@ const (
 	rightsubnet={{.RightSubnets}}
 	auto=start
 `
-	secretsTemplateStr = `@{{.Left}} @{{.Right}}: PSK "{{.PreSharedKey}}"
+	secretsTemplateStr = `@{{.Left}} @{{.Right}} : PSK "{{.PreSharedKey}}"
 `
 )
 
