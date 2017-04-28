@@ -3,16 +3,6 @@ package ipsec
 import "html/template"
 
 const (
-	conf = `version 2.0
-
-config setup
-	protostack=netkey
-	nat_traversal=yes
-	virtual_private=
-	oe=off
-
-include /etc/ipsec.d/*.conf
-`
 	confTemplateStr = `conn {{.Id}}
 	ikelifetime=8h
 	keylife=1h

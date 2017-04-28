@@ -47,8 +47,10 @@ func clearDir() (err error) {
 }
 
 func writeConf() (err error) {
+	data := fmt.Sprintf("include %s/*.conf", config.Config.IpsecDirPath)
+
 	pth := path.Join(config.Config.IpsecConfPath)
-	err = ioutil.WriteFile(pth, []byte(conf), 0600)
+	err = ioutil.WriteFile(pth, []byte(data), 0600)
 	if err != nil {
 		err = errortypes.WriteError{
 			errors.Wrap(err, "ipsec: Failed to write conf"),
