@@ -24,23 +24,20 @@ type templateData struct {
 }
 
 func clearDir() (err error) {
-	files, err := ioutil.ReadDir(config.Config.IpsecDirPath)
+	err = os.RemoveAll(config.Config.IpsecDirPath)
 	if err != nil {
 		err = &errortypes.ReadError{
-			errors.Wrap(err, "ipsec: Failed to read ipsec dir"),
+			errors.Wrap(err, "ipsec: Failed to remove ipsec conf dir"),
 		}
 		return
 	}
 
-	for _, file := range files {
-		pth := path.Join(config.Config.IpsecDirPath, file.Name())
-		err = os.RemoveAll(pth)
-		if err != nil {
-			err = &errortypes.WriteError{
-				errors.Wrap(err, "ipsec: Failed to remove ipsec file"),
-			}
-			return
+	err = os.MkdirAll(config.Config.IpsecDirPath, 0755)
+	if err != nil {
+		err = &errortypes.ReadError{
+			errors.Wrap(err, "ipsec: Failed to create ipsec conf dir"),
 		}
+		return
 	}
 
 	return
