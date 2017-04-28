@@ -44,6 +44,6 @@ func Init() {
 	for {
 		time.Sleep(1 * time.Second)
 		SyncStates()
-		utils.Exec("", "service", "ipsec", "status")
+		utils.Exec("", "ipsec", "status")
 	}
 }

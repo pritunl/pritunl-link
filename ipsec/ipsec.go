@@ -133,7 +133,7 @@ func Deploy() (err error) {
 		return
 	}
 
-	err = utils.Exec("", "service", "ipsec", "restart")
+	err = utils.Exec("", "ipsec", "restart")
 	if err != nil {
 		return
 	}
