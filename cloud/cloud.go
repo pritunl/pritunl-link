@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
 )
 
@@ -127,17 +128,36 @@ func awsGetRouteTables(region, vpcId string) (tables []string, err error) {
 }
 
 func AwsAddRoute(network string) (err error) {
-	data, err := awsGetMetaData()
+	region := ""
+	vpcId := ""
+	instanceId := ""
+	interfaceId := ""
+
+	if config.Config.Aws != nil {
+		region = config.Config.Aws.Region
+		vpcId = config.Config.Aws.VpcId
+		instanceId = config.Config.Aws.InstanceId
+		interfaceId = config.Config.Aws.InterfaceId
+	}
+
+	if vpcId == "" {
+		data, e := awsGetMetaData()
+		if e != nil {
+			err = e
+			return
+		}
+
+		region = data.Region
+		vpcId = data.VpcId
+		instanceId = data.InstanceId
+	}
+
+	tables, err := awsGetRouteTables(region, vpcId)
 	if err != nil {
 		return
 	}
 
-	tables, err := awsGetRouteTables(data.Region, data.VpcId)
-	if err != nil {
-		return
-	}
-
-	sess, err := awsGetSession(data.Region)
+	sess, err := awsGetSession(region)
 	if err != nil {
 		return
 	}
@@ -146,14 +166,19 @@ func AwsAddRoute(network string) (err error) {
 
 	for _, table := range tables {
 		input := &ec2.CreateRouteInput{}
-		input.SetInstanceId(data.InstanceId)
 		input.SetDestinationCidrBlock(network)
 		input.SetRouteTableId(table)
+
+		if interfaceId != "" {
+			input.SetNetworkInterfaceId(interfaceId)
+		} else {
+			input.SetInstanceId(instanceId)
+		}
 
 		_, err = ec2Svc.CreateRoute(input)
 		if err != nil {
 			input := &ec2.ReplaceRouteInput{}
-			input.SetInstanceId(data.InstanceId)
+			input.SetInstanceId(instanceId)
 			input.SetDestinationCidrBlock(network)
 			input.SetRouteTableId(table)
 
