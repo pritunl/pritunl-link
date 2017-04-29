@@ -176,8 +176,8 @@ func GoogleAddRoute(network string) (err error) {
 
 	if route, ok := routes[network]; ok {
 		if route.DestRange != network ||
-			route.Network != data.Network ||
-			route.NextHopInstance != data.Instance {
+			route.NetworkShort != data.NetworkShort ||
+			route.NextHopInstanceShort != data.InstanceShort {
 
 			call := svc.Routes.Delete(data.Project, route.Name)
 
