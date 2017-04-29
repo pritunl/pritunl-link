@@ -16,14 +16,31 @@ type awsMetaData struct {
 	VpcId      string
 }
 
-func awsGetMetaData() (data *awsMetaData, err error) {
-	sess, err := session.NewSessionWithOptions(session.Options{
+func awsGetSession(region string) (sess *session.Session, err error) {
+	opts := session.Options{
 		SharedConfigState: session.SharedConfigEnable,
-	})
+	}
+
+	if region != "" {
+		opts.Config = aws.Config{
+			Region: &region,
+		}
+	}
+
+	sess, err = session.NewSessionWithOptions(opts)
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "cloud: Failed to create AWS session"),
 		}
+		return
+	}
+
+	return
+}
+
+func awsGetMetaData() (data *awsMetaData, err error) {
+	sess, err := awsGetSession("")
+	if err != nil {
 		return
 	}
 
@@ -74,16 +91,8 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 func awsGetRouteTables(region, vpcId string) (tables []string, err error) {
 	tables = []string{}
 
-	sess, err := session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-		Config: aws.Config{
-			Region: &region,
-		},
-	})
+	sess, err := awsGetSession(region)
 	if err != nil {
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to create AWS session"),
-		}
 		return
 	}
 
@@ -130,16 +139,8 @@ func AwsAddRoute(network string) (err error) {
 		return
 	}
 
-	sess, err := session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-		Config: aws.Config{
-			Region: &data.Region,
-		},
-	})
+	sess, err := awsGetSession(data.Region)
 	if err != nil {
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to create AWS session"),
-		}
 		return
 	}
 
