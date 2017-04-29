@@ -44,7 +44,6 @@ func Init() {
 	for {
 		time.Sleep(1 * time.Second)
 		SyncStates()
-
 		status, _ := ipsec.GetStatus()
 		fmt.Println(status)
 	}
