@@ -17,6 +17,11 @@ func AdvertiseRoutes() (err error) {
 					if err != nil {
 						return
 					}
+				} else if config.Config.Provider == "google" {
+					err = cloud.GoogleAddRoute(network)
+					if err != nil {
+						return
+					}
 				}
 			}
 		}
