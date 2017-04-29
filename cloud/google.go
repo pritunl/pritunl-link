@@ -156,6 +156,30 @@ func GoogleAddRoute(network string) (err error) {
 		return
 	}
 
+	routes, err := googleGetRoutes(svc, data.Project)
+	if err != nil {
+		return
+	}
+
+	if route, ok := routes[network]; ok {
+		if route.DestRange != network ||
+			route.Network != data.Network ||
+			route.NextHopInstance != data.Instance {
+
+			call := svc.Routes.Delete(data.Project, route.Name)
+
+			_, err = call.Do()
+			if err != nil {
+				err = &errortypes.RequestError{
+					errors.Wrap(err, "cloud: Failed to remove Google route"),
+				}
+				return
+			}
+		} else {
+			return
+		}
+	}
+
 	route := &compute.Route{
 		Name:            fmt.Sprintf("pritunl-%x", md5.Sum([]byte(network))),
 		DestRange:       network,
