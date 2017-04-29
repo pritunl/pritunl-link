@@ -15,6 +15,13 @@ var (
 
 var Config = &ConfigData{}
 
+type AwsData struct {
+	Region      string `json:"region"`
+	VpcId       string `json:"vpc_id"`
+	InstanceId  string `json:"instance_id"`
+	InterfaceId string `json:"interface_id"`
+}
+
 type ConfigData struct {
 	path             string   `json:"-"`
 	loaded           bool     `json:"-"`
@@ -23,6 +30,7 @@ type ConfigData struct {
 	IpsecConfPath    string   `json:"ipsec_conf_path"`
 	IpsecSecretsPath string   `json:"ipsec_secrets_path"`
 	IpsecDirPath     string   `json:"ipsec_dir_path"`
+	Aws              *AwsData `json:"aws"`
 }
 
 func (c *ConfigData) Load(path string) (err error) {
