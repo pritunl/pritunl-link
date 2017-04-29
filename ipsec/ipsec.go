@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/advertise"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/state"
@@ -134,6 +135,11 @@ func Deploy() (err error) {
 	}
 
 	err = utils.Exec("", "ipsec", "restart")
+	if err != nil {
+		return
+	}
+
+	err = advertise.AdvertiseRoutes()
 	if err != nil {
 		return
 	}
