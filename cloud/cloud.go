@@ -127,8 +127,6 @@ func awsGetRouteTables(region, vpcId string) (tables []string, err error) {
 }
 
 func AwsAddRoute(network string) (err error) {
-	_ = network
-
 	data, err := awsGetMetaData()
 	if err != nil {
 		return
