@@ -1,6 +1,8 @@
 package ipsec
 
-import "html/template"
+import (
+	"html/template"
+)
 
 const (
 	confTemplateStr = `conn {{.Id}}
