@@ -116,3 +116,57 @@ func awsGetRouteTables(region, vpcId string) (tables []string, err error) {
 
 	return
 }
+
+func AwsAddRoute(network string) (err error) {
+	_ = network
+
+	data, err := awsGetMetaData()
+	if err != nil {
+		return
+	}
+
+	tables, err := awsGetRouteTables(data.Region, data.VpcId)
+	if err != nil {
+		return
+	}
+
+	sess, err := session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+		Config: aws.Config{
+			Region: &data.Region,
+		},
+	})
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "cloud: Failed to create AWS session"),
+		}
+		return
+	}
+
+	ec2Svc := ec2.New(sess)
+
+	for _, table := range tables {
+		input := &ec2.CreateRouteInput{}
+		input.SetInstanceId(data.InstanceId)
+		input.SetDestinationCidrBlock(network)
+		input.SetRouteTableId(table)
+
+		_, err = ec2Svc.CreateRoute(input)
+		if err != nil {
+			input := &ec2.ReplaceRouteInput{}
+			input.SetInstanceId(data.InstanceId)
+			input.SetDestinationCidrBlock(network)
+			input.SetRouteTableId(table)
+
+			_, err = ec2Svc.ReplaceRoute(input)
+			if err != nil {
+				err = &errortypes.RequestError{
+					errors.Wrap(err, "cloud: Failed to get create route"),
+				}
+				return
+			}
+		}
+	}
+
+	return
+}
