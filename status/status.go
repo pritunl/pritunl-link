@@ -5,10 +5,10 @@ import (
 	"strings"
 )
 
-var Status = map[string]string{}
+var Status = map[string]map[string]string{}
 
 func Update() (err error) {
-	status := map[string]string{}
+	status := map[string]map[string]string{}
 
 	output, err := utils.ExecOutput("", "ipsec", "status")
 	if err != nil {
@@ -25,9 +25,13 @@ func Update() (err error) {
 			continue
 		}
 
-		connId := strings.SplitN(lines[0], "[", 2)[0]
+		connId := strings.SplitN(strings.SplitN(lines[0], "[", 2)[0], "-", 2)
 		connState := strings.SplitN(
 			strings.TrimSpace(lines[1]), " ", 2)[0]
+
+		if len(connId) != 2 {
+			continue
+		}
 
 		switch connState {
 		case "ESTABLISHED":
@@ -40,8 +44,12 @@ func Update() (err error) {
 			connState = "disconnected"
 		}
 
-		if _, ok := status[connId]; !ok {
-			status[connId] = connState
+		if _, ok := status[connId[0]]; !ok {
+			status[connId[0]] = map[string]string{}
+		}
+
+		if _, ok := status[connId[0]][connId[1]]; !ok {
+			status[connId[0]][connId[1]] = connState
 		}
 	}
 
