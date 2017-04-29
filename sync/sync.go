@@ -7,6 +7,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/ipsec"
 	"github.com/pritunl/pritunl-link/state"
+	"github.com/pritunl/pritunl-link/status"
 	"io"
 	"time"
 )
@@ -44,7 +45,7 @@ func Init() {
 	for {
 		time.Sleep(1 * time.Second)
 		SyncStates()
-		status, _ := ipsec.GetStatus()
-		fmt.Println(status)
+		status.Update()
+		fmt.Println(status.Status)
 	}
 }
