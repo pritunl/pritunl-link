@@ -20,6 +20,13 @@ type googleMetaData struct {
 	Network  string
 }
 
+type googleRoute struct {
+	Name            string
+	DestRange       string
+	Network         string
+	NextHopInstance string
+}
+
 var client = &http.Client{
 	Timeout: 500 * time.Millisecond,
 }
@@ -94,6 +101,32 @@ func googleGetMetaData() (data *googleMetaData, err error) {
 		Project:  project,
 		Instance: fmt.Sprintf("%s/instances/%s", zone, name),
 		Network:  network,
+	}
+
+	return
+}
+
+func googleGetRoutes(svc *compute.Service, project string) (
+	routes map[string]*googleRoute, err error) {
+
+	routes = map[string]*googleRoute{}
+	call := svc.Routes.List(project)
+
+	resp, err := call.Do()
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "cloud: Failed to get Google routes"),
+		}
+		return
+	}
+
+	for _, route := range resp.Items {
+		routes[route.DestRange] = &googleRoute{
+			Name:            route.Name,
+			DestRange:       route.DestRange,
+			Network:         route.Network,
+			NextHopInstance: route.NextHopInstance,
+		}
 	}
 
 	return
