@@ -25,6 +25,7 @@ type AwsData struct {
 type ConfigData struct {
 	path             string   `json:"-"`
 	loaded           bool     `json:"-"`
+	Provider         string   `json:"provider"`
 	PublicAddress    string   `json:"public_address"`
 	Uris             []string `json:"uris"`
 	IpsecConfPath    string   `json:"ipsec_conf_path"`
