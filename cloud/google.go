@@ -15,16 +15,20 @@ import (
 )
 
 type googleMetaData struct {
-	Project  string
-	Instance string
-	Network  string
+	Project       string
+	Instance      string
+	InstanceShort string
+	Network       string
+	NetworkShort  string
 }
 
 type googleRoute struct {
-	Name            string
-	DestRange       string
-	Network         string
-	NextHopInstance string
+	Name                 string
+	DestRange            string
+	Network              string
+	NetworkShort         string
+	NextHopInstance      string
+	NextHopInstanceShort string
 }
 
 var client = &http.Client{
@@ -97,10 +101,14 @@ func googleGetMetaData() (data *googleMetaData, err error) {
 			network, "/networks/", "/global/networks/", 1)
 	}
 
+	networks := strings.Split(network, "/")
+
 	data = &googleMetaData{
-		Project:  project,
-		Instance: fmt.Sprintf("%s/instances/%s", zone, name),
-		Network:  network,
+		Project:       project,
+		Instance:      fmt.Sprintf("%s/instances/%s", zone, name),
+		InstanceShort: name,
+		Network:       network,
+		NetworkShort:  networks[len(networks)-1],
 	}
 
 	return
@@ -121,11 +129,16 @@ func googleGetRoutes(svc *compute.Service, project string) (
 	}
 
 	for _, route := range resp.Items {
+		network := strings.Split(route.Network, "/")
+		instance := strings.Split(route.NextHopInstance, "/")
+
 		routes[route.DestRange] = &googleRoute{
-			Name:            route.Name,
-			DestRange:       route.DestRange,
-			Network:         route.Network,
-			NextHopInstance: route.NextHopInstance,
+			Name:                 route.Name,
+			DestRange:            route.DestRange,
+			Network:              route.Network,
+			NetworkShort:         network[len(network)-1],
+			NextHopInstance:      route.NextHopInstance,
+			NextHopInstanceShort: instance[len(instance)-1],
 		}
 	}
 
