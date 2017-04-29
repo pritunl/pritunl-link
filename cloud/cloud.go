@@ -20,7 +20,7 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 	})
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "advertise: Failed to create AWS session"),
+			errors.Wrap(err, "cloud: Failed to create AWS session"),
 		}
 		return
 	}
@@ -30,7 +30,7 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 	region, err := ec2metadataSvc.Region()
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "advertise: Failed to get AWS region"),
+			errors.Wrap(err, "cloud: Failed to get AWS region"),
 		}
 		return
 	}
@@ -38,7 +38,7 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 	instanceId, err := ec2metadataSvc.GetMetadata("instance-id")
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "advertise: Failed to get EC2 instance ID"),
+			errors.Wrap(err, "cloud: Failed to get EC2 instance ID"),
 		}
 		return
 	}
@@ -46,7 +46,7 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 	macAddr, err := ec2metadataSvc.GetMetadata("mac")
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "advertise: Failed to get EC2 MAC address"),
+			errors.Wrap(err, "cloud: Failed to get EC2 MAC address"),
 		}
 		return
 	}
@@ -55,7 +55,7 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 		fmt.Sprintf("network/interfaces/macs/%s/vpc-id", macAddr))
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "advertise: Failed to get EC2 VPC ID"),
+			errors.Wrap(err, "cloud: Failed to get EC2 VPC ID"),
 		}
 		return
 	}
