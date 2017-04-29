@@ -7,8 +7,8 @@ import (
 
 var Status = map[string]string{}
 
-func Update() (status map[string]string, err error) {
-	status = map[string]string{}
+func Update() (err error) {
+	status := map[string]string{}
 
 	output, err := utils.ExecOutput("", "ipsec", "status")
 	if err != nil {
