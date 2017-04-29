@@ -2,8 +2,10 @@ package cloud
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/errortypes"
 )
@@ -64,6 +66,52 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 		Region:     region,
 		InstanceId: instanceId,
 		VpcId:      vpcId,
+	}
+
+	return
+}
+
+func awsGetRouteTables(region, vpcId string) (tables []string, err error) {
+	tables = []string{}
+
+	sess, err := session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+		Config: aws.Config{
+			Region: &region,
+		},
+	})
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "cloud: Failed to create AWS session"),
+		}
+		return
+	}
+
+	ec2Svc := ec2.New(sess)
+
+	filterName := "vpc-id"
+	filters := []*ec2.Filter{
+		{
+			Name: &filterName,
+			Values: []*string{
+				&vpcId,
+			},
+		},
+	}
+
+	input := &ec2.DescribeRouteTablesInput{}
+	input.SetFilters(filters)
+
+	vpcTables, err := ec2Svc.DescribeRouteTables(input)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "cloud: Failed to get VPC route tables"),
+		}
+		return
+	}
+
+	for _, table := range vpcTables.RouteTables {
+		tables = append(tables, *table.RouteTableId)
 	}
 
 	return
