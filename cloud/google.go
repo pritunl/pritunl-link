@@ -145,6 +145,51 @@ func googleGetRoutes(svc *compute.Service, project string) (
 	return
 }
 
+func googleHasRoute(svc *compute.Service, project, destRange,
+	networkShort, instanceShort string) (exists bool, err error) {
+
+	routes, err := googleGetRoutes(svc, project)
+	if err != nil {
+		return
+	}
+
+	if route, ok := routes[destRange]; ok {
+		if route.DestRange != destRange ||
+			route.NetworkShort != networkShort ||
+			route.NextHopInstanceShort != instanceShort {
+
+			call := svc.Routes.Delete(project, route.Name)
+
+			_, err = call.Do()
+			if err != nil {
+				err = &errortypes.RequestError{
+					errors.Wrap(err, "cloud: Failed to remove Google route"),
+				}
+				return
+			}
+
+			for i := 0; i < 20; i++ {
+				routes, e := googleGetRoutes(svc, project)
+				if e != nil {
+					err = e
+					return
+				}
+
+				if _, ok := routes[destRange]; !ok {
+					break
+				}
+
+				time.Sleep(250 * time.Millisecond)
+			}
+		} else {
+			exists = true
+			return
+		}
+	}
+
+	return
+}
+
 func GoogleAddRoute(network string) (err error) {
 	ctx := context.Background()
 
@@ -169,28 +214,13 @@ func GoogleAddRoute(network string) (err error) {
 		return
 	}
 
-	routes, err := googleGetRoutes(svc, data.Project)
+	exists, err := googleHasRoute(svc, data.Project, network,
+		data.NetworkShort, data.InstanceShort)
 	if err != nil {
 		return
 	}
-
-	if route, ok := routes[network]; ok {
-		if route.DestRange != network ||
-			route.NetworkShort != data.NetworkShort ||
-			route.NextHopInstanceShort != data.InstanceShort {
-
-			call := svc.Routes.Delete(data.Project, route.Name)
-
-			_, err = call.Do()
-			if err != nil {
-				err = &errortypes.RequestError{
-					errors.Wrap(err, "cloud: Failed to remove Google route"),
-				}
-				return
-			}
-		} else {
-			return
-		}
+	if exists {
+		return
 	}
 
 	route := &compute.Route{
