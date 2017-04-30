@@ -22,16 +22,23 @@ type AwsData struct {
 	InterfaceId string `json:"interface_id"`
 }
 
+type GoogleData struct {
+	Project  string `json:"project"`
+	Network  string `json:"network"`
+	Instance string `json:"instance"`
+}
+
 type ConfigData struct {
-	path             string   `json:"-"`
-	loaded           bool     `json:"-"`
-	Provider         string   `json:"provider"`
-	PublicAddress    string   `json:"public_address"`
-	Uris             []string `json:"uris"`
-	IpsecConfPath    string   `json:"ipsec_conf_path"`
-	IpsecSecretsPath string   `json:"ipsec_secrets_path"`
-	IpsecDirPath     string   `json:"ipsec_dir_path"`
-	Aws              *AwsData `json:"aws"`
+	path             string      `json:"-"`
+	loaded           bool        `json:"-"`
+	Provider         string      `json:"provider"`
+	PublicAddress    string      `json:"public_address"`
+	Uris             []string    `json:"uris"`
+	IpsecConfPath    string      `json:"ipsec_conf_path"`
+	IpsecSecretsPath string      `json:"ipsec_secrets_path"`
+	IpsecDirPath     string      `json:"ipsec_dir_path"`
+	Aws              *AwsData    `json:"aws"`
+	Google           *GoogleData `json:"google"`
 }
 
 func (c *ConfigData) Load(path string) (err error) {
