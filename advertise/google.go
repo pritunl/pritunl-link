@@ -1,4 +1,4 @@
-package cloud
+package advertise
 
 import (
 	"crypto/md5"
