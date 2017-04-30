@@ -140,7 +140,7 @@ func AwsAddRoute(network string) (err error) {
 		interfaceId = config.Config.Aws.InterfaceId
 	}
 
-	if vpcId == "" {
+	if region == "" || vpcId == "" || (instanceId == "" && interfaceId == "") {
 		data, e := awsGetMetaData()
 		if e != nil {
 			err = e
