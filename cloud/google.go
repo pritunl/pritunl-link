@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
@@ -101,14 +102,10 @@ func googleGetMetaData() (data *googleMetaData, err error) {
 			network, "/networks/", "/global/networks/", 1)
 	}
 
-	networks := strings.Split(network, "/")
-
 	data = &googleMetaData{
-		Project:       project,
-		Instance:      fmt.Sprintf("%s/instances/%s", zone, name),
-		InstanceShort: name,
-		Network:       network,
-		NetworkShort:  networks[len(networks)-1],
+		Project:  project,
+		Instance: fmt.Sprintf("%s/instances/%s", zone, name),
+		Network:  network,
 	}
 
 	return
@@ -190,11 +187,34 @@ func googleHasRoute(svc *compute.Service, project, destRange,
 	return
 }
 
-func GoogleAddRoute(network string) (err error) {
-	data, err := googleGetMetaData()
-	if err != nil {
-		return
+func GoogleAddRoute(destNetwork string) (err error) {
+	project := ""
+	network := ""
+	instance := ""
+
+	if config.Config.Google != nil {
+		project = config.Config.Google.Project
+		network = config.Config.Google.Network
+		instance = config.Config.Google.Instance
 	}
+
+	if instance == "" {
+		data, e := googleGetMetaData()
+		if e != nil {
+			err = e
+			return
+		}
+
+		project = data.Project
+		network = data.Network
+		instance = data.Instance
+	}
+
+	instanceSpl := strings.Split(instance, "/")
+	instanceShort := instanceSpl[len(instanceSpl)-1]
+
+	networkSpl := strings.Split(network, "/")
+	networkShort := networkSpl[len(networkSpl)-1]
 
 	ctx := context.Background()
 	client, err := google.DefaultClient(ctx, compute.CloudPlatformScope)
@@ -213,8 +233,8 @@ func GoogleAddRoute(network string) (err error) {
 		return
 	}
 
-	exists, err := googleHasRoute(svc, data.Project, network,
-		data.NetworkShort, data.InstanceShort)
+	exists, err := googleHasRoute(svc, project, destNetwork,
+		networkShort, instanceShort)
 	if err != nil {
 		return
 	}
@@ -223,14 +243,15 @@ func GoogleAddRoute(network string) (err error) {
 	}
 
 	route := &compute.Route{
-		Name:            fmt.Sprintf("pritunl-%x", md5.Sum([]byte(network))),
-		DestRange:       network,
+		Name: fmt.Sprintf(
+			"pritunl-%x", md5.Sum([]byte(destNetwork))),
+		DestRange:       destNetwork,
 		Priority:        1000,
-		Network:         data.Network,
-		NextHopInstance: data.Instance,
+		Network:         network,
+		NextHopInstance: instance,
 	}
 
-	call := svc.Routes.Insert(data.Project, route)
+	call := svc.Routes.Insert(project, route)
 
 	_, err = call.Do()
 	if err != nil {
