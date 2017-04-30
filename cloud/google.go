@@ -191,13 +191,12 @@ func googleHasRoute(svc *compute.Service, project, destRange,
 }
 
 func GoogleAddRoute(network string) (err error) {
-	ctx := context.Background()
-
 	data, err := googleGetMetaData()
 	if err != nil {
 		return
 	}
 
+	ctx := context.Background()
 	client, err := google.DefaultClient(ctx, compute.CloudPlatformScope)
 	if err != nil {
 		err = &errortypes.RequestError{
