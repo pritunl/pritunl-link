@@ -198,7 +198,7 @@ func GoogleAddRoute(destNetwork string) (err error) {
 		instance = config.Config.Google.Instance
 	}
 
-	if instance == "" {
+	if project == "" || network == "" || instance == "" {
 		data, e := googleGetMetaData()
 		if e != nil {
 			err = e
