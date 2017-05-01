@@ -66,6 +66,13 @@ func decResp(secret, iv, encData string) (cipData []byte, err error) {
 		return
 	}
 
+	if len(cipIv) != 16 {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "state: Invalid cipher key"),
+		}
+		return
+	}
+
 	block, err := aes.NewCipher(cipKey)
 	if err != nil {
 		err = &errortypes.ParseError{
