@@ -2,7 +2,10 @@ package state
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/hmac"
+	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/tls"
 	"encoding/base64"
@@ -14,6 +17,7 @@ import (
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/status"
 	"github.com/pritunl/pritunl-link/utils"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -39,6 +43,43 @@ type stateData struct {
 	PublicAddress string            `json:"public_address"`
 	Status        map[string]string `json:"status"`
 	Errors        []string          `json:"errors"`
+}
+
+func decResp(secret, iv, encData string) (cipData []byte, err error) {
+	cipIv, err := base64.StdEncoding.DecodeString(iv)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "state: Failed to decode cipher IV"),
+		}
+		return
+	}
+
+	encKeyHash := sha256.New()
+	encKeyHash.Write([]byte(secret))
+	cipKey := encKeyHash.Sum(nil)
+
+	cipData, err = base64.StdEncoding.DecodeString(encData)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "state: Failed to decode response data"),
+		}
+		return
+	}
+
+	block, err := aes.NewCipher(cipKey)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "state: Failed to load cipher"),
+		}
+		return
+	}
+
+	mode := cipher.NewCBCDecrypter(block, cipIv)
+	mode.CryptBlocks(cipData, cipData)
+
+	cipData = bytes.TrimRight(cipData, "\x00")
+
+	return
 }
 
 func GetState(uri string) (state *State, err error) {
@@ -120,7 +161,27 @@ func GetState(uri string) (state *State, err error) {
 
 	state = &State{}
 
-	err = json.NewDecoder(res.Body).Decode(state)
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "state: Failed to read response body"),
+		}
+		return
+	}
+
+	decBody, err := decResp(
+		hostSecret,
+		res.Header.Get("Cipher-IV"),
+		string(body),
+	)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "state: Failed to decrypt response"),
+		}
+		return
+	}
+
+	err = json.Unmarshal(decBody, state)
 	if err != nil {
 		err = &errortypes.ParseError{
 			errors.Wrap(err, "state: Failed to parse response data"),
