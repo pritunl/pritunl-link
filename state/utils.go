@@ -14,6 +14,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/status"
 	"github.com/pritunl/pritunl-link/utils"
@@ -40,6 +41,7 @@ var (
 )
 
 type stateData struct {
+	Version       string            `json:"version"`
 	PublicAddress string            `json:"public_address"`
 	Status        map[string]string `json:"status"`
 	Errors        []string          `json:"errors"`
@@ -108,6 +110,7 @@ func GetState(uri string) (state *State, err error) {
 	}
 
 	data := &stateData{
+		Version:       constants.Version,
 		PublicAddress: config.Config.PublicAddress,
 		Status:        status.Status[uriData.User.Username()],
 	}
