@@ -184,7 +184,7 @@ func GetState(uri string) (state *State, err error) {
 	err = json.Unmarshal(decBody, state)
 	if err != nil {
 		err = &errortypes.ParseError{
-			errors.Wrap(err, "state: Failed to parse unmarshal data"),
+			errors.Wrap(err, "state: Failed to unmarshal data"),
 		}
 		return
 	}
