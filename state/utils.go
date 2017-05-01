@@ -83,6 +83,8 @@ func decResp(secret, iv, encData string) (cipData []byte, err error) {
 }
 
 func GetState(uri string) (state *State, err error) {
+	state = &State{}
+
 	uriData, err := url.ParseRequestURI(uri)
 	if err != nil {
 		err = &errortypes.ParseError{
@@ -158,8 +160,6 @@ func GetState(uri string) (state *State, err error) {
 		}
 		return
 	}
-
-	state = &State{}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
