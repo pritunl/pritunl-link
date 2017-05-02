@@ -32,7 +32,7 @@ var (
 			InsecureSkipVerify: true,
 		},
 	}
-	client = &http.Client{
+	clientInsec = &http.Client{
 		Transport: transport,
 		Timeout:   5 * time.Second,
 	}
@@ -166,7 +166,7 @@ func GetState(uri string) (state *State, err error) {
 
 	var clnt *http.Client
 	if config.Config.SkipVerify {
-		clnt = client
+		clnt = clientInsec
 	} else {
 		clnt = clientSec
 	}
