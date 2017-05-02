@@ -8,5 +8,6 @@ const (
 )
 
 var (
-	RoutesPath = path.Join(VarDir, "routes")
+	RoutesPath    = path.Join(VarDir, "routes")
+	CurRoutesPath = path.Join(VarDir, "cur_routes")
 )
