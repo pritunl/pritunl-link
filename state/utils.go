@@ -164,7 +164,14 @@ func GetState(uri string) (state *State, err error) {
 	req.Header.Set("Auth-Nonce", nonce)
 	req.Header.Set("Auth-Signature", sig)
 
-	res, err := client.Do(req)
+	var clnt *http.Client
+	if config.Config.SkipVerify {
+		clnt = client
+	} else {
+		clnt = clientSec
+	}
+
+	res, err := clnt.Do(req)
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "state: Request put error"),
