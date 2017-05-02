@@ -34,6 +34,7 @@ type ConfigData struct {
 	Provider         string      `json:"provider"`
 	PublicAddress    string      `json:"public_address"`
 	Uris             []string    `json:"uris"`
+	SkipVerify       bool        `json:"skip_verify"`
 	IpsecConfPath    string      `json:"ipsec_conf_path"`
 	IpsecSecretsPath string      `json:"ipsec_secrets_path"`
 	IpsecDirPath     string      `json:"ipsec_dir_path"`
