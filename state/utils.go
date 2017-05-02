@@ -36,6 +36,9 @@ var (
 		Transport: transport,
 		Timeout:   5 * time.Second,
 	}
+	clientSec = &http.Client{
+		Timeout: 5 * time.Second,
+	}
 	States = []*State{}
 	Hash   = ""
 )
