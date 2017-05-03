@@ -1,7 +1,5 @@
 package advertise
 
-var curRoutes = &currentRoutes{}
-
 type AwsRoute struct {
 	InterfaceId string `json:"interface_id"`
 	InstanceId  string `json:"instance_id"`
