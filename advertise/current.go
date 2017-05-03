@@ -9,20 +9,20 @@ import (
 	"os"
 )
 
-type AwsRoute struct {
+type awsRoute struct {
 	Network     string `json:"network"`
 	InterfaceId string `json:"interface_id"`
 	InstanceId  string `json:"instance_id"`
 }
 
-func (r *AwsRoute) Add() (err error) {
+func (r *awsRoute) Add() (err error) {
 	routes, err := getCurrentRoutes()
 	if err != nil {
 		return
 	}
 
 	if routes.Aws == nil {
-		routes.Aws = map[string]*AwsRoute{}
+		routes.Aws = map[string]*awsRoute{}
 	}
 
 	routes.Aws[r.Network] = r
@@ -36,7 +36,7 @@ func (r *AwsRoute) Add() (err error) {
 }
 
 type currentRoutes struct {
-	Aws map[string]*AwsRoute `json:"aws"`
+	Aws map[string]*awsRoute `json:"aws"`
 }
 
 func (c *currentRoutes) Commit() (err error) {
