@@ -9,32 +9,6 @@ import (
 	"os"
 )
 
-type awsRoute struct {
-	Network     string `json:"network"`
-	InterfaceId string `json:"interface_id"`
-	InstanceId  string `json:"instance_id"`
-}
-
-func (r *awsRoute) Add() (err error) {
-	routes, err := getCurrentRoutes()
-	if err != nil {
-		return
-	}
-
-	if routes.Aws == nil {
-		routes.Aws = map[string]*awsRoute{}
-	}
-
-	routes.Aws[r.Network] = r
-
-	err = routes.Commit()
-	if err != nil {
-		return
-	}
-
-	return
-}
-
 type currentRoutes struct {
 	Aws map[string]*awsRoute `json:"aws"`
 }
@@ -79,6 +53,32 @@ func getCurrentRoutes() (routes *currentRoutes, err error) {
 		err = errortypes.ParseError{
 			errors.Wrap(err, "advertise: Failed to prase routes"),
 		}
+		return
+	}
+
+	return
+}
+
+type awsRoute struct {
+	Network     string `json:"network"`
+	InterfaceId string `json:"interface_id"`
+	InstanceId  string `json:"instance_id"`
+}
+
+func (r *awsRoute) Add() (err error) {
+	routes, err := getCurrentRoutes()
+	if err != nil {
+		return
+	}
+
+	if routes.Aws == nil {
+		routes.Aws = map[string]*awsRoute{}
+	}
+
+	routes.Aws[r.Network] = r
+
+	err = routes.Commit()
+	if err != nil {
 		return
 	}
 
