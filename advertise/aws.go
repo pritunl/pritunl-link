@@ -9,6 +9,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/pritunl/pritunl-link/routes"
 )
 
 type awsMetaData struct {
@@ -192,7 +193,7 @@ func AwsAddRoute(network string) (err error) {
 		}
 	}
 
-	route := &awsRoute{
+	route := &routes.AwsRoute{
 		Network:     network,
 		InterfaceId: interfaceId,
 		InstanceId:  instanceId,
