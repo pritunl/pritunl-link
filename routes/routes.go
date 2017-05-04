@@ -10,7 +10,8 @@ import (
 )
 
 type CurrentRoutes struct {
-	Aws map[string]*AwsRoute `json:"aws"`
+	Aws    map[string]*AwsRoute    `json:"aws"`
+	Google map[string]*GoogleRoute `json:"google"`
 }
 
 func (c *CurrentRoutes) Commit() (err error) {
