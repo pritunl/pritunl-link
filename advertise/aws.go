@@ -102,11 +102,9 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 		return
 	}
 
-	data = &awsMetaData{
-		Region:     region,
-		InstanceId: instanceId,
-		VpcId:      vpcId,
-	}
+	data.Region = region
+	data.VpcId = vpcId
+	data.InstanceId = instanceId
 
 	return
 }
