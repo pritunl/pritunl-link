@@ -181,6 +181,13 @@ func AwsAddRoute(network string) (err error) {
 		_, err = ec2Svc.CreateRoute(input)
 		if err != nil {
 			input := &ec2.ReplaceRouteInput{}
+
+			if data.InterfaceId != "" {
+				input.SetNetworkInterfaceId(data.InterfaceId)
+			} else {
+				input.SetInstanceId(data.InstanceId)
+			}
+
 			input.SetInstanceId(data.InstanceId)
 			input.SetDestinationCidrBlock(network)
 			input.SetRouteTableId(table)
