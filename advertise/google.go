@@ -174,12 +174,12 @@ func googleGetRoutes(svc *compute.Service, project string) (
 func googleHasRoute(svc *compute.Service, project, destRange,
 	networkShort, instanceShort string) (exists bool, err error) {
 
-	routes, err := googleGetRoutes(svc, project)
+	rotes, err := googleGetRoutes(svc, project)
 	if err != nil {
 		return
 	}
 
-	if route, ok := routes[destRange]; ok {
+	if route, ok := rotes[destRange]; ok {
 		if route.DestRange != destRange ||
 			route.NetworkShort != networkShort ||
 			route.NextHopInstanceShort != instanceShort {
@@ -195,13 +195,13 @@ func googleHasRoute(svc *compute.Service, project, destRange,
 			}
 
 			for i := 0; i < 20; i++ {
-				routes, e := googleGetRoutes(svc, project)
+				rotes, e := googleGetRoutes(svc, project)
 				if e != nil {
 					err = e
 					return
 				}
 
-				if _, ok := routes[destRange]; !ok {
+				if _, ok := rotes[destRange]; !ok {
 					break
 				}
 
