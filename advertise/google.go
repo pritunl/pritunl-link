@@ -6,6 +6,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/pritunl/pritunl-link/routes"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/compute/v1"
@@ -242,7 +243,7 @@ func GoogleAddRoute(destNetwork string) (err error) {
 		return
 	}
 
-	route := &compute.Route{
+	googleRoute := &compute.Route{
 		Name: fmt.Sprintf(
 			"pritunl-%x", md5.Sum([]byte(destNetwork))),
 		DestRange:       destNetwork,
@@ -251,13 +252,25 @@ func GoogleAddRoute(destNetwork string) (err error) {
 		NextHopInstance: instance,
 	}
 
-	call := svc.Routes.Insert(project, route)
+	call := svc.Routes.Insert(project, googleRoute)
 
 	_, err = call.Do()
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "cloud: Failed to insert Google route"),
 		}
+		return
+	}
+
+	route := &routes.GoogleRoute{
+		DestNetwork: destNetwork,
+		Project:     project,
+		Network:     network,
+		Instance:    instance,
+	}
+
+	err = route.Add()
+	if err != nil {
 		return
 	}
 
