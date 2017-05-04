@@ -2,6 +2,8 @@ package routes
 
 type AwsRoute struct {
 	DestNetwork string `json:"dest_network"`
+	Region      string `json:"region"`
+	VpcId       string `json:"vpc_id"`
 	InterfaceId string `json:"interface_id"`
 	InstanceId  string `json:"instance_id"`
 }

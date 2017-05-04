@@ -204,6 +204,8 @@ func AwsAddRoute(network string) (err error) {
 
 	route := &routes.AwsRoute{
 		DestNetwork: network,
+		Region:      data.Region,
+		VpcId:       data.VpcId,
 		InterfaceId: data.InterfaceId,
 		InstanceId:  data.InstanceId,
 	}
