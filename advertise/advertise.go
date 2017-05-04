@@ -19,18 +19,20 @@ func AdvertiseRoutes() (err error) {
 		for _, link := range stat.Links {
 			for _, network := range link.RightSubnets {
 				networks = append(networks, network)
+			}
+		}
+	}
 
-				if config.Config.Provider == "aws" {
-					err = AwsAddRoute(network)
-					if err != nil {
-						return
-					}
-				} else if config.Config.Provider == "google" {
-					err = GoogleAddRoute(network)
-					if err != nil {
-						return
-					}
-				}
+	for _, network := range networks {
+		if config.Config.Provider == "aws" {
+			err = AwsAddRoute(network)
+			if err != nil {
+				return
+			}
+		} else if config.Config.Provider == "google" {
+			err = GoogleAddRoute(network)
+			if err != nil {
+				return
 			}
 		}
 	}
