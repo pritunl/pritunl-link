@@ -192,5 +192,16 @@ func AwsAddRoute(network string) (err error) {
 		}
 	}
 
+	route := &awsRoute{
+		Network:     network,
+		InterfaceId: interfaceId,
+		InstanceId:  instanceId,
+	}
+
+	err = route.Add()
+	if err != nil {
+		return
+	}
+
 	return
 }
