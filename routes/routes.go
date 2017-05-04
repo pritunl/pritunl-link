@@ -2,7 +2,9 @@ package routes
 
 import (
 	"encoding/json"
+	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"io/ioutil"
@@ -55,6 +57,36 @@ func GetCurrent() (routes *CurrentRoutes, err error) {
 			errors.Wrap(err, "advertise: Failed to prase routes"),
 		}
 		return
+	}
+
+	return
+}
+
+func GetDiff(destNetworks []string) (routes *CurrentRoutes, err error) {
+	destNetworksSet := set.NewSet()
+	for _, destNetwork := range destNetworks {
+		destNetworksSet.Add(destNetwork)
+	}
+
+	routes, err = GetCurrent()
+	if err != nil {
+		return
+	}
+
+	if config.Config.Provider == "aws" {
+		for destNetwork := range routes.Aws {
+			if destNetworksSet.Contains(destNetwork) {
+				delete(routes.Aws, destNetwork)
+			}
+		}
+	}
+
+	if config.Config.Provider == "google" {
+		for destNetwork := range routes.Google {
+			if destNetworksSet.Contains(destNetwork) {
+				delete(routes.Google, destNetwork)
+			}
+		}
 	}
 
 	return
