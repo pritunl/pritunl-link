@@ -76,6 +76,36 @@ func googleInternal(path string) (val string, err error) {
 }
 
 func googleGetMetaData() (data *googleMetaData, err error) {
+	defer func() {
+		if data.Instance != "" {
+			instanceSpl := strings.Split(data.Instance, "/")
+			instanceShort := instanceSpl[len(instanceSpl)-1]
+			data.InstanceShort = instanceShort
+		}
+
+		if data.Network != "" {
+			networkSpl := strings.Split(data.Network, "/")
+			networkShort := networkSpl[len(networkSpl)-1]
+			data.NetworkShort = networkShort
+		}
+	}()
+
+	data = &googleMetaData{}
+
+	if config.Config.Google != nil {
+		project := config.Config.Google.Project
+		network := config.Config.Google.Network
+		instance := config.Config.Google.Instance
+
+		if project != "" && network != "" && instance != "" {
+			data.Project = project
+			data.Network = network
+			data.Instance = instance
+
+			return
+		}
+	}
+
 	project, err := googleInternal(
 		"computeMetadata/v1/project/project-id")
 	if err != nil {
@@ -103,11 +133,9 @@ func googleGetMetaData() (data *googleMetaData, err error) {
 			network, "/networks/", "/global/networks/", 1)
 	}
 
-	data = &googleMetaData{
-		Project:  project,
-		Instance: fmt.Sprintf("%s/instances/%s", zone, name),
-		Network:  network,
-	}
+	data.Project = project
+	data.Instance = fmt.Sprintf("%s/instances/%s", zone, name)
+	data.Network = network
 
 	return
 }
@@ -189,33 +217,10 @@ func googleHasRoute(svc *compute.Service, project, destRange,
 }
 
 func GoogleAddRoute(destNetwork string) (err error) {
-	project := ""
-	network := ""
-	instance := ""
-
-	if config.Config.Google != nil {
-		project = config.Config.Google.Project
-		network = config.Config.Google.Network
-		instance = config.Config.Google.Instance
+	data, err := googleGetMetaData()
+	if err != nil {
+		return
 	}
-
-	if project == "" || network == "" || instance == "" {
-		data, e := googleGetMetaData()
-		if e != nil {
-			err = e
-			return
-		}
-
-		project = data.Project
-		network = data.Network
-		instance = data.Instance
-	}
-
-	instanceSpl := strings.Split(instance, "/")
-	instanceShort := instanceSpl[len(instanceSpl)-1]
-
-	networkSpl := strings.Split(network, "/")
-	networkShort := networkSpl[len(networkSpl)-1]
 
 	ctx := context.Background()
 	client, err := google.DefaultClient(ctx, compute.CloudPlatformScope)
@@ -234,8 +239,8 @@ func GoogleAddRoute(destNetwork string) (err error) {
 		return
 	}
 
-	exists, err := googleHasRoute(svc, project, destNetwork,
-		networkShort, instanceShort)
+	exists, err := googleHasRoute(svc, data.Project, destNetwork,
+		data.NetworkShort, data.InstanceShort)
 	if err != nil {
 		return
 	}
@@ -248,11 +253,11 @@ func GoogleAddRoute(destNetwork string) (err error) {
 			"pritunl-%x", md5.Sum([]byte(destNetwork))),
 		DestRange:       destNetwork,
 		Priority:        1000,
-		Network:         network,
-		NextHopInstance: instance,
+		Network:         data.Network,
+		NextHopInstance: data.Instance,
 	}
 
-	call := svc.Routes.Insert(project, googleRoute)
+	call := svc.Routes.Insert(data.Project, googleRoute)
 
 	_, err = call.Do()
 	if err != nil {
@@ -264,9 +269,9 @@ func GoogleAddRoute(destNetwork string) (err error) {
 
 	route := &routes.GoogleRoute{
 		DestNetwork: destNetwork,
-		Project:     project,
-		Network:     network,
-		Instance:    instance,
+		Project:     data.Project,
+		Network:     data.Network,
+		Instance:    data.Instance,
 	}
 
 	err = route.Add()
