@@ -13,9 +13,10 @@ import (
 )
 
 type awsMetaData struct {
-	Region     string
-	InstanceId string
-	VpcId      string
+	Region      string
+	InstanceId  string
+	InterfaceId string
+	VpcId       string
 }
 
 func awsGetSession(region string) (sess *session.Session, err error) {
@@ -41,6 +42,26 @@ func awsGetSession(region string) (sess *session.Session, err error) {
 }
 
 func awsGetMetaData() (data *awsMetaData, err error) {
+	data = &awsMetaData{}
+
+	if config.Config.Aws != nil {
+		region := config.Config.Aws.Region
+		vpcId := config.Config.Aws.VpcId
+		instanceId := config.Config.Aws.InstanceId
+		interfaceId := config.Config.Aws.InterfaceId
+
+		if region != "" && vpcId != "" &&
+			(instanceId != "" || interfaceId != "") {
+
+			data.Region = region
+			data.VpcId = vpcId
+			data.InstanceId = instanceId
+			data.InterfaceId = interfaceId
+
+			return
+		}
+	}
+
 	sess, err := awsGetSession("")
 	if err != nil {
 		return
@@ -129,36 +150,17 @@ func awsGetRouteTables(region, vpcId string) (tables []string, err error) {
 }
 
 func AwsAddRoute(network string) (err error) {
-	region := ""
-	vpcId := ""
-	instanceId := ""
-	interfaceId := ""
-
-	if config.Config.Aws != nil {
-		region = config.Config.Aws.Region
-		vpcId = config.Config.Aws.VpcId
-		instanceId = config.Config.Aws.InstanceId
-		interfaceId = config.Config.Aws.InterfaceId
-	}
-
-	if region == "" || vpcId == "" || (instanceId == "" && interfaceId == "") {
-		data, e := awsGetMetaData()
-		if e != nil {
-			err = e
-			return
-		}
-
-		region = data.Region
-		vpcId = data.VpcId
-		instanceId = data.InstanceId
-	}
-
-	tables, err := awsGetRouteTables(region, vpcId)
+	data, err := awsGetMetaData()
 	if err != nil {
 		return
 	}
 
-	sess, err := awsGetSession(region)
+	tables, err := awsGetRouteTables(data.Region, data.VpcId)
+	if err != nil {
+		return
+	}
+
+	sess, err := awsGetSession(data.Region)
 	if err != nil {
 		return
 	}
@@ -170,16 +172,16 @@ func AwsAddRoute(network string) (err error) {
 		input.SetDestinationCidrBlock(network)
 		input.SetRouteTableId(table)
 
-		if interfaceId != "" {
-			input.SetNetworkInterfaceId(interfaceId)
+		if data.InterfaceId != "" {
+			input.SetNetworkInterfaceId(data.InterfaceId)
 		} else {
-			input.SetInstanceId(instanceId)
+			input.SetInstanceId(data.InstanceId)
 		}
 
 		_, err = ec2Svc.CreateRoute(input)
 		if err != nil {
 			input := &ec2.ReplaceRouteInput{}
-			input.SetInstanceId(instanceId)
+			input.SetInstanceId(data.InstanceId)
 			input.SetDestinationCidrBlock(network)
 			input.SetRouteTableId(table)
 
@@ -195,8 +197,8 @@ func AwsAddRoute(network string) (err error) {
 
 	route := &routes.AwsRoute{
 		DestNetwork: network,
-		InterfaceId: interfaceId,
-		InstanceId:  instanceId,
+		InterfaceId: data.InterfaceId,
+		InstanceId:  data.InstanceId,
 	}
 
 	err = route.Add()
