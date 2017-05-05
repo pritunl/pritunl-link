@@ -24,16 +24,21 @@ func AdvertiseRoutes() (err error) {
 	}
 
 	for _, network := range networks {
-		if config.Config.Provider == "aws" {
+		switch config.Config.Provider {
+		case "aws":
 			err = AwsAddRoute(network)
 			if err != nil {
 				return
 			}
-		} else if config.Config.Provider == "google" {
+
+			break
+		case "google":
 			err = GoogleAddRoute(network)
 			if err != nil {
 				return
 			}
+
+			break
 		}
 	}
 
