@@ -244,7 +244,36 @@ func GoogleAddRoute(destNetwork string) (err error) {
 	if err != nil {
 		return
 	}
-	if exists {
+	if !exists {
+		googleRoute := &compute.Route{
+			Name: fmt.Sprintf(
+				"pritunl-%x", md5.Sum([]byte(destNetwork))),
+			DestRange:       destNetwork,
+			Priority:        1000,
+			Network:         data.Network,
+			NextHopInstance: data.Instance,
+		}
+
+		call := svc.Routes.Insert(data.Project, googleRoute)
+
+		_, err = call.Do()
+		if err != nil {
+			err = &errortypes.RequestError{
+				errors.Wrap(err, "cloud: Failed to insert Google route"),
+			}
+			return
+		}
+	}
+
+	route := &routes.GoogleRoute{
+		DestNetwork: destNetwork,
+		Project:     data.Project,
+		Network:     data.Network,
+		Instance:    data.Instance,
+	}
+
+	err = route.Add()
+	if err != nil {
 		return
 	}
 
