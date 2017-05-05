@@ -40,7 +40,7 @@ func AdvertiseRoutes() (err error) {
 
 	if curRoutes.Aws != nil {
 		for _, route := range curRoutes.Aws {
-			err = AwsDeleteRoute(route.DestNetwork)
+			err = AwsDeleteRoute(route)
 			if err != nil {
 				return
 			}
