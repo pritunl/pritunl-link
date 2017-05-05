@@ -5,6 +5,7 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/pritunl/pritunl-link/routes"
 	"github.com/pritunl/pritunl-link/state"
 	"io/ioutil"
 	"os"
@@ -19,6 +20,29 @@ func AdvertiseRoutes() (err error) {
 		for _, link := range stat.Links {
 			for _, network := range link.RightSubnets {
 				networks = append(networks, network)
+			}
+		}
+	}
+
+	curRoutes, err := routes.GetDiff(networks)
+	if err != nil {
+		return
+	}
+
+	if curRoutes.Google != nil {
+		for _, route := range curRoutes.Google {
+			err = GoogleDeleteRoute(route.DestNetwork)
+			if err != nil {
+				return
+			}
+		}
+	}
+
+	if curRoutes.Aws != nil {
+		for _, route := range curRoutes.Aws {
+			err = AwsDeleteRoute(route.DestNetwork)
+			if err != nil {
+				return
 			}
 		}
 	}
