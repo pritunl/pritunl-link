@@ -305,14 +305,7 @@ func GoogleDeleteRoute(route *routes.GoogleRoute) (err error) {
 
 	if rout, ok := rotes[route.DestNetwork]; ok {
 		call := svc.Routes.Delete(route.Project, rout.Name)
-
-		_, err = call.Do()
-		if err != nil {
-			err = &errortypes.RequestError{
-				errors.Wrap(err, "cloud: Failed to remove Google route"),
-			}
-			return
-		}
+		call.Do()
 	}
 
 	err = route.Remove()

@@ -235,13 +235,7 @@ func AwsDeleteRoute(route *routes.AwsRoute) (err error) {
 		input.SetDestinationCidrBlock(route.DestNetwork)
 		input.SetRouteTableId(table)
 
-		_, err = ec2Svc.DeleteRoute(input)
-		if err != nil {
-			err = &errortypes.RequestError{
-				errors.Wrap(err, "cloud: Failed to get delete route"),
-			}
-			return
-		}
+		ec2Svc.DeleteRoute(input)
 	}
 
 	err = route.Remove()
