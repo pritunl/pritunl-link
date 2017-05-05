@@ -31,7 +31,7 @@ func AdvertiseRoutes() (err error) {
 
 	if curRoutes.Google != nil {
 		for _, route := range curRoutes.Google {
-			err = GoogleDeleteRoute(route.DestNetwork)
+			err = GoogleDeleteRoute(route)
 			if err != nil {
 				return
 			}

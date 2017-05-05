@@ -280,12 +280,7 @@ func GoogleAddRoute(destNetwork string) (err error) {
 	return
 }
 
-func GoogleDeleteRoute(destNetwork string) (err error) {
-	data, err := googleGetMetaData()
-	if err != nil {
-		return
-	}
-
+func GoogleDeleteRoute(route *routes.GoogleRoute) (err error) {
 	ctx := context.Background()
 	client, err := google.DefaultClient(ctx, compute.CloudPlatformScope)
 	if err != nil {
@@ -303,13 +298,13 @@ func GoogleDeleteRoute(destNetwork string) (err error) {
 		return
 	}
 
-	rotes, err := googleGetRoutes(svc, data.Project)
+	rotes, err := googleGetRoutes(svc, route.Project)
 	if err != nil {
 		return
 	}
 
-	if route, ok := rotes[destNetwork]; ok {
-		call := svc.Routes.Delete(data.Project, route.Name)
+	if rout, ok := rotes[route.DestNetwork]; ok {
+		call := svc.Routes.Delete(route.Project, rout.Name)
 
 		_, err = call.Do()
 		if err != nil {
@@ -318,10 +313,6 @@ func GoogleDeleteRoute(destNetwork string) (err error) {
 			}
 			return
 		}
-	}
-
-	route := &routes.GoogleRoute{
-		DestNetwork: destNetwork,
 	}
 
 	err = route.Remove()
