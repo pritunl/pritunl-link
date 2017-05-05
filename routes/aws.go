@@ -27,3 +27,27 @@ func (r *AwsRoute) Add() (err error) {
 
 	return
 }
+
+func (r *AwsRoute) Remove() (err error) {
+	routes, err := GetCurrent()
+	if err != nil {
+		return
+	}
+
+	if routes.Aws != nil {
+		if _, ok := routes.Aws[r.DestNetwork]; ok {
+			delete(routes.Aws, r.DestNetwork)
+		}
+
+		if len(routes.Aws) == 0 {
+			routes.Aws = nil
+		}
+	}
+
+	err = routes.Commit()
+	if err != nil {
+		return
+	}
+
+	return
+}
