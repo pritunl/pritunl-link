@@ -277,33 +277,54 @@ func GoogleAddRoute(destNetwork string) (err error) {
 		return
 	}
 
-	googleRoute := &compute.Route{
-		Name: fmt.Sprintf(
-			"pritunl-%x", md5.Sum([]byte(destNetwork))),
-		DestRange:       destNetwork,
-		Priority:        1000,
-		Network:         data.Network,
-		NextHopInstance: data.Instance,
+	return
+}
+
+func GoogleDeleteRoute(destNetwork string) (err error) {
+	data, err := googleGetMetaData()
+	if err != nil {
+		return
 	}
 
-	call := svc.Routes.Insert(data.Project, googleRoute)
-
-	_, err = call.Do()
+	ctx := context.Background()
+	client, err := google.DefaultClient(ctx, compute.CloudPlatformScope)
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to insert Google route"),
+			errors.Wrap(err, "cloud: Failed to get Google client"),
 		}
 		return
 	}
 
-	route := &routes.GoogleRoute{
-		DestNetwork: destNetwork,
-		Project:     data.Project,
-		Network:     data.Network,
-		Instance:    data.Instance,
+	svc, err := compute.New(client)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "cloud: Failed to get Google compute"),
+		}
+		return
 	}
 
-	err = route.Add()
+	rotes, err := googleGetRoutes(svc, data.Project)
+	if err != nil {
+		return
+	}
+
+	if route, ok := rotes[destNetwork]; ok {
+		call := svc.Routes.Delete(data.Project, route.Name)
+
+		_, err = call.Do()
+		if err != nil {
+			err = &errortypes.RequestError{
+				errors.Wrap(err, "cloud: Failed to remove Google route"),
+			}
+			return
+		}
+	}
+
+	route := &routes.GoogleRoute{
+		DestNetwork: destNetwork,
+	}
+
+	err = route.Remove()
 	if err != nil {
 		return
 	}
