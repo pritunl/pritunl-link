@@ -215,3 +215,49 @@ func AwsAddRoute(network string) (err error) {
 
 	return
 }
+
+func AwsDeleteRoute(network string) (err error) {
+	data, err := awsGetMetaData()
+	if err != nil {
+		return
+	}
+
+	tables, err := awsGetRouteTables(data.Region, data.VpcId)
+	if err != nil {
+		return
+	}
+
+	sess, err := awsGetSession(data.Region)
+	if err != nil {
+		return
+	}
+
+	ec2Svc := ec2.New(sess)
+
+	for _, table := range tables {
+		input := &ec2.DeleteRouteInput{}
+
+		input.SetDestinationCidrBlock(network)
+		input.SetRouteTableId(table)
+
+		_, err = ec2Svc.DeleteRoute(input)
+		if err != nil {
+			err = &errortypes.RequestError{
+				errors.Wrap(err, "cloud: Failed to get delete route"),
+			}
+			return
+		}
+
+	}
+
+	route := &routes.AwsRoute{
+		DestNetwork: network,
+	}
+
+	err = route.Remove()
+	if err != nil {
+		return
+	}
+
+	return
+}
