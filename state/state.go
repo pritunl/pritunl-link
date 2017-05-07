@@ -1,10 +1,10 @@
 package state
 
 type State struct {
-	Id     string   `json:"id"`
-	Secret string   `json:"-"`
-	Hash   string   `json:"hash"`
-	Links  []*Link  `json:"links"`
+	Id     string  `json:"id"`
+	Secret string  `json:"-"`
+	Hash   string  `json:"hash"`
+	Links  []*Link `json:"links"`
 }
 
 type Link struct {
