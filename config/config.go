@@ -42,59 +42,6 @@ type ConfigData struct {
 	Google           *GoogleData `json:"google"`
 }
 
-func (c *ConfigData) Load(path string) (err error) {
-	c.path = path
-
-	_, err = os.Stat(c.path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = nil
-			c.loaded = true
-		} else {
-			err = &errortypes.ReadError{
-				errors.Wrap(err, "config: File stat error"),
-			}
-		}
-		return
-	}
-
-	file, err := ioutil.ReadFile(c.path)
-	if err != nil {
-		err = &errortypes.ReadError{
-			errors.Wrap(err, "config: File read error"),
-		}
-		return
-	}
-
-	err = json.Unmarshal(file, Config)
-	if err != nil {
-		err = &errortypes.ReadError{
-			errors.Wrap(err, "config: File unmarshal error"),
-		}
-		return
-	}
-
-	if c.Uris == nil {
-		c.Uris = []string{}
-	}
-
-	if c.IpsecConfPath == "" {
-		c.IpsecConfPath = "/etc/ipsec.conf"
-	}
-
-	if c.IpsecSecretsPath == "" {
-		c.IpsecSecretsPath = "/etc/ipsec.secrets"
-	}
-
-	if c.IpsecDirPath == "" {
-		c.IpsecDirPath = "/etc/ipsec.pritunl"
-	}
-
-	c.loaded = true
-
-	return
-}
-
 func (c *ConfigData) Save() (err error) {
 	if !c.loaded {
 		err = &errortypes.WriteError{
@@ -123,10 +70,58 @@ func (c *ConfigData) Save() (err error) {
 }
 
 func Load() (err error) {
-	err = Config.Load(confPath)
+	data := &ConfigData{}
+
+	data.path = confPath
+
+	_, err = os.Stat(data.path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			err = nil
+			data.loaded = true
+		} else {
+			err = &errortypes.ReadError{
+				errors.Wrap(err, "config: File stat error"),
+			}
+		}
 		return
 	}
+
+	file, err := ioutil.ReadFile(data.path)
+	if err != nil {
+		err = &errortypes.ReadError{
+			errors.Wrap(err, "config: File read error"),
+		}
+		return
+	}
+
+	err = json.Unmarshal(file, data)
+	if err != nil {
+		err = &errortypes.ReadError{
+			errors.Wrap(err, "config: File unmarshal error"),
+		}
+		return
+	}
+
+	if data.Uris == nil {
+		data.Uris = []string{}
+	}
+
+	if data.IpsecConfPath == "" {
+		data.IpsecConfPath = "/etc/ipsec.conf"
+	}
+
+	if data.IpsecSecretsPath == "" {
+		data.IpsecSecretsPath = "/etc/ipsec.secrets"
+	}
+
+	if data.IpsecDirPath == "" {
+		data.IpsecDirPath = "/etc/ipsec.pritunl"
+	}
+
+	data.loaded = true
+
+	Config = data
 
 	return
 }
