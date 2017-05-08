@@ -2,12 +2,14 @@ package config
 
 import (
 	"encoding/json"
+	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/requires"
 	"io/ioutil"
 	"os"
+	"time"
 )
 
 var Config = &ConfigData{}
@@ -129,6 +131,44 @@ func Save() (err error) {
 	return
 }
 
+func getModTime() (mod time.Time, err error) {
+	stat, err := os.Stat(constants.ConfPath)
+	if err != nil {
+		err = errortypes.ReadError{
+			errors.Wrap(err, "config: Failed to stat conf file"),
+		}
+		return
+	}
+
+	mod = stat.ModTime()
+
+	return
+}
+
+func watch() {
+	curMod, _ := getModTime()
+
+	for {
+		time.Sleep(500 * time.Millisecond)
+
+		mod, err := getModTime()
+		if err != nil {
+			continue
+		}
+
+		if mod != curMod {
+			err = Load()
+			if err != nil {
+				continue
+			}
+
+			logrus.Info("Reloaded config")
+
+			curMod = mod
+		}
+	}
+}
+
 func init() {
 	module := requires.New("config")
 
@@ -142,5 +182,7 @@ func init() {
 		if err != nil {
 			panic(err)
 		}
+
+		go watch()
 	}
 }
