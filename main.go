@@ -38,5 +38,17 @@ func main() {
 			panic(err)
 		}
 		break
+	case "verify-on":
+		err := cmd.VerifyOn()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "verify-off":
+		err := cmd.VerifyOff()
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 }
