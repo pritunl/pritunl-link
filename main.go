@@ -19,5 +19,24 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		break
+	case "add":
+		err := cmd.Add(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "remove":
+		err := cmd.Remove(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "clear":
+		err := cmd.Clear()
+		if err != nil {
+			panic(err)
+		}
+		break
 	}
 }
