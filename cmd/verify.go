@@ -26,7 +26,7 @@ func VerifyOff() (err error) {
 		return
 	}
 
-	logrus.Info("cmd.verify: Certificate verification disable")
+	logrus.Info("cmd.verify: Certificate verification disabled")
 
 	return
 }
