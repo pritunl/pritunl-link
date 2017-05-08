@@ -12,6 +12,8 @@ func Remove(uri string) (err error) {
 				config.Config.Uris[:i],
 				config.Config.Uris[i+1:]...,
 			)
+
+			break
 		}
 	}
 
