@@ -38,6 +38,12 @@ func main() {
 			panic(err)
 		}
 		break
+	case "address":
+		err := cmd.Address(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
 	case "verify-on":
 		err := cmd.VerifyOn()
 		if err != nil {
