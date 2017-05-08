@@ -3,8 +3,9 @@ package constants
 import "path"
 
 const (
-	Version = "1.0.0"
-	VarDir  = "/var/lib/pritunl"
+	Version  = "1.0.0"
+	VarDir   = "/var/lib/pritunl"
+	ConfPath = "/etc/pritunl-link.json"
 )
 
 var (

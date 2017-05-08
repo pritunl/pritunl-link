@@ -3,14 +3,11 @@ package config
 import (
 	"encoding/json"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/requires"
 	"io/ioutil"
 	"os"
-)
-
-var (
-	confPath = "/etc/pritunl-link.json"
 )
 
 var Config = &ConfigData{}
@@ -29,7 +26,6 @@ type GoogleData struct {
 }
 
 type ConfigData struct {
-	path             string      `json:"-"`
 	loaded           bool        `json:"-"`
 	Provider         string      `json:"provider"`
 	PublicAddress    string      `json:"public_address"`
@@ -58,7 +54,7 @@ func (c *ConfigData) Save() (err error) {
 		return
 	}
 
-	err = ioutil.WriteFile(c.path, data, 0600)
+	err = ioutil.WriteFile(constants.ConfPath, data, 0600)
 	if err != nil {
 		err = &errortypes.WriteError{
 			errors.Wrap(err, "config: File write error"),
@@ -72,9 +68,7 @@ func (c *ConfigData) Save() (err error) {
 func Load() (err error) {
 	data := &ConfigData{}
 
-	data.path = confPath
-
-	_, err = os.Stat(data.path)
+	_, err = os.Stat(constants.ConfPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			err = nil
@@ -87,7 +81,7 @@ func Load() (err error) {
 		return
 	}
 
-	file, err := ioutil.ReadFile(data.path)
+	file, err := ioutil.ReadFile(constants.ConfPath)
 	if err != nil {
 		err = &errortypes.ReadError{
 			errors.Wrap(err, "config: File read error"),
