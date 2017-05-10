@@ -119,6 +119,11 @@ func writeTemplates() (err error) {
 }
 
 func Deploy() (err error) {
+	err = utils.NetInit()
+	if err != nil {
+		return
+	}
+
 	err = clearDir()
 	if err != nil {
 		return
