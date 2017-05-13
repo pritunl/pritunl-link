@@ -166,9 +166,7 @@ func AwsAddRoute(network string) (err error) {
 	ec2Svc := ec2.New(sess)
 
 	for _, table := range tables {
-		input := &ec2.CreateRouteInput{}
-		input.SetDestinationCidrBlock(network)
-		input.SetRouteTableId(table)
+		input := &ec2.ReplaceRouteInput{}
 
 		if data.InterfaceId != "" {
 			input.SetNetworkInterfaceId(data.InterfaceId)
@@ -176,9 +174,16 @@ func AwsAddRoute(network string) (err error) {
 			input.SetInstanceId(data.InstanceId)
 		}
 
-		_, err = ec2Svc.CreateRoute(input)
+		input.SetInstanceId(data.InstanceId)
+		input.SetDestinationCidrBlock(network)
+		input.SetRouteTableId(table)
+
+		_, err = ec2Svc.ReplaceRoute(input)
+
 		if err != nil {
-			input := &ec2.ReplaceRouteInput{}
+			input := &ec2.CreateRouteInput{}
+			input.SetDestinationCidrBlock(network)
+			input.SetRouteTableId(table)
 
 			if data.InterfaceId != "" {
 				input.SetNetworkInterfaceId(data.InterfaceId)
@@ -186,11 +191,7 @@ func AwsAddRoute(network string) (err error) {
 				input.SetInstanceId(data.InstanceId)
 			}
 
-			input.SetInstanceId(data.InstanceId)
-			input.SetDestinationCidrBlock(network)
-			input.SetRouteTableId(table)
-
-			_, err = ec2Svc.ReplaceRoute(input)
+			_, err = ec2Svc.CreateRoute(input)
 			if err != nil {
 				err = &errortypes.RequestError{
 					errors.Wrap(err, "cloud: Failed to get create route"),
