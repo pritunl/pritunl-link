@@ -40,12 +40,16 @@ func SyncStates() {
 	}
 }
 
-func Init() {
-	SyncStates()
+func runSyncStates() {
 	for {
 		time.Sleep(1 * time.Second)
 		SyncStates()
 		status.Update()
 		fmt.Println(status.Status)
 	}
+}
+
+func Init() {
+	SyncStates()
+	go runSyncStates()
 }
