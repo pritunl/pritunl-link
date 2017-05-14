@@ -50,7 +50,18 @@ type stateData struct {
 	Errors        []string          `json:"errors"`
 }
 
-func decResp(secret, iv, encData string) (cipData []byte, err error) {
+func decResp(secret, iv, sig, encData string) (cipData []byte, err error) {
+	hashFunc := hmac.New(sha512.New, []byte(secret))
+	hashFunc.Write([]byte(encData))
+	rawSignature := hashFunc.Sum(nil)
+	testSig := base64.StdEncoding.EncodeToString(rawSignature)
+	if sig != testSig {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "state: Cipher data signature invalid"),
+		}
+		return
+	}
+
 	cipIv, err := base64.StdEncoding.DecodeString(iv)
 	if err != nil {
 		err = &errortypes.ParseError{
@@ -199,6 +210,7 @@ func GetState(uri string) (state *State, err error) {
 	decBody, err := decResp(
 		hostSecret,
 		res.Header.Get("Cipher-IV"),
+		res.Header.Get("Cipher-Signature"),
 		string(body),
 	)
 	if err != nil {
