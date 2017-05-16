@@ -3,14 +3,27 @@ package sync
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"github.com/Sirupsen/logrus"
+	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/constants"
+	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/ipsec"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/status"
 	"io"
+	"net/http"
 	"time"
 )
+
+var client = &http.Client{
+	Timeout: 2 * time.Second,
+}
+
+type publicAddressData struct {
+	Ip string `json:"ip"`
+}
 
 func SyncStates() {
 	states := state.GetStates()
@@ -49,7 +62,70 @@ func runSyncStates() {
 	}
 }
 
+func SyncPublicAddress() (err error) {
+	req, err := http.NewRequest(
+		"GET",
+		constants.PublicIpServer,
+		nil,
+	)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "sync: Failed to get public address"),
+		}
+		return
+	}
+
+	req.Header.Set("User-Agent", "pritunl-link")
+
+	res, err := client.Do(req)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "sync: Failed to get public address"),
+		}
+		return
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		err = &errortypes.RequestError{
+			errors.Wrapf(err, "sync: Bad status %n code from server",
+				res.StatusCode),
+		}
+		return
+	}
+
+	data := &publicAddressData{}
+
+	err = json.NewDecoder(res.Body).Decode(data)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "sync: Failed to parse data"),
+		}
+		return
+	}
+
+	if data.Ip != "" {
+		state.PublicAddress = data.Ip
+	}
+
+	return
+}
+
+func runSyncPublicAddress() {
+	for {
+		time.Sleep(30 * time.Second)
+		err := SyncPublicAddress()
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err,
+			}).Info("sync: Failed to get public address")
+			return
+		}
+	}
+}
+
 func Init() {
+	SyncPublicAddress()
 	SyncStates()
 	go runSyncStates()
 }
