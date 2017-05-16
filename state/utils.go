@@ -125,7 +125,7 @@ func GetState(uri string) (state *State, err error) {
 
 	data := &stateData{
 		Version:       constants.Version,
-		PublicAddress: config.Config.PublicAddress,
+		PublicAddress: GetPublicAddress(),
 		Status:        status.Status[uriData.User.Username()],
 	}
 	dataBuf := &bytes.Buffer{}

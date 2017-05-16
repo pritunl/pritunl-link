@@ -1,5 +1,11 @@
 package state
 
+import (
+	"github.com/pritunl/pritunl-link/config"
+)
+
+var PublicAddress = ""
+
 type State struct {
 	Id     string  `json:"id"`
 	Secret string  `json:"-"`
@@ -12,4 +18,11 @@ type Link struct {
 	Right        string   `json:"right"`
 	LeftSubnets  []string `json:"left_subnets"`
 	RightSubnets []string `json:"right_subnets"`
+}
+
+func GetPublicAddress() string {
+	if PublicAddress != "" {
+		return PublicAddress
+	}
+	return config.Config.PublicAddress
 }

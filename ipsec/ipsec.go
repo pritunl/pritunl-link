@@ -69,7 +69,7 @@ func writeTemplates() (err error) {
 		for i, link := range stat.Links {
 			data := &templateData{
 				Id:           fmt.Sprintf("%s-%d", stat.Id, i),
-				Left:         config.Config.PublicAddress,
+				Left:         state.GetPublicAddress(),
 				LeftSubnets:  strings.Join(link.LeftSubnets, ","),
 				Right:        link.Right,
 				RightSubnets: strings.Join(link.RightSubnets, ","),
