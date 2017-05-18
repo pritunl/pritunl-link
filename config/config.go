@@ -75,6 +75,7 @@ func Load() (err error) {
 		if os.IsNotExist(err) {
 			err = nil
 			data.loaded = true
+			Config = data
 		} else {
 			err = &errortypes.ReadError{
 				errors.Wrap(err, "config: File stat error"),
