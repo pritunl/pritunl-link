@@ -127,5 +127,6 @@ func runSyncPublicAddress() {
 func Init() {
 	SyncPublicAddress()
 	SyncStates()
+	go runSyncPublicAddress()
 	go runSyncStates()
 }
