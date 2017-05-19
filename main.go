@@ -56,6 +56,12 @@ func main() {
 			panic(err)
 		}
 		break
+	case "provider":
+		err := cmd.Provider(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
 	case "unifi-username":
 		err := cmd.UnifiUsername(flag.Arg(1))
 		if err != nil {
