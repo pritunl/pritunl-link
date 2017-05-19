@@ -45,7 +45,7 @@ func googleInternal(path string) (val string, err error) {
 	)
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to request Google metadata"),
+			errors.Wrap(err, "advertise: Failed to request Google metadata"),
 		}
 		return
 	}
@@ -55,7 +55,7 @@ func googleInternal(path string) (val string, err error) {
 	resp, err := googleClient.Do(req)
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to get Google metadata"),
+			errors.Wrap(err, "advertise: Failed to get Google metadata"),
 		}
 		return
 	}
@@ -65,7 +65,7 @@ func googleInternal(path string) (val string, err error) {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to read Google metadata"),
+			errors.Wrap(err, "advertise: Failed to read Google metadata"),
 		}
 		return
 	}
@@ -147,7 +147,7 @@ func googleGetRoutes(svc *compute.Service, project string) (
 	resp, err := call.Do()
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to get Google routes"),
+			errors.Wrap(err, "advertise: Failed to get Google routes"),
 		}
 		return
 	}
@@ -187,7 +187,7 @@ func googleHasRoute(svc *compute.Service, project, destRange,
 			_, err = call.Do()
 			if err != nil {
 				err = &errortypes.RequestError{
-					errors.Wrap(err, "cloud: Failed to remove Google route"),
+					errors.Wrap(err, "advertise: Failed to remove Google route"),
 				}
 				return
 			}
@@ -224,7 +224,7 @@ func GoogleAddRoute(destNetwork string) (err error) {
 	client, err := google.DefaultClient(ctx, compute.CloudPlatformScope)
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to get Google client"),
+			errors.Wrap(err, "advertise: Failed to get Google client"),
 		}
 		return
 	}
@@ -232,7 +232,7 @@ func GoogleAddRoute(destNetwork string) (err error) {
 	svc, err := compute.New(client)
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to get Google compute"),
+			errors.Wrap(err, "advertise: Failed to get Google compute"),
 		}
 		return
 	}
@@ -257,7 +257,7 @@ func GoogleAddRoute(destNetwork string) (err error) {
 		_, err = call.Do()
 		if err != nil {
 			err = &errortypes.RequestError{
-				errors.Wrap(err, "cloud: Failed to insert Google route"),
+				errors.Wrap(err, "advertise: Failed to insert Google route"),
 			}
 			return
 		}
@@ -283,7 +283,7 @@ func GoogleDeleteRoute(route *routes.GoogleRoute) (err error) {
 	client, err := google.DefaultClient(ctx, compute.CloudPlatformScope)
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to get Google client"),
+			errors.Wrap(err, "advertise: Failed to get Google client"),
 		}
 		return
 	}
@@ -291,7 +291,7 @@ func GoogleDeleteRoute(route *routes.GoogleRoute) (err error) {
 	svc, err := compute.New(client)
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to get Google compute"),
+			errors.Wrap(err, "advertise: Failed to get Google compute"),
 		}
 		return
 	}
