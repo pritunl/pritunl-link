@@ -33,7 +33,7 @@ type googleRoute struct {
 	NextHopInstanceShort string
 }
 
-var client = &http.Client{
+var googleClient = &http.Client{
 	Timeout: 500 * time.Millisecond,
 }
 
@@ -52,7 +52,7 @@ func googleInternal(path string) (val string, err error) {
 
 	req.Header.Set("Metadata-Flavor", "Google")
 
-	resp, err := client.Do(req)
+	resp, err := googleClient.Do(req)
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "cloud: Failed to get Google metadata"),
