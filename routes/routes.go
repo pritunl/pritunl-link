@@ -90,5 +90,13 @@ func GetDiff(destNetworks []string) (routes *CurrentRoutes, err error) {
 		}
 	}
 
+	if config.Config.Provider == "unifi" {
+		for destNetwork := range routes.Unifi {
+			if destNetworksSet.Contains(destNetwork) {
+				delete(routes.Unifi, destNetwork)
+			}
+		}
+	}
+
 	return
 }
