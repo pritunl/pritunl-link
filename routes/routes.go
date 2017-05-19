@@ -14,6 +14,7 @@ import (
 type CurrentRoutes struct {
 	Aws    map[string]*AwsRoute    `json:"aws"`
 	Google map[string]*GoogleRoute `json:"google"`
+	Unifi  map[string]*UnifiRoute  `json:"unifi"`
 }
 
 func (c *CurrentRoutes) Commit() (err error) {
