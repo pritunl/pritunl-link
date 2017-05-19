@@ -13,6 +13,7 @@ import (
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/status"
 	"io"
+	"net"
 	"net/http"
 	"time"
 )
@@ -59,6 +60,40 @@ func runSyncStates() {
 		SyncStates()
 		status.Update()
 		fmt.Println(status.Status)
+	}
+}
+
+func SyncLocalAddress() (err error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		err = &errortypes.ReadError{
+			errors.Wrap(err, "sync: Failed to get interface addresses"),
+		}
+		return
+	}
+
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				state.LocalAddress = ipnet.IP.String()
+				return
+			}
+		}
+	}
+
+	return
+}
+
+func runSyncLocalAddress() {
+	for {
+		time.Sleep(5 * time.Second)
+		err := SyncPublicAddress()
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err,
+			}).Info("sync: Failed to get local address")
+			return
+		}
 	}
 }
 
@@ -125,8 +160,10 @@ func runSyncPublicAddress() {
 }
 
 func Init() {
+	SyncLocalAddress()
 	SyncPublicAddress()
 	SyncStates()
+	go runSyncLocalAddress()
 	go runSyncPublicAddress()
 	go runSyncStates()
 }
