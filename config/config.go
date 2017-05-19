@@ -27,6 +27,13 @@ type GoogleData struct {
 	Instance string `json:"instance"`
 }
 
+type UnifiData struct {
+	Controller string `json:"controller"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	Interface  string `json:"interface"`
+}
+
 type ConfigData struct {
 	loaded           bool       `json:"-"`
 	Provider         string     `json:"provider"`
@@ -38,6 +45,7 @@ type ConfigData struct {
 	IpsecDirPath     string     `json:"ipsec_dir_path"`
 	Aws              AwsData    `json:"aws"`
 	Google           GoogleData `json:"google"`
+	Unifi            UnifiData  `json:"unifi"`
 }
 
 func (c *ConfigData) Save() (err error) {
