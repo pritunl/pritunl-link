@@ -19,11 +19,9 @@ const (
 	left=%defaultroute
 	leftid=@{{.Left}}
 	leftsubnet={{.LeftSubnets}}
-	leftikeport=600
 	right={{.Right}}
 	rightid=@{{.Right}}
 	rightsubnet={{.RightSubnets}}
-	rightikeport=600
 	auto=start
 `
 	secretsTemplateStr = `@{{.Left}} @{{.Right}} : PSK "{{.PreSharedKey}}"
