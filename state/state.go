@@ -21,8 +21,9 @@ type Link struct {
 }
 
 func GetPublicAddress() string {
-	if PublicAddress != "" {
-		return PublicAddress
+	addr := config.Config.PublicAddress
+	if addr != "" {
+		return addr
 	}
-	return config.Config.PublicAddress
+	return PublicAddress
 }
