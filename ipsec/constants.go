@@ -15,7 +15,7 @@ const (
 	dpddelay=10s
 	dpdtimeout=30s
 	dpdaction=restart
-	left=%defaultroute
+	left={{.Left}}
 	leftid=@{{.Left}}
 	leftsubnet={{.LeftSubnets}}
 	right={{.Right}}
