@@ -47,6 +47,15 @@ func AdvertiseRoutes() (err error) {
 		}
 	}
 
+	if curRoutes.Unifi != nil {
+		for _, route := range curRoutes.Unifi {
+			err = UnifiDeleteRoute(route)
+			if err != nil {
+				return
+			}
+		}
+	}
+
 	for _, network := range networks {
 		switch config.Config.Provider {
 		case "aws":
@@ -58,6 +67,13 @@ func AdvertiseRoutes() (err error) {
 			break
 		case "google":
 			err = GoogleAddRoute(network)
+			if err != nil {
+				return
+			}
+
+			break
+		case "unifi":
+			err = UnifiAddRoute(network)
 			if err != nil {
 				return
 			}
