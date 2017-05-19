@@ -44,22 +44,20 @@ func awsGetSession(region string) (sess *session.Session, err error) {
 func awsGetMetaData() (data *awsMetaData, err error) {
 	data = &awsMetaData{}
 
-	if config.Config.Aws != nil {
-		region := config.Config.Aws.Region
-		vpcId := config.Config.Aws.VpcId
-		instanceId := config.Config.Aws.InstanceId
-		interfaceId := config.Config.Aws.InterfaceId
+	confRegion := config.Config.Aws.Region
+	confVpcId := config.Config.Aws.VpcId
+	confInstanceId := config.Config.Aws.InstanceId
+	confInterfaceId := config.Config.Aws.InterfaceId
 
-		if region != "" && vpcId != "" &&
-			(instanceId != "" || interfaceId != "") {
+	if confRegion != "" && confVpcId != "" &&
+		(confInstanceId != "" || confInterfaceId != "") {
 
-			data.Region = region
-			data.VpcId = vpcId
-			data.InstanceId = instanceId
-			data.InterfaceId = interfaceId
+		data.Region = confRegion
+		data.VpcId = confVpcId
+		data.InstanceId = confInstanceId
+		data.InterfaceId = confInterfaceId
 
-			return
-		}
+		return
 	}
 
 	sess, err := awsGetSession("")

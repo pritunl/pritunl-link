@@ -28,16 +28,16 @@ type GoogleData struct {
 }
 
 type ConfigData struct {
-	loaded           bool        `json:"-"`
-	Provider         string      `json:"provider"`
-	PublicAddress    string      `json:"public_address"`
-	Uris             []string    `json:"uris"`
-	SkipVerify       bool        `json:"skip_verify"`
-	IpsecConfPath    string      `json:"ipsec_conf_path"`
-	IpsecSecretsPath string      `json:"ipsec_secrets_path"`
-	IpsecDirPath     string      `json:"ipsec_dir_path"`
-	Aws              *AwsData    `json:"aws"`
-	Google           *GoogleData `json:"google"`
+	loaded           bool       `json:"-"`
+	Provider         string     `json:"provider"`
+	PublicAddress    string     `json:"public_address"`
+	Uris             []string   `json:"uris"`
+	SkipVerify       bool       `json:"skip_verify"`
+	IpsecConfPath    string     `json:"ipsec_conf_path"`
+	IpsecSecretsPath string     `json:"ipsec_secrets_path"`
+	IpsecDirPath     string     `json:"ipsec_dir_path"`
+	Aws              AwsData    `json:"aws"`
+	Google           GoogleData `json:"google"`
 }
 
 func (c *ConfigData) Save() (err error) {

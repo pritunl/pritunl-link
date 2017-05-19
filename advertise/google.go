@@ -92,18 +92,16 @@ func googleGetMetaData() (data *googleMetaData, err error) {
 
 	data = &googleMetaData{}
 
-	if config.Config.Google != nil {
-		project := config.Config.Google.Project
-		network := config.Config.Google.Network
-		instance := config.Config.Google.Instance
+	confProject := config.Config.Google.Project
+	confNetwork := config.Config.Google.Network
+	confInstance := config.Config.Google.Instance
 
-		if project != "" && network != "" && instance != "" {
-			data.Project = project
-			data.Network = network
-			data.Instance = instance
+	if confProject != "" && confNetwork != "" && confInstance != "" {
+		data.Project = confProject
+		data.Network = confNetwork
+		data.Instance = confInstance
 
-			return
-		}
+		return
 	}
 
 	project, err := googleInternal(
