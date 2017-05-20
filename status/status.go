@@ -1,13 +1,21 @@
 package status
 
 import (
+	"fmt"
+	"github.com/Sirupsen/logrus"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/utils"
 	"strings"
+	"time"
 )
 
-var Status = map[string]map[string]string{}
+var (
+	offlineTime time.Time
+	Status      = map[string]map[string]string{}
+)
 
-func Update() (err error) {
+func Update(total int) (err error) {
+	connected := 0
 	status := map[string]map[string]string{}
 
 	output, err := utils.ExecOutput("", "ipsec", "status")
@@ -53,7 +61,38 @@ func Update() (err error) {
 		}
 	}
 
+	for _, stat := range status {
+		for _, conn := range stat {
+			if conn == "connected" {
+				connected += 1
+			}
+		}
+	}
+
 	Status = status
+
+	if connected < total {
+		if !offlineTime.IsZero() {
+			if time.Since(offlineTime) > constants.DiconnectedTimeout {
+				logrus.Warn("status: Disconnected timeout restarting")
+
+				e := utils.Exec("", "ipsec", "restart")
+				if e != nil {
+					logrus.WithFields(logrus.Fields{
+						"error": e,
+					}).Warn("status: Disconnected timeout failed to restart")
+				}
+
+				offlineTime = time.Time{}
+			}
+		} else {
+			offlineTime = time.Now()
+		}
+	} else {
+		offlineTime = time.Time{}
+	}
+
+	fmt.Println(connected, total)
 
 	return
 }
