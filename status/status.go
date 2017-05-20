@@ -3,6 +3,7 @@ package status
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
+	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/utils"
 	"strings"
@@ -73,16 +74,25 @@ func Update(total int) (err error) {
 
 	if connected < total {
 		if !offlineTime.IsZero() {
-			if time.Since(offlineTime) > constants.DiconnectedTimeout {
-				logrus.Warn("status: Disconnected timeout restarting")
+			timeout := constants.DefaultDiconnectedTimeout
 
-				e := utils.Exec("", "ipsec", "restart")
-				if e != nil {
-					logrus.WithFields(logrus.Fields{
-						"error": e,
-					}).Warn("status: Disconnected timeout failed to restart")
+			disconnectedTimeout := config.Config.DisconnectedTimeout
+			if disconnectedTimeout != 0 {
+				timeout = time.Duration(disconnectedTimeout) * time.Second
+			}
+
+			if !config.Config.DisableDisconnectedRestart {
+				if time.Since(offlineTime) > timeout {
+					logrus.Warn("status: Disconnected timeout restarting")
+
+					e := utils.Exec("", "ipsec", "restart")
+					if e != nil {
+						logrus.WithFields(logrus.Fields{
+							"error": e,
+						}).Warn("status: Failed to restart")
+					}
 				}
-
+			} else {
 				offlineTime = time.Time{}
 			}
 		} else {
