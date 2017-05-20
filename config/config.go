@@ -7,6 +7,7 @@ import (
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/requires"
+	"github.com/pritunl/pritunl-link/utils"
 	"io/ioutil"
 	"os"
 	"time"
@@ -186,6 +187,8 @@ func init() {
 	module := requires.New("config")
 
 	module.Handler = func() {
+		utils.ExistsMkdir(constants.VarDir, 0755)
+
 		err := Load()
 		if err != nil {
 			panic(err)
