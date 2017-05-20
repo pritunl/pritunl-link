@@ -37,19 +37,7 @@ func SyncStates() {
 	newHash := hex.EncodeToString(hsh.Sum(nil))
 
 	if newHash != state.Hash {
-		logrus.Info("state: Deploying state")
-
-		state.States = states
-
-		err := ipsec.Deploy()
-		if err != nil {
-			logrus.WithFields(logrus.Fields{
-				"error": err,
-			}).Info("state: Failed to deploy state")
-			time.Sleep(1 * time.Second)
-			return
-		}
-
+		ipsec.Deploy(states)
 		state.Hash = newHash
 	}
 }
