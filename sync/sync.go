@@ -30,7 +30,9 @@ func SyncStates() {
 	states := state.GetStates()
 	hsh := md5.New()
 
+	total := 0
 	for _, stat := range states {
+		total += len(stat.Links)
 		io.WriteString(hsh, stat.Hash)
 	}
 
@@ -40,13 +42,16 @@ func SyncStates() {
 		ipsec.Deploy(states)
 		state.Hash = newHash
 	}
+
+	status.Update(total)
+
+	return
 }
 
 func runSyncStates() {
 	for {
 		time.Sleep(1 * time.Second)
 		SyncStates()
-		status.Update()
 		fmt.Println(status.Status)
 	}
 }
