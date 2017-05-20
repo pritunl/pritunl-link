@@ -9,9 +9,9 @@ import (
 
 func main() {
 	flag.Parse()
+	logger.Init()
 
 	requires.Init()
-	logger.Init()
 
 	switch flag.Arg(0) {
 	case "start":
