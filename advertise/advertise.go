@@ -12,8 +12,7 @@ import (
 	"strings"
 )
 
-func AdvertiseRoutes() (err error) {
-	states := state.States
+func AdvertiseRoutes(states []*state.State) (err error) {
 	networks := []string{}
 
 	for _, stat := range states {
