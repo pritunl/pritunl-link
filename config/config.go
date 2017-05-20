@@ -44,6 +44,7 @@ type ConfigData struct {
 	IpsecConfPath    string     `json:"ipsec_conf_path"`
 	IpsecSecretsPath string     `json:"ipsec_secrets_path"`
 	IpsecDirPath     string     `json:"ipsec_dir_path"`
+	DeleteRoutes     bool       `json:"delete_routes"`
 	Aws              AwsData    `json:"aws"`
 	Google           GoogleData `json:"google"`
 	Unifi            UnifiData  `json:"unifi"`
