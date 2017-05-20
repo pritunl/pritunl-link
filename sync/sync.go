@@ -19,7 +19,7 @@ import (
 )
 
 var client = &http.Client{
-	Timeout: 2 * time.Second,
+	Timeout: 30 * time.Second,
 }
 
 type publicAddressData struct {
