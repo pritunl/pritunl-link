@@ -279,31 +279,34 @@ func GoogleAddRoute(destNetwork string) (err error) {
 }
 
 func GoogleDeleteRoute(route *routes.GoogleRoute) (err error) {
-	ctx := context.Background()
-	client, err := google.DefaultClient(ctx, compute.CloudPlatformScope)
-	if err != nil {
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "advertise: Failed to get Google client"),
+	if config.Config.DeleteRoutes {
+		ctx := context.Background()
+		client, e := google.DefaultClient(ctx, compute.CloudPlatformScope)
+		if e != nil {
+			err = &errortypes.RequestError{
+				errors.Wrap(e, "advertise: Failed to get Google client"),
+			}
+			return
 		}
-		return
-	}
 
-	svc, err := compute.New(client)
-	if err != nil {
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "advertise: Failed to get Google compute"),
+		svc, e := compute.New(client)
+		if e != nil {
+			err = &errortypes.RequestError{
+				errors.Wrap(e, "advertise: Failed to get Google compute"),
+			}
+			return
 		}
-		return
-	}
 
-	rotes, err := googleGetRoutes(svc, route.Project)
-	if err != nil {
-		return
-	}
+		rotes, e := googleGetRoutes(svc, route.Project)
+		if e != nil {
+			err = e
+			return
+		}
 
-	if rout, ok := rotes[route.DestNetwork]; ok {
-		call := svc.Routes.Delete(route.Project, rout.Name)
-		call.Do()
+		if rout, ok := rotes[route.DestNetwork]; ok {
+			call := svc.Routes.Delete(route.Project, rout.Name)
+			call.Do()
+		}
 	}
 
 	err = route.Remove()

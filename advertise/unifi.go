@@ -446,24 +446,28 @@ func UnifiAddRoute(network string) (err error) {
 }
 
 func UnifiDeleteRoute(route *routes.UnifiRoute) (err error) {
-	client, err := unifiGetClient()
-	if err != nil {
-		return
-	}
+	if config.Config.DeleteRoutes {
+		client, e := unifiGetClient()
+		if e != nil {
+			err = e
+			return
+		}
 
-	rts, err := unifiGetRoutes(client)
-	if err != nil {
-		return
-	}
+		rts, e := unifiGetRoutes(client)
+		if e != nil {
+			err = e
+			return
+		}
 
-	for _, rte := range rts {
-		if rte.Network == route.Network && rte.Nexthop == route.Nexthop {
-			err = unifiDeleteRoute(client, rte.Id)
-			if err != nil {
-				return
+		for _, rte := range rts {
+			if rte.Network == route.Network && rte.Nexthop == route.Nexthop {
+				err = unifiDeleteRoute(client, rte.Id)
+				if err != nil {
+					return
+				}
+
+				break
 			}
-
-			break
 		}
 	}
 

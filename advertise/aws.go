@@ -219,25 +219,31 @@ func AwsAddRoute(network string) (err error) {
 }
 
 func AwsDeleteRoute(route *routes.AwsRoute) (err error) {
-	tables, err := awsGetRouteTables(route.Region, route.VpcId)
-	if err != nil {
-		return
-	}
+	if config.Config.DeleteRoutes {
+		time.Sleep(150 * time.Millisecond)
 
-	sess, err := awsGetSession(route.Region)
-	if err != nil {
-		return
-	}
+		tables, e := awsGetRouteTables(route.Region, route.VpcId)
+		if e != nil {
+			err = e
+			return
+		}
 
-	ec2Svc := ec2.New(sess)
+		sess, e := awsGetSession(route.Region)
+		if e != nil {
+			err = e
+			return
+		}
 
-	for _, table := range tables {
-		input := &ec2.DeleteRouteInput{}
+		ec2Svc := ec2.New(sess)
 
-		input.SetDestinationCidrBlock(route.DestNetwork)
-		input.SetRouteTableId(table)
+		for _, table := range tables {
+			input := &ec2.DeleteRouteInput{}
 
-		ec2Svc.DeleteRoute(input)
+			input.SetDestinationCidrBlock(route.DestNetwork)
+			input.SetRouteTableId(table)
+
+			ec2Svc.DeleteRoute(input)
+		}
 	}
 
 	err = route.Remove()
