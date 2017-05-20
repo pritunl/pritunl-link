@@ -12,10 +12,11 @@ const (
 	keyingtries=%forever
 	authby=secret
 	keyexchange=ikev2
+	mobike=no
 	dpddelay=10s
 	dpdtimeout=30s
 	dpdaction=restart
-	left={{.Left}}
+	left=%defaultroute
 	leftid=@{{.Left}}
 	leftsubnet={{.LeftSubnets}}
 	right={{.Right}}
