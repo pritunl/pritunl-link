@@ -6,12 +6,12 @@ import (
 )
 
 const (
-	Version            = "1.0.0"
-	VarDir             = "/var/lib/pritunl"
-	ConfPath           = "/etc/pritunl-link.json"
-	PublicIpServer     = "https://app.pritunl.com/ip"
-	PublicIp6Server    = "https://app6.pritunl.com/ip"
-	DiconnectedTimeout = 60 * time.Second
+	Version                   = "1.0.0"
+	VarDir                    = "/var/lib/pritunl"
+	ConfPath                  = "/etc/pritunl-link.json"
+	PublicIpServer            = "https://app.pritunl.com/ip"
+	PublicIp6Server           = "https://app6.pritunl.com/ip"
+	DefaultDiconnectedTimeout = 60 * time.Second
 )
 
 var (
