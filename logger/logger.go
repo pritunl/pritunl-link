@@ -2,6 +2,7 @@ package logger
 
 import (
 	"github.com/Sirupsen/logrus"
+	"github.com/pritunl/pritunl-link/requires"
 	"os"
 )
 
@@ -31,10 +32,17 @@ func initSender() {
 }
 
 func Init() {
-	initSender()
-
 	logrus.SetFormatter(&formatter{})
 	logrus.AddHook(&logHook{})
 	logrus.SetOutput(os.Stderr)
 	logrus.SetLevel(logrus.InfoLevel)
+}
+
+func init() {
+	module := requires.New("logger")
+	module.After("config")
+
+	module.Handler = func() {
+		initSender()
+	}
 }
