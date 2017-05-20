@@ -10,6 +10,7 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/routes"
+	"time"
 )
 
 type awsMetaData struct {
@@ -146,6 +147,8 @@ func awsGetRouteTables(region, vpcId string) (tables []string, err error) {
 }
 
 func AwsAddRoute(network string) (err error) {
+	time.Sleep(150 * time.Millisecond)
+
 	data, err := awsGetMetaData()
 	if err != nil {
 		return
