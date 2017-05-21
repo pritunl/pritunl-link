@@ -38,8 +38,14 @@ func main() {
 			panic(err)
 		}
 		break
-	case "address":
-		err := cmd.Address(flag.Arg(1))
+	case "local-address":
+		err := cmd.LocalAddress(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "public-address":
+		err := cmd.PublicAddress(flag.Arg(1))
 		if err != nil {
 			panic(err)
 		}
