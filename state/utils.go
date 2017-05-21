@@ -39,8 +39,7 @@ var (
 	clientSec = &http.Client{
 		Timeout: 25 * time.Second,
 	}
-	States = []*State{}
-	Hash   = ""
+	Hash = ""
 )
 
 type stateData struct {
