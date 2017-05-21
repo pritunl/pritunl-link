@@ -56,6 +56,18 @@ func main() {
 			panic(err)
 		}
 		break
+	case "disconnected-timeout-on":
+		err := cmd.DisconnectedTimeoutOn()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "disconnected-timeout-off":
+		err := cmd.DisconnectedTimeoutOff()
+		if err != nil {
+			panic(err)
+		}
+		break
 	case "provider":
 		err := cmd.Provider(flag.Arg(1))
 		if err != nil {
