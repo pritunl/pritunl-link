@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	Version                   = "1.0.0"
+	Version                   = "1.0.547.31"
 	VarDir                    = "/var/lib/pritunl"
 	ConfPath                  = "/etc/pritunl-link.json"
 	PublicIpServer            = "https://app.pritunl.com/ip"
@@ -18,3 +18,8 @@ var (
 	RoutesPath    = path.Join(VarDir, "routes")
 	CurRoutesPath = path.Join(VarDir, "cur_routes")
 )
+
+// TODO Port option
+// TODO Show status in web console
+// TODO Count connections show 2/3 for 2 of 3 connected
+// TODO Test second antergos failover
