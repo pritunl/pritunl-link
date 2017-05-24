@@ -45,6 +45,9 @@ def get_int_ver(version):
 
 cmd = sys.argv[1]
 
+with open(CONSTANTS_PATH, 'r') as constants_file:
+    cur_version = re.findall('= "(.*?)"', constants_file.read())[0]
+
 if cmd == 'set-version':
     new_version = get_ver(sys.argv[2])
 
@@ -64,27 +67,45 @@ if cmd == 'set-version':
     subprocess.check_call(['git', 'commit', '-S', '-m', 'Create new release'])
     subprocess.check_call(['git', 'push'])
 
-elif cmd == 'build':
+elif cmd == 'build' or cmd == 'build-test':
+    if cmd == 'build':
+        pacur_path = STABLE_PACUR_PATH
+    else:
+        pacur_path = TEST_PACUR_PATH
+
+    for target in BUILD_TARGETS:
+        pkgbuild_path = os.path.join(pacur_path, target, 'PKGBUILD')
+
+        with open(pkgbuild_path, 'r') as pkgbuild_file:
+            pkgbuild_data = re.sub(
+                'pkgver="(.*)"',
+                'pkgver="%s"' % cur_version,
+                pkgbuild_file.read(),
+            )
+
+        with open(pkgbuild_path, 'w') as pkgbuild_file:
+            pkgbuild_file.write(pkgbuild_data)
+
     for build_target in BUILD_TARGETS:
         subprocess.check_call(
             ['sudo', 'pacur', 'project', 'build', build_target],
-            cwd=STABLE_PACUR_PATH,
+            cwd=pacur_path,
         )
 
-elif cmd == 'build-test':
-    for build_target in BUILD_TARGETS:
-        subprocess.check_call(
-            ['sudo', 'pacur', 'project', 'build', build_target],
-            cwd=TEST_PACUR_PATH,
-        )
+elif cmd == 'upload' or cmd == 'upload-test':
+    if cmd == 'upload':
+        mirror_urls = mirror_url
+        pacur_path = STABLE_PACUR_PATH
+    else:
+        mirror_urls = test_mirror_url
+        pacur_path = TEST_PACUR_PATH
 
-elif cmd == 'upload':
     subprocess.check_call(
         ['sudo', 'pacur', 'project', 'repo'],
-        cwd=STABLE_PACUR_PATH,
+        cwd=pacur_path,
     )
 
-    for mir_url in mirror_url:
+    for mir_url in mirror_urls:
         subprocess.check_call([
             'rsync',
             '--human-readable',
@@ -94,22 +115,4 @@ elif cmd == 'upload':
             '--acls',
             'mirror/',
             mir_url,
-        ], cwd=STABLE_PACUR_PATH)
-
-elif cmd == 'upload-test':
-    subprocess.check_call(
-        ['sudo', 'pacur', 'project', 'repo'],
-        cwd=TEST_PACUR_PATH,
-    )
-
-    for mir_url in test_mirror_url:
-        subprocess.check_call([
-            'rsync',
-            '--human-readable',
-            '--archive',
-            '--progress',
-            '--delete',
-            '--acls',
-            'mirror/',
-            mir_url,
-        ], cwd=TEST_PACUR_PATH)
+        ], cwd=pacur_path)
