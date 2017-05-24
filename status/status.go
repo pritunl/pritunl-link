@@ -102,7 +102,5 @@ func Update(total int) (err error) {
 		offlineTime = time.Time{}
 	}
 
-	fmt.Println(connected, total)
-
 	return
 }
