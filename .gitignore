@@ -12,3 +12,4 @@ Thumbs.db
 .sass-cache
 /pritunl-auth
 /pritunl-auth.iml
+/build_keys.json
