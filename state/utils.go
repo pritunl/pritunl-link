@@ -111,7 +111,7 @@ func decResp(secret, iv, sig, encData string) (cipData []byte, err error) {
 	return
 }
 
-func GetState(uri string, retry bool) (state *State, err error) {
+func GetState(uri string, retry int) (state *State, err error) {
 	state = &State{}
 
 	uriData, err := url.ParseRequestURI(uri)
@@ -183,9 +183,9 @@ func GetState(uri string, retry bool) (state *State, err error) {
 
 	res, err := client.Do(req)
 	if err != nil {
-		if retry {
-			time.Sleep(1 * time.Second)
-			state, err = GetState(uri, false)
+		if retry < 2 {
+			time.Sleep(3 * time.Second)
+			state, err = GetState(uri, retry+1)
 			return
 		}
 
@@ -240,7 +240,7 @@ func GetStates() (states []*State) {
 	states = []*State{}
 
 	for _, uri := range config.Config.Uris {
-		state, err := GetState(uri, true)
+		state, err := GetState(uri, 0)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"uri":   uri,
