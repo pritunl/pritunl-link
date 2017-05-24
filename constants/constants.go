@@ -18,8 +18,3 @@ var (
 	RoutesPath    = path.Join(VarDir, "routes")
 	CurRoutesPath = path.Join(VarDir, "cur_routes")
 )
-
-// TODO Port option
-// TODO Show status in web console
-// TODO Count connections show 2/3 for 2 of 3 connected
-// TODO Test second antergos failover
