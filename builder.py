@@ -4,6 +4,7 @@ import sys
 import subprocess
 import math
 import json
+import os
 
 CONSTANTS_PATH = 'constants/constants.go'
 STABLE_PACUR_PATH = '../pritunl-pacur'
