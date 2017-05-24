@@ -1,7 +1,6 @@
 package status
 
 import (
-	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
