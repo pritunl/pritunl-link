@@ -135,6 +135,13 @@ func main() {
 			panic(err)
 		}
 		break
+	case "unifi-site":
+		Init()
+		err := cmd.UnifiSite(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
 	default:
 		fmt.Println(help)
 	}

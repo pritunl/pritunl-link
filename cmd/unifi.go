@@ -61,3 +61,18 @@ func UnifiController(controller string) (err error) {
 
 	return
 }
+
+func UnifiSite(site string) (err error) {
+	config.Config.Unifi.Site = site
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"site": config.Config.Unifi.Site,
+	}).Info("cmd.unifi: Set Unifi site")
+
+	return
+}
