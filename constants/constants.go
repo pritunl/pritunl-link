@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	Version                   = "1.0.547.39"
+	Version                   = "1.0.548.17"
 	VarDir                    = "/var/lib/pritunl"
 	ConfPath                  = "/etc/pritunl-link.json"
 	PublicIpServer            = "https://app.pritunl.com/ip"
