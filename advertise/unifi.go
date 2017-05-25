@@ -71,6 +71,14 @@ type unifiRoute struct {
 	Enabled bool
 }
 
+func site() string {
+	site := config.Config.Unifi.Site
+	if site == "" {
+		site = "default"
+	}
+	return site
+}
+
 func unifiGetClient() (client *http.Client, err error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -174,8 +182,8 @@ func unifiGetClient() (client *http.Client, err error) {
 func unifiGetRoutes(client *http.Client) (routes []*unifiRoute, err error) {
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/api/s/default/rest/routing",
-			config.Config.Unifi.Controller),
+		fmt.Sprintf("%s/api/s/%s/rest/routing",
+			config.Config.Unifi.Controller, site()),
 		nil,
 	)
 	if err != nil {
@@ -251,8 +259,8 @@ func unifiGetRoutes(client *http.Client) (routes []*unifiRoute, err error) {
 func unifiDeleteRoute(client *http.Client, id string) (err error) {
 	req, err := http.NewRequest(
 		"DELETE",
-		fmt.Sprintf("%s/api/s/default/rest/routing/%s",
-			config.Config.Unifi.Controller, id),
+		fmt.Sprintf("%s/api/s/%s/rest/routing/%s",
+			config.Config.Unifi.Controller, site(), id),
 		nil,
 	)
 	if err != nil {
@@ -329,8 +337,8 @@ func unifiAddRoute(client *http.Client, network, nexthop string) (err error) {
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/api/s/default/rest/routing",
-			config.Config.Unifi.Controller),
+		fmt.Sprintf("%s/api/s/%s/rest/routing",
+			config.Config.Unifi.Controller, site()),
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {
