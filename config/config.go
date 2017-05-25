@@ -30,6 +30,7 @@ type GoogleData struct {
 
 type UnifiData struct {
 	Controller string `json:"controller"`
+	Site       string `json:"site"`
 	Username   string `json:"username"`
 	Password   string `json:"password"`
 	Interface  string `json:"interface"`
