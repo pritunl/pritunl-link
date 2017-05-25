@@ -175,7 +175,10 @@ func runDeploy() {
 			deployLock.Unlock()
 
 			if states != nil {
-				logrus.Info("state: Deploying state")
+				logrus.WithFields(logrus.Fields{
+					"local_address":  state.GetLocalAddress(),
+					"public_address": state.GetPublicAddress(),
+				}).Info("state: Deploying state")
 
 				err := deploy(states)
 				if err != nil {
