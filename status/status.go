@@ -90,6 +90,8 @@ func Update(total int) (err error) {
 							"error": e,
 						}).Warn("status: Failed to restart")
 					}
+
+					offlineTime = time.Time{}
 				}
 			} else {
 				offlineTime = time.Time{}
