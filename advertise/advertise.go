@@ -104,9 +104,11 @@ func AdvertiseRoutes(states []*state.State) (err error) {
 func AdvertisePorts() (err error) {
 	switch config.Config.Provider {
 	case "unifi":
-		err = UnifiAddPorts()
-		if err != nil {
-			return
+		if !config.Config.Unifi.DisablePort {
+			err = UnifiAddPorts()
+			if err != nil {
+				return
+			}
 		}
 
 		break
