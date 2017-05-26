@@ -113,10 +113,20 @@ func Remove(path string) (err error) {
 }
 
 func RemoveAll(path string) (err error) {
-	err = os.RemoveAll(path)
+	cmd := exec.Command(
+		"rm",
+		"-r",
+		"-f",
+		path,
+	)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err = cmd.Run()
 	if err != nil {
-		err = &errortypes.WriteError{
-			errors.Wrapf(err, "utils: Failed to remove '%s'", path),
+		err = errortypes.ExecError{
+			errors.Wrapf(err, "package: Failed to remove path %s", path),
 		}
 		return
 	}
@@ -126,7 +136,7 @@ func RemoveAll(path string) (err error) {
 
 func Copy(sourcePath, destPath string) (err error) {
 	cmd := exec.Command(
-		"/usr/bin/cp",
+		"cp",
 		sourcePath,
 		destPath,
 	)
@@ -148,7 +158,7 @@ func Copy(sourcePath, destPath string) (err error) {
 
 func CopyAll(sourcePath, destPath string) (err error) {
 	cmd := exec.Command(
-		"/usr/bin/cp",
+		"cp",
 		"-r",
 		sourcePath,
 		destPath,
@@ -162,6 +172,27 @@ func CopyAll(sourcePath, destPath string) (err error) {
 		err = errortypes.ExecError{
 			errors.Wrapf(err, "package: Failed to copy %s to %s",
 				sourcePath, destPath),
+		}
+		return
+	}
+
+	return
+}
+
+func MkdirAll(path string) (err error) {
+	cmd := exec.Command(
+		"mkdir",
+		"-p",
+		path,
+	)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err = cmd.Run()
+	if err != nil {
+		err = errortypes.ExecError{
+			errors.Wrapf(err, "package: Failed to create path %s", path),
 		}
 		return
 	}
