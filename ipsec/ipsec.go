@@ -12,7 +12,6 @@ import (
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
 	"io/ioutil"
-	"os"
 	"path"
 	"strings"
 	"sync"
@@ -34,7 +33,7 @@ type templateData struct {
 }
 
 func clearDir() (err error) {
-	err = os.RemoveAll(config.Config.IpsecDirPath)
+	err = utils.RemoveAll(config.Config.IpsecDirPath)
 	if err != nil {
 		err = &errortypes.ReadError{
 			errors.Wrap(err, "ipsec: Failed to remove ipsec conf dir"),
@@ -42,7 +41,7 @@ func clearDir() (err error) {
 		return
 	}
 
-	err = os.MkdirAll(config.Config.IpsecDirPath, 0755)
+	err = utils.MkdirAll(config.Config.IpsecDirPath)
 	if err != nil {
 		err = &errortypes.ReadError{
 			errors.Wrap(err, "ipsec: Failed to create ipsec conf dir"),
