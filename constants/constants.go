@@ -10,6 +10,9 @@ const (
 	VarDir                    = "/var/lib/pritunl"
 	LogPath                   = "/var/log/pritunl.log"
 	ConfPath                  = "/etc/pritunl-link.json"
+	IpsecConfPath             = "/etc/ipsec.conf"
+	IpsecSecretsPath          = "/etc/ipsec.secrets"
+	IpsecDirPath              = "/etc/ipsec.pritunl"
 	PublicIpServer            = "https://app.pritunl.com/ip"
 	PublicIp6Server           = "https://app6.pritunl.com/ip"
 	DefaultDiconnectedTimeout = 45 * time.Second

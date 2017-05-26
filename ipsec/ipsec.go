@@ -6,12 +6,13 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/advertise"
-	"github.com/pritunl/pritunl-link/config"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/requires"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
 	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"sync"
@@ -34,7 +35,7 @@ type templateData struct {
 }
 
 func clearDir() (err error) {
-	err = utils.RemoveAll(config.Config.IpsecDirPath)
+	err = os.RemoveAll(constants.IpsecDirPath)
 	if err != nil {
 		err = &errortypes.ReadError{
 			errors.Wrap(err, "ipsec: Failed to remove ipsec conf dir"),
@@ -42,7 +43,7 @@ func clearDir() (err error) {
 		return
 	}
 
-	err = utils.MkdirAll(config.Config.IpsecDirPath)
+	err = os.MkdirAll(constants.IpsecDirPath, 0755)
 	if err != nil {
 		err = &errortypes.ReadError{
 			errors.Wrap(err, "ipsec: Failed to create ipsec conf dir"),
@@ -54,9 +55,9 @@ func clearDir() (err error) {
 }
 
 func writeConf() (err error) {
-	data := fmt.Sprintf("include %s/*.conf", config.Config.IpsecDirPath)
+	data := fmt.Sprintf("include %s/*.conf", constants.IpsecDirPath)
 
-	pth := path.Join(config.Config.IpsecConfPath)
+	pth := path.Join(constants.IpsecConfPath)
 	err = ioutil.WriteFile(pth, []byte(data), 0644)
 	if err != nil {
 		err = errortypes.WriteError{
@@ -103,7 +104,7 @@ func writeTemplates(states []*state.State) (err error) {
 			}
 		}
 
-		pth := path.Join(config.Config.IpsecDirPath,
+		pth := path.Join(constants.IpsecDirPath,
 			fmt.Sprintf("%s.conf", stat.Id))
 		err = ioutil.WriteFile(pth, confBuf.Bytes(), 0644)
 		if err != nil {
@@ -115,7 +116,7 @@ func writeTemplates(states []*state.State) (err error) {
 	}
 
 	err = ioutil.WriteFile(
-		config.Config.IpsecSecretsPath, secretsBuf.Bytes(), 0600)
+		constants.IpsecSecretsPath, secretsBuf.Bytes(), 0600)
 	if err != nil {
 		err = errortypes.WriteError{
 			errors.Wrap(err, "ipsec: Failed to write state secrets"),

@@ -43,9 +43,6 @@ type ConfigData struct {
 	LocalAddress               string     `json:"local_address"`
 	Uris                       []string   `json:"uris"`
 	SkipVerify                 bool       `json:"skip_verify"`
-	IpsecConfPath              string     `json:"ipsec_conf_path"`
-	IpsecSecretsPath           string     `json:"ipsec_secrets_path"`
-	IpsecDirPath               string     `json:"ipsec_dir_path"`
 	DeleteRoutes               bool       `json:"delete_routes"`
 	DisconnectedTimeout        int        `json:"disconnected_timeout"`
 	DisableDisconnectedRestart bool       `json:"disable_disconnected_restart"`
@@ -116,18 +113,6 @@ func Load() (err error) {
 
 	if data.Uris == nil {
 		data.Uris = []string{}
-	}
-
-	if data.IpsecConfPath == "" {
-		data.IpsecConfPath = "/etc/ipsec.conf"
-	}
-
-	if data.IpsecSecretsPath == "" {
-		data.IpsecSecretsPath = "/etc/ipsec.secrets"
-	}
-
-	if data.IpsecDirPath == "" {
-		data.IpsecDirPath = "/etc/ipsec.pritunl"
 	}
 
 	data.loaded = true
