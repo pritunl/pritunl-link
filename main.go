@@ -27,6 +27,8 @@ Commands:
   unifi-password            Set Unifi password
   unifi-controller          Set URL of Unifi controller
   unifi-site                Set the Unifi site if different then default
+  unifi-port-on             Enable automatic port forwarding on Unifi
+  unifi-port-off            Disable automatic port forwarding on Unifi
 `
 
 func Init() {
@@ -139,6 +141,20 @@ func main() {
 	case "unifi-site":
 		Init()
 		err := cmd.UnifiSite(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "unifi-port-on":
+		Init()
+		err := cmd.UnifiPortOn()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "unifi-port-off":
+		Init()
+		err := cmd.UnifiPortOff()
 		if err != nil {
 			panic(err)
 		}

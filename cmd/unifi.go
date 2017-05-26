@@ -76,3 +76,29 @@ func UnifiSite(site string) (err error) {
 
 	return
 }
+
+func UnifiPortOn() (err error) {
+	config.Config.Unifi.DisablePort = false
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.Info("cmd.unifi: Unifi port forwarding enabled")
+
+	return
+}
+
+func UnifiPortOff() (err error) {
+	config.Config.Unifi.DisablePort = true
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.Info("cmd.unifi: Unifi port forwarding disabled")
+
+	return
+}
