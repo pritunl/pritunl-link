@@ -766,7 +766,6 @@ func unifiHasPort(client *http.Client, ports []*unifiPortForward, source,
 func UnifiAddPorts() (err error) {
 	source := "any"
 	forward := state.GetLocalAddress()
-	forward = "10.10.0.20"
 	proto := "udp"
 
 	client, err := unifiGetClient()
