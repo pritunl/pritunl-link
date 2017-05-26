@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/ipsec"
@@ -18,9 +19,12 @@ import (
 	"time"
 )
 
-var client = &http.Client{
-	Timeout: 30 * time.Second,
-}
+var (
+	client = &http.Client{
+		Timeout: 30 * time.Second,
+	}
+	curMod time.Time
+)
 
 type publicAddressData struct {
 	Ip string `json:"ip"`
@@ -85,7 +89,6 @@ func runSyncLocalAddress() {
 			logrus.WithFields(logrus.Fields{
 				"error": err,
 			}).Info("sync: Failed to get local address")
-			return
 		}
 	}
 }
@@ -147,7 +150,43 @@ func runSyncPublicAddress() {
 			logrus.WithFields(logrus.Fields{
 				"error": err,
 			}).Info("sync: Failed to get public address")
+		}
+	}
+}
+
+func SyncConfig() (err error) {
+	mod, err := config.GetModTime()
+	if err != nil {
+		return
+	}
+
+	if mod != curMod {
+		err = config.Load()
+		if err != nil {
 			return
+		}
+
+		logrus.Info("Reloaded config")
+
+		curMod = mod
+
+		ipsec.ReDeploy()
+	}
+
+	return
+}
+
+func runSyncConfig() {
+	curMod, _ = config.GetModTime()
+
+	for {
+		time.Sleep(500 * time.Millisecond)
+
+		err := SyncConfig()
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err,
+			}).Info("sync: Failed to sync config")
 		}
 	}
 }
@@ -159,4 +198,5 @@ func Init() {
 	go runSyncLocalAddress()
 	go runSyncPublicAddress()
 	go runSyncStates()
+	go runSyncConfig()
 }

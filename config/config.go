@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
@@ -147,7 +146,7 @@ func Save() (err error) {
 	return
 }
 
-func getModTime() (mod time.Time, err error) {
+func GetModTime() (mod time.Time, err error) {
 	stat, err := os.Stat(constants.ConfPath)
 	if err != nil {
 		err = errortypes.ReadError{
@@ -159,30 +158,6 @@ func getModTime() (mod time.Time, err error) {
 	mod = stat.ModTime()
 
 	return
-}
-
-func watch() {
-	curMod, _ := getModTime()
-
-	for {
-		time.Sleep(500 * time.Millisecond)
-
-		mod, err := getModTime()
-		if err != nil {
-			continue
-		}
-
-		if mod != curMod {
-			err = Load()
-			if err != nil {
-				continue
-			}
-
-			logrus.Info("Reloaded config")
-
-			curMod = mod
-		}
-	}
 }
 
 func init() {
@@ -200,7 +175,5 @@ func init() {
 		if err != nil {
 			panic(err)
 		}
-
-		go watch()
 	}
 }
