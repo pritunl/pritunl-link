@@ -189,7 +189,6 @@ func runDeploy() {
 					logrus.WithFields(logrus.Fields{
 						"error": err,
 					}).Info("state: Failed to deploy state")
-					return
 				}
 			}
 		}
