@@ -189,6 +189,14 @@ func runDeploy() {
 					logrus.WithFields(logrus.Fields{
 						"error": err,
 					}).Info("state: Failed to deploy state")
+
+					time.Sleep(3 * time.Second)
+
+					deployLock.Lock()
+					if deployStates == nil {
+						deployStates = states
+					}
+					deployLock.Unlock()
 				}
 			}
 		}
