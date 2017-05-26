@@ -207,3 +207,12 @@ func Init() {
 	go runSyncPublicAddress()
 	go runSyncStates()
 }
+
+func init() {
+	module := requires.New("sync")
+	module.After("config")
+
+	module.Handler = func() {
+		go runSyncConfig()
+	}
+}
