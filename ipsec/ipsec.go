@@ -147,6 +147,11 @@ func deploy(states []*state.State) (err error) {
 		return
 	}
 
+	err = advertise.AdvertisePorts()
+	if err != nil {
+		return
+	}
+
 	err = utils.Exec("", "ipsec", "restart")
 	if err != nil {
 		return
