@@ -7,9 +7,9 @@ import (
 
 const (
 	Version                   = "1.0.549.44"
-	VarDir                    = "/var/lib/pritunl"
-	LogPath                   = "/var/log/pritunl.log"
-	ConfPath                  = "/etc/pritunl-link.json"
+	VarDir                    = "/var/lib/pritunl_link"
+	LogPath                   = "/var/log/pritunl_link.log"
+	ConfPath                  = "/etc/pritunl_link.json"
 	IpsecConfPath             = "/etc/ipsec.conf"
 	IpsecSecretsPath          = "/etc/ipsec.secrets"
 	IpsecDirPath              = "/etc/ipsec.pritunl"
