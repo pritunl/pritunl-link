@@ -71,6 +71,41 @@ type unifiRoute struct {
 	Enabled bool
 }
 
+type unifiPortGetData struct {
+	Id      string `json:"_id"`
+	Name    string `json:"name"`
+	Src     string `json:"src"`
+	DstPort string `json:"dst_port"`
+	Fwd     string `json:"fwd"`
+	FwdPort string `json:"fwd_port"`
+	Proto   string `json:"proto"`
+	SiteId  string `json:"site_id"`
+}
+
+type unifiPortPostData struct {
+	Name    string `json:"name"`
+	Src     string `json:"src"`
+	DstPort string `json:"dst_port"`
+	Fwd     string `json:"fwd"`
+	FwdPort string `json:"fwd_port"`
+	Proto   string `json:"proto"`
+}
+
+type unifiPortRespData struct {
+	Data []unifiPortGetData `json:"data"`
+	Meta unifiMetaData      `json:"meta"`
+}
+
+type unifiPortForward struct {
+	Id          string
+	Name        string
+	Source      string
+	DestPort    string
+	Forward     string
+	ForwardPort string
+	Proto       string
+}
+
 func site() string {
 	site := config.Config.Unifi.Site
 	if site == "" {
@@ -482,6 +517,294 @@ func UnifiDeleteRoute(route *routes.UnifiRoute) (err error) {
 	err = route.Remove()
 	if err != nil {
 		return
+	}
+
+	return
+}
+
+func unifiGetPorts(client *http.Client) (
+	ports []*unifiPortForward, err error) {
+
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s/api/s/%s/rest/portforward",
+			config.Config.Unifi.Controller, site()),
+		nil,
+	)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Request error"),
+		}
+		return
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Unifi request error"),
+		}
+		return
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Unifi response error"),
+		}
+		return
+	}
+
+	respData := &unifiPortRespData{}
+
+	err = json.Unmarshal(body, respData)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "advertise: Unifi parse error"),
+		}
+		return
+	}
+
+	if respData.Meta.Rc != "ok" {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Unifi api error"),
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"status":   resp.StatusCode,
+			"response": string(body),
+			"error":    err,
+		}).Info("advertise: Unifi api error")
+
+		return
+	}
+
+	ports = []*unifiPortForward{}
+
+	for _, portData := range respData.Data {
+		port := &unifiPortForward{
+			Id:          portData.Id,
+			Name:        portData.Name,
+			Source:      portData.Src,
+			DestPort:    portData.DstPort,
+			Forward:     portData.Fwd,
+			ForwardPort: portData.FwdPort,
+			Proto:       portData.Proto,
+		}
+
+		ports = append(ports, port)
+	}
+
+	return
+}
+func unifiDeletePort(client *http.Client, id string) (err error) {
+	req, err := http.NewRequest(
+		"DELETE",
+		fmt.Sprintf("%s/api/s/%s/rest/portforward/%s",
+			config.Config.Unifi.Controller, site(), id),
+		nil,
+	)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Request error"),
+		}
+		return
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Unifi request error"),
+		}
+		return
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Unifi response error"),
+		}
+		return
+	}
+
+	respData := &unifiRespData{}
+
+	err = json.Unmarshal(body, respData)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "advertise: Unifi parse error"),
+		}
+		return
+	}
+
+	if respData.Meta.Rc != "ok" {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Unifi api error"),
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"status":   resp.StatusCode,
+			"response": string(body),
+			"error":    err,
+		}).Info("advertise: Unifi api error")
+
+		return
+	}
+
+	return
+}
+
+func unifiAddPort(client *http.Client, source, destPort,
+	forward, forwardPort, proto string) (err error) {
+
+	data := &unifiPortPostData{
+		Name:    "Pritunl IPsec",
+		Src:     source,
+		DstPort: destPort,
+		Fwd:     forward,
+		FwdPort: forwardPort,
+		Proto:   proto,
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "advertise: Json parse error"),
+		}
+		return
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("%s/api/s/%s/rest/portforward",
+			config.Config.Unifi.Controller, site()),
+		bytes.NewBuffer(jsonData),
+	)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Request error"),
+		}
+		return
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Unifi request error"),
+		}
+		return
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Unifi response error"),
+		}
+		return
+	}
+
+	respData := &unifiRespData{}
+
+	err = json.Unmarshal(body, respData)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "advertise: Unifi parse error"),
+		}
+		return
+	}
+
+	if respData.Meta.Rc != "ok" {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Unifi api error"),
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"status":   resp.StatusCode,
+			"response": string(body),
+			"error":    err,
+		}).Info("advertise: Unifi api error")
+
+		return
+	}
+
+	return
+}
+
+func unifiHasPort(client *http.Client, ports []*unifiPortForward, source,
+	destPort, forward, forwardPort, proto string) (exists bool, err error) {
+
+	for _, port := range ports {
+		if (port.DestPort == destPort && (port.Proto == proto ||
+			port.Proto == "tcp_udp")) || (port.Forward == forward &&
+			port.ForwardPort == forwardPort && (port.Proto == proto ||
+			port.Proto == "tcp_udp")) {
+
+			if port.Source == source && port.Forward == forward &&
+				port.ForwardPort == forwardPort && port.Proto == proto {
+
+				exists = true
+				return
+			}
+
+			err = unifiDeletePort(client, port.Id)
+			if err != nil {
+				return
+			}
+
+			return
+		}
+	}
+
+	return
+}
+
+func UnifiAddPorts() (err error) {
+	source := "any"
+	forward := state.GetLocalAddress()
+	forward = "10.10.0.20"
+	proto := "udp"
+
+	client, err := unifiGetClient()
+	if err != nil {
+		return
+	}
+
+	ports, err := unifiGetPorts(client)
+	if err != nil {
+		return
+	}
+
+	exists, err := unifiHasPort(client, ports, source, "500",
+		forward, "500", proto)
+	if err != nil {
+		return
+	}
+
+	if !exists {
+		err = unifiAddPort(client, source, "500",
+			forward, "500", proto)
+		if err != nil {
+			return
+		}
+	}
+
+	exists, err = unifiHasPort(client, ports, source, "4500",
+		forward, "4500", proto)
+	if err != nil {
+		return
+	}
+
+	if !exists {
+		err = unifiAddPort(client, source, "4500",
+			forward, "4500", proto)
+		if err != nil {
+			return
+		}
 	}
 
 	return
