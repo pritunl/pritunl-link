@@ -11,6 +11,7 @@ import (
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/ipsec"
+	"github.com/pritunl/pritunl-link/requires"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/status"
 	"io"
@@ -192,11 +193,17 @@ func runSyncConfig() {
 }
 
 func Init() {
+	module := requires.New("sync")
+	module.After("config")
+
+	module.Handler = func() {
+		go runSyncConfig()
+	}
+
 	SyncLocalAddress()
 	SyncPublicAddress()
 	SyncStates()
 	go runSyncLocalAddress()
 	go runSyncPublicAddress()
 	go runSyncStates()
-	go runSyncConfig()
 }
