@@ -20,6 +20,7 @@ import (
 
 var (
 	deployStates []*state.State
+	curStates    []*state.State
 	deployLock   sync.Mutex
 )
 
@@ -170,12 +171,23 @@ func Deploy(states []*state.State) {
 	deployLock.Unlock()
 }
 
+func ReDeploy() {
+	deployLock.Lock()
+	if deployStates == nil && curStates != nil {
+		deployStates = curStates
+	}
+	deployLock.Unlock()
+}
+
 func runDeploy() {
 	for {
 		if deployStates != nil {
 			deployLock.Lock()
 			states := deployStates
 			deployStates = nil
+			if states != nil {
+				curStates = states
+			}
 			deployLock.Unlock()
 
 			if states != nil {
