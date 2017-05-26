@@ -193,13 +193,6 @@ func runSyncConfig() {
 }
 
 func Init() {
-	module := requires.New("sync")
-	module.After("config")
-
-	module.Handler = func() {
-		go runSyncConfig()
-	}
-
 	SyncLocalAddress()
 	SyncPublicAddress()
 	SyncStates()
