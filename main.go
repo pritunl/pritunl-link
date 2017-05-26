@@ -26,6 +26,7 @@ Commands:
   unifi-username            Set Unifi username
   unifi-password            Set Unifi password
   unifi-controller          Set URL of Unifi controller
+  unifi-site                Set the Unifi site if different then default
 `
 
 func Init() {
