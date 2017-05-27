@@ -170,6 +170,22 @@ func deploy(states []*state.State) (err error) {
 }
 
 func update(states []*state.State) (err error) {
+	hasLinks := false
+	for _, ste := range states {
+		if ste.Links != nil && len(ste.Links) != 0 {
+			hasLinks = true
+		}
+	}
+
+	if !hasLinks {
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"local_address":  state.GetLocalAddress(),
+		"public_address": state.GetPublicAddress(),
+	}).Info("state: Update advertisement")
+
 	err = advertise.AdvertisePorts(states)
 	if err != nil {
 		return
@@ -215,11 +231,6 @@ func runDeploy() {
 
 			if states != nil {
 				if updateAd {
-					logrus.WithFields(logrus.Fields{
-						"local_address":  state.GetLocalAddress(),
-						"public_address": state.GetPublicAddress(),
-					}).Info("state: Update advertisement")
-
 					update(states)
 				} else {
 					logrus.WithFields(logrus.Fields{
@@ -271,10 +282,6 @@ func runUpdateAdvertise() {
 
 		states := curStates
 		if states != nil {
-			logrus.WithFields(logrus.Fields{
-				"local_address":  state.GetLocalAddress(),
-				"public_address": state.GetPublicAddress(),
-			}).Info("state: Update advertisement")
 			update(states)
 		}
 	}
