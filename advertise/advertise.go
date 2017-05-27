@@ -1,7 +1,6 @@
 package advertise
 
 import (
-	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
@@ -103,18 +102,20 @@ func AdvertiseRoutes(states []*state.State) (err error) {
 }
 
 func AdvertisePorts(states []*state.State) (err error) {
-	if len(states) == 0 {
+	hasLinks := false
+	for _, ste := range states {
+		if ste.Links != nil && len(ste.Links) != 0 {
+			hasLinks = true
+		}
+	}
+
+	if !hasLinks {
 		return
 	}
 
 	switch config.Config.Provider {
 	case "unifi":
 		if !config.Config.Unifi.DisablePort {
-			logrus.WithFields(logrus.Fields{
-				"local_address":  state.GetLocalAddress(),
-				"public_address": state.GetPublicAddress(),
-			}).Info("advertise: Advertising Unifi ports")
-
 			err = UnifiAddPorts()
 			if err != nil {
 				return
