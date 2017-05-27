@@ -1,6 +1,7 @@
 package advertise
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
@@ -105,6 +106,11 @@ func AdvertisePorts() (err error) {
 	switch config.Config.Provider {
 	case "unifi":
 		if !config.Config.Unifi.DisablePort {
+			logrus.WithFields(logrus.Fields{
+				"local_address":  state.GetLocalAddress(),
+				"public_address": state.GetPublicAddress(),
+			}).Info("advertise: Advertising Unifi ports")
+
 			err = UnifiAddPorts()
 			if err != nil {
 				return
