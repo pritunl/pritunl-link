@@ -60,7 +60,7 @@ func runSyncStates() {
 	}
 }
 
-func SyncLocalAddress() (err error) {
+func SyncLocalAddress(redeploy bool) (err error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		err = &errortypes.ReadError{
@@ -72,7 +72,13 @@ func SyncLocalAddress() (err error) {
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
+				changed := state.LocalAddress != ipnet.IP.String()
 				state.LocalAddress = ipnet.IP.String()
+
+				if changed && redeploy {
+					ipsec.ReDeploy()
+				}
+
 				return
 			}
 		}
@@ -84,7 +90,7 @@ func SyncLocalAddress() (err error) {
 func runSyncLocalAddress() {
 	for {
 		time.Sleep(5 * time.Second)
-		err := SyncLocalAddress()
+		err := SyncLocalAddress(true)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"error": err,
@@ -93,7 +99,7 @@ func runSyncLocalAddress() {
 	}
 }
 
-func SyncPublicAddress() (err error) {
+func SyncPublicAddress(redeploy bool) (err error) {
 	req, err := http.NewRequest(
 		"GET",
 		constants.PublicIpServer,
@@ -136,7 +142,12 @@ func SyncPublicAddress() (err error) {
 	}
 
 	if data.Ip != "" {
+		changed := state.PublicAddress != data.Ip
 		state.PublicAddress = data.Ip
+
+		if changed && redeploy {
+			ipsec.ReDeploy()
+		}
 	}
 
 	return
@@ -145,7 +156,7 @@ func SyncPublicAddress() (err error) {
 func runSyncPublicAddress() {
 	for {
 		time.Sleep(30 * time.Second)
-		err := SyncPublicAddress()
+		err := SyncPublicAddress(true)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"error": err,
@@ -192,8 +203,8 @@ func runSyncConfig() {
 }
 
 func Init() {
-	SyncLocalAddress()
-	SyncPublicAddress()
+	SyncLocalAddress(false)
+	SyncPublicAddress(false)
 	SyncStates()
 	go runSyncLocalAddress()
 	go runSyncPublicAddress()
