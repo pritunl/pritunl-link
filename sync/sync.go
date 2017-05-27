@@ -84,7 +84,7 @@ func SyncLocalAddress() (err error) {
 func runSyncLocalAddress() {
 	for {
 		time.Sleep(5 * time.Second)
-		err := SyncPublicAddress()
+		err := SyncLocalAddress()
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"error": err,
