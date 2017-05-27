@@ -20,6 +20,12 @@ type awsMetaData struct {
 	VpcId       string
 }
 
+type awsRoute struct {
+	DestinationCidrBlock string
+	InstanceId           string
+	NetworkInterfaceId   string
+}
+
 func awsGetSession(region string) (sess *session.Session, err error) {
 	opts := session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -108,8 +114,10 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 	return
 }
 
-func awsGetRouteTables(region, vpcId string) (tables []string, err error) {
-	tables = []string{}
+func awsGetRouteTables(region, vpcId string) (
+	tables map[string][]*awsRoute, err error) {
+
+	tables = map[string][]*awsRoute{}
 
 	sess, err := awsGetSession(region)
 	if err != nil {
@@ -140,7 +148,43 @@ func awsGetRouteTables(region, vpcId string) (tables []string, err error) {
 	}
 
 	for _, table := range vpcTables.RouteTables {
-		tables = append(tables, *table.RouteTableId)
+		rtes := []*awsRoute{}
+
+		for _, route := range table.Routes {
+			destinationCidrBlock := ""
+			if route.DestinationCidrBlock != nil {
+				destinationCidrBlock = *route.DestinationCidrBlock
+			}
+
+			instanceId := ""
+			if route.InstanceId != nil {
+				instanceId = *route.InstanceId
+			}
+
+			networkInterfaceId := ""
+			if route.NetworkInterfaceId != nil {
+				networkInterfaceId = *route.NetworkInterfaceId
+			}
+
+			rte := &awsRoute{
+				DestinationCidrBlock: destinationCidrBlock,
+				InstanceId:           instanceId,
+				NetworkInterfaceId:   networkInterfaceId,
+			}
+
+			rtes = append(rtes, rte)
+		}
+
+		tableId := ""
+		if table.RouteTableId != nil {
+			tableId = *table.RouteTableId
+		}
+
+		if tableId == "" {
+			continue
+		}
+
+		tables[tableId] = rtes
 	}
 
 	return
@@ -166,25 +210,70 @@ func AwsAddRoute(network string) (err error) {
 
 	ec2Svc := ec2.New(sess)
 
-	for _, table := range tables {
-		input := &ec2.ReplaceRouteInput{}
+	for tableId, rtes := range tables {
+		exists := false
+		replace := false
 
-		if data.InterfaceId != "" {
-			input.SetNetworkInterfaceId(data.InterfaceId)
-		} else {
-			input.SetInstanceId(data.InstanceId)
+		for _, route := range rtes {
+			if route.DestinationCidrBlock != network {
+				continue
+			}
+			exists = true
+
+			if data.InterfaceId != "" {
+				if route.NetworkInterfaceId != data.InterfaceId {
+					replace = true
+				}
+			} else {
+				if route.InstanceId != data.InstanceId {
+					replace = true
+				}
+			}
+
+			break
 		}
 
-		input.SetInstanceId(data.InstanceId)
-		input.SetDestinationCidrBlock(network)
-		input.SetRouteTableId(table)
+		if exists && !replace {
+			continue
+		}
 
-		_, err = ec2Svc.ReplaceRoute(input)
+		if replace {
+			input := &ec2.ReplaceRouteInput{}
 
-		if err != nil {
+			if data.InterfaceId != "" {
+				input.SetNetworkInterfaceId(data.InterfaceId)
+			} else {
+				input.SetInstanceId(data.InstanceId)
+			}
+
+			input.SetDestinationCidrBlock(network)
+			input.SetRouteTableId(tableId)
+
+			_, err = ec2Svc.ReplaceRoute(input)
+
+			if err != nil {
+				input := &ec2.CreateRouteInput{}
+				input.SetDestinationCidrBlock(network)
+				input.SetRouteTableId(tableId)
+
+				if data.InterfaceId != "" {
+					input.SetNetworkInterfaceId(data.InterfaceId)
+				} else {
+					input.SetInstanceId(data.InstanceId)
+				}
+
+				_, err = ec2Svc.CreateRoute(input)
+				if err != nil {
+					err = &errortypes.RequestError{
+						errors.Wrap(err, "cloud: Failed to get create route"),
+					}
+					return
+				}
+			}
+		} else {
 			input := &ec2.CreateRouteInput{}
 			input.SetDestinationCidrBlock(network)
-			input.SetRouteTableId(table)
+			input.SetRouteTableId(tableId)
 
 			if data.InterfaceId != "" {
 				input.SetNetworkInterfaceId(data.InterfaceId)
@@ -194,10 +283,24 @@ func AwsAddRoute(network string) (err error) {
 
 			_, err = ec2Svc.CreateRoute(input)
 			if err != nil {
-				err = &errortypes.RequestError{
-					errors.Wrap(err, "cloud: Failed to get create route"),
+				input := &ec2.ReplaceRouteInput{}
+
+				if data.InterfaceId != "" {
+					input.SetNetworkInterfaceId(data.InterfaceId)
+				} else {
+					input.SetInstanceId(data.InstanceId)
 				}
-				return
+
+				input.SetDestinationCidrBlock(network)
+				input.SetRouteTableId(tableId)
+
+				_, err = ec2Svc.ReplaceRoute(input)
+				if err != nil {
+					err = &errortypes.RequestError{
+						errors.Wrap(err, "cloud: Failed to get create route"),
+					}
+					return
+				}
 			}
 		}
 	}
@@ -236,11 +339,11 @@ func AwsDeleteRoute(route *routes.AwsRoute) (err error) {
 
 		ec2Svc := ec2.New(sess)
 
-		for _, table := range tables {
+		for tableId := range tables {
 			input := &ec2.DeleteRouteInput{}
 
 			input.SetDestinationCidrBlock(route.DestNetwork)
-			input.SetRouteTableId(table)
+			input.SetRouteTableId(tableId)
 
 			ec2Svc.DeleteRoute(input)
 		}
