@@ -38,7 +38,8 @@ var (
 	clientSec = &http.Client{
 		Timeout: 25 * time.Second,
 	}
-	Hash = ""
+	stateCaches = map[string]*stateCache{}
+	Hash        = ""
 )
 
 type stateData struct {
@@ -46,6 +47,11 @@ type stateData struct {
 	PublicAddress string            `json:"public_address"`
 	Status        map[string]string `json:"status"`
 	Errors        []string          `json:"errors"`
+}
+
+type stateCache struct {
+	Timestamp time.Time
+	State     *State
 }
 
 func decResp(secret, iv, sig, encData string) (cipData []byte, err error) {
@@ -110,7 +116,17 @@ func decResp(secret, iv, sig, encData string) (cipData []byte, err error) {
 	return
 }
 
-func GetState(uri string, retry int) (state *State, err error) {
+func getStateCache(uri string) (state *State) {
+	cache, ok := stateCaches[uri]
+	if ok && time.Since(cache.Timestamp) < constants.StateCacheTtl {
+		state = cache.State
+		return
+	}
+
+	return
+}
+
+func GetState(uri string) (state *State, err error) {
 	state = &State{}
 
 	uriData, err := url.ParseRequestURI(uri)
@@ -182,20 +198,30 @@ func GetState(uri string, retry int) (state *State, err error) {
 
 	res, err := client.Do(req)
 	if err != nil {
-		if retry < 2 {
-			time.Sleep(3 * time.Second)
-			state, err = GetState(uri, retry+1)
-			return
-		}
-
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "state: Request put error"),
+		state = getStateCache(uri)
+		if state == nil {
+			err = &errortypes.RequestError{
+				errors.Wrap(err, "state: Request put error"),
+			}
+		} else {
+			err = nil
 		}
 		return
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != 200 {
+	if res.StatusCode >= 500 && res.StatusCode < 600 {
+		state = getStateCache(uri)
+		if state == nil {
+			err = &errortypes.RequestError{
+				errors.Wrapf(err, "state: Bad status %n code from server",
+					res.StatusCode),
+			}
+		} else {
+			err = nil
+		}
+		return
+	} else if res.StatusCode != 200 {
 		err = &errortypes.RequestError{
 			errors.Wrapf(err, "state: Bad status %n code from server",
 				res.StatusCode),
@@ -232,6 +258,12 @@ func GetState(uri string, retry int) (state *State, err error) {
 		return
 	}
 
+	cache := &stateCache{
+		Timestamp: time.Now(),
+		State:     state,
+	}
+	stateCaches[uri] = cache
+
 	return
 }
 
@@ -239,7 +271,7 @@ func GetStates() (states []*State) {
 	states = []*State{}
 
 	for _, uri := range config.Config.Uris {
-		state, err := GetState(uri, 0)
+		state, err := GetState(uri)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"uri":   uri,

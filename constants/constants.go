@@ -18,6 +18,7 @@ const (
 	DefaultDiconnectedTimeout = 45 * time.Second
 	UpdateAdvertiseRate       = 90
 	UpdateAdvertiseDelay      = 30
+	StateCacheTtl             = 20 * time.Second
 )
 
 var (
