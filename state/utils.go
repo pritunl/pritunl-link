@@ -16,7 +16,6 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
-	"github.com/pritunl/pritunl-link/status"
 	"github.com/pritunl/pritunl-link/utils"
 	"io/ioutil"
 	"net/http"
@@ -125,7 +124,7 @@ func GetState(uri string, retry int) (state *State, err error) {
 	data := &stateData{
 		Version:       constants.Version,
 		PublicAddress: GetPublicAddress(),
-		Status:        status.Status[uriData.User.Username()],
+		Status:        Status[uriData.User.Username()],
 	}
 	dataBuf := &bytes.Buffer{}
 

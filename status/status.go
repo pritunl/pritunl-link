@@ -4,6 +4,8 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
+	"github.com/pritunl/pritunl-link/ipsec"
+	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
 	"strings"
 	"time"
@@ -11,7 +13,6 @@ import (
 
 var (
 	offlineTime time.Time
-	Status      = map[string]map[string]string{}
 )
 
 func Update(total int) (err error) {
@@ -69,7 +70,7 @@ func Update(total int) (err error) {
 		}
 	}
 
-	Status = status
+	state.Status = status
 
 	if connected < total {
 		if !offlineTime.IsZero() {

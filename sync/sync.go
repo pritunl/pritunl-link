@@ -56,7 +56,7 @@ func runSyncStates() {
 	for {
 		time.Sleep(1 * time.Second)
 		SyncStates()
-		fmt.Println(status.Status)
+		fmt.Println(state.Status)
 	}
 }
 

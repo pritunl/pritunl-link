@@ -7,6 +7,7 @@ import (
 var (
 	LocalAddress  = ""
 	PublicAddress = ""
+	Status        = map[string]map[string]string{}
 )
 
 type State struct {
