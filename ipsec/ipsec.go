@@ -20,9 +20,12 @@ import (
 )
 
 var (
-	deployStates []*state.State
-	curStates    []*state.State
-	deployLock   sync.Mutex
+	updateAdvertise bool
+	deployStates    []*state.State
+	curStates       []*state.State
+	deployLock      sync.Mutex
+	updateSleepLock sync.Mutex
+	updateSleep     = constants.UpdateAdvertiseRate
 )
 
 type templateData struct {
@@ -148,14 +151,26 @@ func deploy(states []*state.State) (err error) {
 		return
 	}
 
-	if len(states) != 0 {
-		err = advertise.AdvertisePorts()
-		if err != nil {
-			return
-		}
+	err = advertise.AdvertisePorts(states)
+	if err != nil {
+		return
 	}
 
 	err = utils.Exec("", "ipsec", "restart")
+	if err != nil {
+		return
+	}
+
+	err = advertise.AdvertiseRoutes(states)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func update(states []*state.State) (err error) {
+	err = advertise.AdvertisePorts(states)
 	if err != nil {
 		return
 	}
@@ -184,39 +199,84 @@ func ReDeploy() {
 
 func runDeploy() {
 	for {
-		if deployStates != nil {
+		if deployStates != nil || updateAdvertise {
 			deployLock.Lock()
 			states := deployStates
+			updateAd := false
 			deployStates = nil
 			if states != nil {
 				curStates = states
+			} else if updateAdvertise {
+				updateAd = true
+				states = curStates
 			}
+			updateAdvertise = false
 			deployLock.Unlock()
 
 			if states != nil {
-				logrus.WithFields(logrus.Fields{
-					"local_address":  state.GetLocalAddress(),
-					"public_address": state.GetPublicAddress(),
-				}).Info("state: Deploying state")
-
-				err := deploy(states)
-				if err != nil {
+				if updateAd {
 					logrus.WithFields(logrus.Fields{
-						"error": err,
-					}).Info("state: Failed to deploy state")
+						"local_address":  state.GetLocalAddress(),
+						"public_address": state.GetPublicAddress(),
+					}).Info("state: Update advertisement")
 
-					time.Sleep(3 * time.Second)
+					update(states)
+				} else {
+					logrus.WithFields(logrus.Fields{
+						"local_address":  state.GetLocalAddress(),
+						"public_address": state.GetPublicAddress(),
+					}).Info("state: Deploying state")
 
-					deployLock.Lock()
-					if deployStates == nil {
-						deployStates = states
+					err := deploy(states)
+					if err != nil {
+						logrus.WithFields(logrus.Fields{
+							"error": err,
+						}).Info("state: Failed to deploy state")
+
+						time.Sleep(3 * time.Second)
+
+						deployLock.Lock()
+						if deployStates == nil {
+							deployStates = states
+						}
+						deployLock.Unlock()
+					} else {
+						updateSleepLock.Lock()
+						updateSleep = constants.UpdateAdvertiseDelay
+						updateSleepLock.Unlock()
 					}
-					deployLock.Unlock()
 				}
 			}
 		}
 
 		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func runUpdateAdvertise() {
+	for {
+		for {
+			time.Sleep(1 * time.Second)
+
+			updateSleepLock.Lock()
+			updateSleep -= 1
+			if updateSleep <= 0 {
+				updateSleep = constants.UpdateAdvertiseRate
+				updateSleepLock.Unlock()
+				break
+			} else {
+				updateSleepLock.Unlock()
+			}
+		}
+
+		states := curStates
+		if states != nil {
+			logrus.WithFields(logrus.Fields{
+				"local_address":  state.GetLocalAddress(),
+				"public_address": state.GetPublicAddress(),
+			}).Info("state: Update advertisement")
+			update(states)
+		}
 	}
 }
 
@@ -226,5 +286,6 @@ func init() {
 
 	module.Handler = func() {
 		go runDeploy()
+		go runUpdateAdvertise()
 	}
 }

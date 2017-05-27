@@ -102,7 +102,11 @@ func AdvertiseRoutes(states []*state.State) (err error) {
 	return
 }
 
-func AdvertisePorts() (err error) {
+func AdvertisePorts(states []*state.State) (err error) {
+	if len(states) == 0 {
+		return
+	}
+
 	switch config.Config.Provider {
 	case "unifi":
 		if !config.Config.Unifi.DisablePort {

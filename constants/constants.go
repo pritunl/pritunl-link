@@ -16,6 +16,8 @@ const (
 	PublicIpServer            = "https://app.pritunl.com/ip"
 	PublicIp6Server           = "https://app6.pritunl.com/ip"
 	DefaultDiconnectedTimeout = 45 * time.Second
+	UpdateAdvertiseRate       = 90
+	UpdateAdvertiseDelay      = 30
 )
 
 var (
