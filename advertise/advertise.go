@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func AdvertiseRoutes(states []*state.State) (err error) {
+func Routes(states []*state.State) (err error) {
 	if constants.Interrupt {
 		err = &errortypes.UnknownError{
 			errors.Wrap(err, "advertise: Interrupt"),
@@ -108,7 +108,7 @@ func AdvertiseRoutes(states []*state.State) (err error) {
 	return
 }
 
-func AdvertisePorts(states []*state.State) (err error) {
+func Ports(states []*state.State) (err error) {
 	if constants.Interrupt {
 		err = &errortypes.UnknownError{
 			errors.Wrap(err, "advertise: Interrupt"),

@@ -164,7 +164,7 @@ func deploy(states []*state.State) (err error) {
 		return
 	}
 
-	err = advertise.AdvertisePorts(states)
+	err = advertise.Ports(states)
 	if err != nil {
 		return
 	}
@@ -174,7 +174,7 @@ func deploy(states []*state.State) (err error) {
 		return
 	}
 
-	err = advertise.AdvertiseRoutes(states)
+	err = advertise.Routes(states)
 	if err != nil {
 		return
 	}
