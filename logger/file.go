@@ -2,9 +2,9 @@ package logger
 
 import (
 	"github.com/Sirupsen/logrus"
-	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/constants"
+	"github.com/pritunl/pritunl-link/errortypes"
 	"os"
 )
 
