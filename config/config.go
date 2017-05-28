@@ -45,6 +45,7 @@ type ConfigData struct {
 	SkipVerify                 bool       `json:"skip_verify"`
 	DeleteRoutes               bool       `json:"delete_routes"`
 	DisconnectedTimeout        int        `json:"disconnected_timeout"`
+	DisableAdvertiseUpdate     bool       `json:"disable_advertise_update"`
 	DisableDisconnectedRestart bool       `json:"disable_disconnected_restart"`
 	Aws                        AwsData    `json:"aws"`
 	Google                     GoogleData `json:"google"`

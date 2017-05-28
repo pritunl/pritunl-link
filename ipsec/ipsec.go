@@ -6,6 +6,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/advertise"
+	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/requires"
@@ -186,6 +187,10 @@ func update(states []*state.State) (err error) {
 		err = &errortypes.UnknownError{
 			errors.Wrap(err, "state: Interrupt"),
 		}
+		return
+	}
+
+	if config.Config.DisableAdvertiseUpdate {
 		return
 	}
 
