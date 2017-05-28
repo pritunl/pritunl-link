@@ -131,6 +131,13 @@ func writeTemplates(states []*state.State) (err error) {
 }
 
 func deploy(states []*state.State) (err error) {
+	if constants.Interrupt {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "state: Interrupt"),
+		}
+		return
+	}
+
 	err = utils.NetInit()
 	if err != nil {
 		return
@@ -170,6 +177,13 @@ func deploy(states []*state.State) (err error) {
 }
 
 func update(states []*state.State) (err error) {
+	if constants.Interrupt {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "state: Interrupt"),
+		}
+		return
+	}
+
 	hasLinks := false
 	for _, ste := range states {
 		if ste.Links != nil && len(ste.Links) != 0 {

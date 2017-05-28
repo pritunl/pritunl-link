@@ -31,6 +31,10 @@ type publicAddressData struct {
 }
 
 func SyncStates() {
+	if constants.Interrupt {
+		return
+	}
+
 	states := state.GetStates()
 	hsh := md5.New()
 
@@ -61,6 +65,10 @@ func runSyncStates() {
 }
 
 func SyncLocalAddress(redeploy bool) (err error) {
+	if constants.Interrupt {
+		return
+	}
+
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		err = &errortypes.ReadError{
@@ -100,6 +108,10 @@ func runSyncLocalAddress() {
 }
 
 func SyncPublicAddress(redeploy bool) (err error) {
+	if constants.Interrupt {
+		return
+	}
+
 	req, err := http.NewRequest(
 		"GET",
 		constants.PublicIpServer,
@@ -166,6 +178,10 @@ func runSyncPublicAddress() {
 }
 
 func SyncConfig() (err error) {
+	if constants.Interrupt {
+		return
+	}
+
 	mod, err := config.GetModTime()
 	if err != nil {
 		return

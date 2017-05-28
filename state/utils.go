@@ -127,6 +127,13 @@ func getStateCache(uri string) (state *State) {
 }
 
 func GetState(uri string) (state *State, err error) {
+	if constants.Interrupt {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "state: Interrupt"),
+		}
+		return
+	}
+
 	state = &State{}
 
 	uriData, err := url.ParseRequestURI(uri)

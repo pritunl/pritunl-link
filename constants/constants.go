@@ -22,6 +22,7 @@ const (
 )
 
 var (
+	Interrupt     = false
 	RoutesPath    = path.Join(VarDir, "routes")
 	CurRoutesPath = path.Join(VarDir, "cur_routes")
 )

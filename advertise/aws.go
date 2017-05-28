@@ -10,6 +10,7 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/routes"
+	"github.com/pritunl/pritunl-link/constants"
 	"time"
 )
 
@@ -193,6 +194,13 @@ func awsGetRouteTables(region, vpcId string) (
 func AwsAddRoute(network string) (err error) {
 	time.Sleep(150 * time.Millisecond)
 
+	if constants.Interrupt {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "advertise: Interrupt"),
+		}
+		return
+	}
+
 	data, err := awsGetMetaData()
 	if err != nil {
 		return
@@ -324,6 +332,13 @@ func AwsAddRoute(network string) (err error) {
 func AwsDeleteRoute(route *routes.AwsRoute) (err error) {
 	if config.Config.DeleteRoutes {
 		time.Sleep(150 * time.Millisecond)
+
+		if constants.Interrupt {
+			err = &errortypes.UnknownError{
+				errors.Wrap(err, "advertise: Interrupt"),
+			}
+			return
+		}
 
 		tables, e := awsGetRouteTables(route.Region, route.VpcId)
 		if e != nil {

@@ -13,6 +13,13 @@ import (
 )
 
 func AdvertiseRoutes(states []*state.State) (err error) {
+	if constants.Interrupt {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "advertise: Interrupt"),
+		}
+		return
+	}
+
 	networks := []string{}
 
 	for _, stat := range states {
@@ -102,6 +109,13 @@ func AdvertiseRoutes(states []*state.State) (err error) {
 }
 
 func AdvertisePorts(states []*state.State) (err error) {
+	if constants.Interrupt {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "advertise: Interrupt"),
+		}
+		return
+	}
+
 	hasLinks := false
 	for _, ste := range states {
 		if ste.Links != nil && len(ste.Links) != 0 {

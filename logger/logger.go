@@ -2,6 +2,7 @@ package logger
 
 import (
 	"github.com/Sirupsen/logrus"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/requires"
 	"os"
 )
@@ -19,6 +20,10 @@ func initSender() {
 	go func() {
 		for {
 			entry := <-buffer
+
+			if constants.Interrupt {
+				return
+			}
 
 			if len(entry.Message) > 7 && entry.Message[:7] == "logger:" {
 				continue

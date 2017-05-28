@@ -9,6 +9,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/routes"
 	"github.com/pritunl/pritunl-link/state"
@@ -456,6 +457,13 @@ func unifiHasRoute(client *http.Client, network, nexthop string) (
 }
 
 func UnifiAddRoute(network string) (err error) {
+	if constants.Interrupt {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "advertise: Interrupt"),
+		}
+		return
+	}
+
 	nexthop := state.GetLocalAddress()
 
 	client, err := unifiGetClient()
@@ -490,6 +498,13 @@ func UnifiAddRoute(network string) (err error) {
 
 func UnifiDeleteRoute(route *routes.UnifiRoute) (err error) {
 	if config.Config.DeleteRoutes {
+		if constants.Interrupt {
+			err = &errortypes.UnknownError{
+				errors.Wrap(err, "advertise: Interrupt"),
+			}
+			return
+		}
+
 		client, e := unifiGetClient()
 		if e != nil {
 			err = e
@@ -764,6 +779,13 @@ func unifiHasPort(client *http.Client, ports []*unifiPortForward, source,
 }
 
 func UnifiAddPorts() (err error) {
+	if constants.Interrupt {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "advertise: Interrupt"),
+		}
+		return
+	}
+
 	source := "any"
 	forward := state.GetLocalAddress()
 	proto := "udp"

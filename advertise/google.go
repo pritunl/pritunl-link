@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/routes"
 	"golang.org/x/net/context"
@@ -215,6 +216,13 @@ func googleHasRoute(svc *compute.Service, project, destRange,
 }
 
 func GoogleAddRoute(destNetwork string) (err error) {
+	if constants.Interrupt {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "advertise: Interrupt"),
+		}
+		return
+	}
+
 	data, err := googleGetMetaData()
 	if err != nil {
 		return
@@ -280,6 +288,13 @@ func GoogleAddRoute(destNetwork string) (err error) {
 
 func GoogleDeleteRoute(route *routes.GoogleRoute) (err error) {
 	if config.Config.DeleteRoutes {
+		if constants.Interrupt {
+			err = &errortypes.UnknownError{
+				errors.Wrap(err, "advertise: Interrupt"),
+			}
+			return
+		}
+
 		ctx := context.Background()
 		client, e := google.DefaultClient(ctx, compute.CloudPlatformScope)
 		if e != nil {
