@@ -188,7 +188,8 @@ func googleHasRoute(svc *compute.Service, project, destRange,
 			_, err = call.Do()
 			if err != nil {
 				err = &errortypes.RequestError{
-					errors.Wrap(err, "advertise: Failed to remove Google route"),
+					errors.Wrap(err,
+						"advertise: Failed to remove Google route"),
 				}
 				return
 			}
