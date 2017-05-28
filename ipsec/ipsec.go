@@ -272,7 +272,7 @@ func runDeploy() {
 						deployLock.Unlock()
 					} else {
 						updateSleepLock.Lock()
-						updateSleep = constants.UpdateAdvertiseDelay
+						updateSleep = constants.UpdateAdvertiseReplay
 						updateSleepLock.Unlock()
 					}
 				}
