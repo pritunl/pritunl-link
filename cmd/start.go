@@ -3,7 +3,11 @@ package cmd
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/constants"
+	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/sync"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -14,9 +18,17 @@ func Start() (err error) {
 
 	sync.Init()
 
-	for {
-		time.Sleep(1 * time.Second)
-	}
+	sig := make(chan os.Signal, 2)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+	<-sig
+
+	constants.Interrupt = true
+
+	state.CleanUp()
+
+	time.Sleep(1010 * time.Millisecond)
+
+	state.CleanUp()
 
 	return
 }
