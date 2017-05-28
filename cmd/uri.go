@@ -25,7 +25,7 @@ func Add(uri string) (err error) {
 
 	logrus.WithFields(logrus.Fields{
 		"uris": config.Config.Uris,
-	}).Info("cmd.add: Added URI")
+	}).Info("cmd.uri: Added URI")
 
 	return
 }
@@ -44,7 +44,7 @@ func Remove(uri string) (err error) {
 
 	logrus.WithFields(logrus.Fields{
 		"uris": config.Config.Uris,
-	}).Info("cmd.remove: Removed URI")
+	}).Info("cmd.uri: Removed URI")
 
 	return
 }

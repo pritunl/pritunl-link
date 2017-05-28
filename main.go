@@ -22,6 +22,8 @@ Commands:
   verify-off                Disable HTTPS certificate verification when connecting to Pritunl server
   disconnected-timeout-on   Enable restart when disconnected for duration of timeout
   disconnected-timeout-off  Disable restart when disconnected for duration of timeout
+  advertise-update-on       Enable recurring checks and updates of routing table and port forwarding
+  advertise-update-off      Disable recurring checks and updates of routing table and port forwarding
   provider                  Manually set network provider
   unifi-username            Set Unifi username
   unifi-password            Set Unifi password
@@ -106,6 +108,20 @@ func main() {
 	case "disconnected-timeout-off":
 		Init()
 		err := cmd.DisconnectedTimeoutOff()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "advertise-update-on":
+		Init()
+		err := cmd.AdvertiseUpdateOn()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "advertise-update-off":
+		Init()
+		err := cmd.AdvertiseUpdateOff()
 		if err != nil {
 			panic(err)
 		}
