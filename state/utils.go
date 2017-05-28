@@ -303,3 +303,78 @@ func GetStates() (states []*State) {
 
 	return
 }
+
+func cleanup(uri string) (err error) {
+	uriData, err := url.ParseRequestURI(uri)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "state: Failed to parse uri"),
+		}
+		return
+	}
+
+	req, err := http.NewRequest(
+		"DELETE",
+		fmt.Sprintf("https://%s/link/state", uriData.Host),
+		nil,
+	)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "state: Request init error"),
+		}
+		return
+	}
+
+	hostId := uriData.User.Username()
+	hostSecret, _ := uriData.User.Password()
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	nonce := utils.RandStr(32)
+
+	authStr := strings.Join([]string{
+		hostId,
+		timestamp,
+		nonce,
+		"DELETE",
+		"/link/state",
+	}, "&")
+
+	hashFunc := hmac.New(sha512.New, []byte(hostSecret))
+	hashFunc.Write([]byte(authStr))
+	rawSignature := hashFunc.Sum(nil)
+	sig := base64.StdEncoding.EncodeToString(rawSignature)
+
+	req.Header.Set("Auth-Token", hostId)
+	req.Header.Set("Auth-Timestamp", timestamp)
+	req.Header.Set("Auth-Nonce", nonce)
+	req.Header.Set("Auth-Signature", sig)
+
+	var client *http.Client
+	if config.Config.SkipVerify {
+		client = clientInsec
+	} else {
+		client = clientSec
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "state: Request delete error"),
+		}
+		return
+	}
+	defer res.Body.Close()
+
+	return
+}
+
+func CleanUp() {
+	uris := config.Config.Uris
+
+	for _, uri := range uris {
+		go cleanup(uri)
+	}
+
+	time.Sleep(3 * time.Second)
+
+	return
+}
