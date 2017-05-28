@@ -210,12 +210,12 @@ func update(states []*state.State) (err error) {
 		"public_address": state.GetPublicAddress(),
 	}).Info("state: Update advertisement")
 
-	err = advertise.AdvertisePorts(states)
+	err = advertise.Ports(states)
 	if err != nil {
 		return
 	}
 
-	err = advertise.AdvertiseRoutes(states)
+	err = advertise.Routes(states)
 	if err != nil {
 		return
 	}
