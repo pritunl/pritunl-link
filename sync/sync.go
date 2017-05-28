@@ -188,6 +188,13 @@ func SyncConfig() (err error) {
 	}
 
 	if mod != curMod {
+		time.Sleep(5 * time.Second)
+
+		mod, err = config.GetModTime()
+		if err != nil {
+			return
+		}
+
 		err = config.Load()
 		if err != nil {
 			return
