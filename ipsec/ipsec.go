@@ -75,13 +75,18 @@ func writeConf() (err error) {
 func writeTemplates(states []*state.State) (err error) {
 	secretsBuf := &bytes.Buffer{}
 
+	publicAddr := state.GetPublicAddress()
+	if publicAddr == "" {
+		return
+	}
+
 	for _, stat := range states {
 		confBuf := &bytes.Buffer{}
 
 		for i, link := range stat.Links {
 			data := &templateData{
 				Id:           fmt.Sprintf("%s-%d", stat.Id, i),
-				Left:         state.GetPublicAddress(),
+				Left:         publicAddr,
 				LeftSubnets:  strings.Join(link.LeftSubnets, ","),
 				Right:        link.Right,
 				RightSubnets: strings.Join(link.RightSubnets, ","),
