@@ -466,6 +466,10 @@ func UnifiAddRoute(network string) (err error) {
 
 	nexthop := state.GetLocalAddress()
 
+	if nexthop == "" {
+		return
+	}
+
 	client, err := unifiGetClient()
 	if err != nil {
 		return
@@ -789,6 +793,10 @@ func UnifiAddPorts() (err error) {
 	source := "any"
 	forward := state.GetLocalAddress()
 	proto := "udp"
+
+	if forward == "" {
+		return
+	}
 
 	client, err := unifiGetClient()
 	if err != nil {
