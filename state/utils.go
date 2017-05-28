@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Sirupsen/logrus"
+	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
@@ -276,8 +277,12 @@ func GetState(uri string) (state *State, err error) {
 
 func GetStates() (states []*State) {
 	states = []*State{}
+	uris := config.Config.Uris
+	urisSet := set.NewSet()
 
-	for _, uri := range config.Config.Uris {
+	for _, uri := range uris {
+		urisSet.Add(uri)
+
 		state, err := GetState(uri)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
@@ -288,6 +293,12 @@ func GetStates() (states []*State) {
 		}
 
 		states = append(states, state)
+	}
+
+	for uri := range stateCaches {
+		if !urisSet.Contains(uri) {
+			delete(stateCaches, uri)
+		}
 	}
 
 	return
