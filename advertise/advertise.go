@@ -9,6 +9,7 @@ import (
 	"github.com/pritunl/pritunl-link/state"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -29,6 +30,8 @@ func Routes(states []*state.State) (err error) {
 			}
 		}
 	}
+
+	sort.Strings(networks)
 
 	curRoutes, err := routes.GetDiff(networks)
 	if err != nil {
