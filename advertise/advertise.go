@@ -100,6 +100,9 @@ func Routes(states []*state.State) (err error) {
 	}
 
 	data := strings.Join(networks, "\n")
+	if data != "" {
+		data = data + "\n"
+	}
 	err = ioutil.WriteFile(constants.RoutesPath, []byte(data), 0644)
 	if err != nil {
 		err = errortypes.WriteError{
