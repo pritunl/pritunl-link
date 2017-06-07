@@ -13,6 +13,7 @@ Usage: pritunl-link COMMAND
 
 Commands:
   start                     Start link service
+  list                      List Pritunl server URIs
   add                       Add a Pritunl server URI
   remove                    Remove a Pritunl server URI
   clear                     Clear all configured Pritunl server URIs
