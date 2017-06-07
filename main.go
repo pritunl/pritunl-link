@@ -49,6 +49,13 @@ func main() {
 			panic(err)
 		}
 		break
+	case "list":
+		Init()
+		err := cmd.List()
+		if err != nil {
+			panic(err)
+		}
+		break
 	case "add":
 		Init()
 		err := cmd.Add(flag.Arg(1))
