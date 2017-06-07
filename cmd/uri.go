@@ -1,14 +1,15 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/config"
 )
 
 func List() (err error) {
-	logrus.WithFields(logrus.Fields{
-		"uris": config.Config.Uris,
-	}).Info("cmd.uri: List URI")
+	for _, u := range config.Config.Uris {
+		fmt.Println(u)
+	}
 
 	return
 }
