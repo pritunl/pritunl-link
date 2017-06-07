@@ -5,6 +5,14 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 )
 
+func List() (err error) {
+	logrus.WithFields(logrus.Fields{
+		"uris": config.Config.Uris,
+	}).Info("cmd.uri: List URI")
+
+	return
+}
+
 func Add(uri string) (err error) {
 	exists := false
 
