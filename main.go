@@ -13,10 +13,10 @@ Usage: pritunl-link COMMAND
 
 Commands:
   start                     Start link service
-  list                      List Pritunl server URIs
   add                       Add a Pritunl server URI
   remove                    Remove a Pritunl server URI
   clear                     Clear all configured Pritunl server URIs
+  list                      List Pritunl server URIs
   local-address             Manually set local IP address
   public-address            Manually set public IP address
   verify-on                 Enable HTTPS certificate verification when connecting to Pritunl server
@@ -50,13 +50,6 @@ func main() {
 			panic(err)
 		}
 		break
-	case "list":
-		Init()
-		err := cmd.List()
-		if err != nil {
-			panic(err)
-		}
-		break
 	case "add":
 		Init()
 		err := cmd.Add(flag.Arg(1))
@@ -74,6 +67,13 @@ func main() {
 	case "clear":
 		Init()
 		err := cmd.Clear()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "list":
+		Init()
+		err := cmd.List()
 		if err != nil {
 			panic(err)
 		}

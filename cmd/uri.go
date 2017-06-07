@@ -6,14 +6,6 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 )
 
-func List() (err error) {
-	for _, u := range config.Config.Uris {
-		fmt.Println(u)
-	}
-
-	return
-}
-
 func Add(uri string) (err error) {
 	exists := false
 
@@ -54,6 +46,14 @@ func Remove(uri string) (err error) {
 	logrus.WithFields(logrus.Fields{
 		"uris": config.Config.Uris,
 	}).Info("cmd.uri: Removed URI")
+
+	return
+}
+
+func List() (err error) {
+	for _, u := range config.Config.Uris {
+		fmt.Println(u)
+	}
 
 	return
 }
