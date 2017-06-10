@@ -50,6 +50,21 @@ func Remove(uri string) (err error) {
 	return
 }
 
+func Clear() (err error) {
+	config.Config.Uris = []string{}
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"uris": config.Config.Uris,
+	}).Info("cmd.clear: Cleared URI")
+
+	return
+}
+
 func List() (err error) {
 	for _, u := range config.Config.Uris {
 		fmt.Println(u)
