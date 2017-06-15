@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
