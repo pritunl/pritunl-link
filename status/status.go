@@ -59,6 +59,11 @@ func Update(total int) (err error) {
 
 		if _, ok := status[connId[0]][connId[1]]; !ok {
 			status[connId[0]][connId[1]] = connState
+		} else if (status[connId[0]][connId[1]] == "disconnected") ||
+			(status[connId[0]][connId[1]] == "connecting" &&
+				connState == "connected") {
+
+			status[connId[0]][connId[1]] = connState
 		}
 	}
 
