@@ -9,18 +9,20 @@ import (
 func Add(uri string) (err error) {
 	exists := false
 
-	for _, u := range config.Config.Uris {
-		if uri == u {
-			exists = true
+	if uri != "" {
+		for _, u := range config.Config.Uris {
+			if uri == u {
+				exists = true
+			}
 		}
-	}
 
-	if !exists {
-		config.Config.Uris = append(config.Config.Uris, uri)
+		if !exists {
+			config.Config.Uris = append(config.Config.Uris, uri)
 
-		err = config.Save()
-		if err != nil {
-			return
+			err = config.Save()
+			if err != nil {
+				return
+			}
 		}
 	}
 
