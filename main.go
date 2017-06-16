@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/pritunl/pritunl-link/cmd"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/logger"
 	"github.com/pritunl/pritunl-link/requires"
 )
@@ -43,6 +44,9 @@ func main() {
 	flag.Parse()
 
 	switch flag.Arg(0) {
+	case "version":
+		fmt.Printf("pritunl-link v%s", constants.Version)
+		break
 	case "start":
 		Init()
 		err := cmd.Start()
