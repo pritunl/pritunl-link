@@ -89,7 +89,14 @@ func Update(total int) (err error) {
 			if !config.Config.DisableDisconnectedRestart {
 				if time.Since(offlineTime) > timeout {
 					logrus.Warn("status: Disconnected timeout restarting")
+
+					err = utils.Exec("", "ipsec", "restart")
+					if err != nil {
+						return
+					}
+
 					ipsec.ReDeploy()
+
 					offlineTime = time.Time{}
 				}
 			} else {
