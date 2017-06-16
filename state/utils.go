@@ -34,10 +34,10 @@ var (
 	}
 	clientInsec = &http.Client{
 		Transport: transport,
-		Timeout:   25 * time.Second,
+		Timeout:   10 * time.Second,
 	}
 	clientSec = &http.Client{
-		Timeout: 25 * time.Second,
+		Timeout: 10 * time.Second,
 	}
 	stateCaches = map[string]*stateCache{}
 	Hash        = ""
