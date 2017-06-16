@@ -13,6 +13,7 @@ const help = `
 Usage: pritunl-link COMMAND
 
 Commands:
+  version                   Show version
   start                     Start link service
   add                       Add a Pritunl server URI
   remove                    Remove a Pritunl server URI
