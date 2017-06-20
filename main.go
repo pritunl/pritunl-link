@@ -46,7 +46,7 @@ func main() {
 
 	switch flag.Arg(0) {
 	case "version":
-		fmt.Printf("pritunl-link v%s", constants.Version)
+		fmt.Printf("pritunl-link v%s\n", constants.Version)
 		break
 	case "start":
 		Init()
