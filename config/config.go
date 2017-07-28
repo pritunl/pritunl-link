@@ -82,17 +82,14 @@ func (c *ConfigData) Save() (err error) {
 func Load() (err error) {
 	data := &ConfigData{}
 
-	_, err = os.Stat(constants.ConfPath)
+	exists, err := utils.Exists(constants.ConfPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			err = nil
-			data.loaded = true
-			Config = data
-		} else {
-			err = &errortypes.ReadError{
-				errors.Wrap(err, "config: File stat error"),
-			}
-		}
+		return
+	}
+
+	if !exists {
+		data.loaded = true
+		Config = data
 		return
 	}
 
@@ -157,9 +154,16 @@ func init() {
 			panic(err)
 		}
 
-		err = Save()
+		exists, err := utils.Exists(constants.ConfPath)
 		if err != nil {
 			panic(err)
+		}
+
+		if !exists {
+			err := Save()
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }
