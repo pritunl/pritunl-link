@@ -234,7 +234,7 @@ func Deploy(states []*state.State) {
 	deployLock.Unlock()
 }
 
-func ReDeploy() {
+func Redeploy() {
 	deployLock.Lock()
 	if deployStates == nil && curStates != nil {
 		deployStates = curStates

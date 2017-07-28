@@ -95,7 +95,7 @@ func Update(total int) (err error) {
 						return
 					}
 
-					ipsec.ReDeploy()
+					ipsec.Redeploy()
 
 					offlineTime = time.Time{}
 				}

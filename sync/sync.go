@@ -82,7 +82,7 @@ func SyncLocalAddress(redeploy bool) (err error) {
 				state.LocalAddress = ipnet.IP.String()
 
 				if changed && redeploy {
-					ipsec.ReDeploy()
+					ipsec.Redeploy()
 				}
 
 				return
@@ -156,7 +156,7 @@ func SyncPublicAddress(redeploy bool) (err error) {
 		state.PublicAddress = data.Ip
 
 		if changed && redeploy {
-			ipsec.ReDeploy()
+			ipsec.Redeploy()
 		}
 	}
 
@@ -202,7 +202,7 @@ func SyncConfig() (err error) {
 
 		curMod = mod
 
-		ipsec.ReDeploy()
+		ipsec.Redeploy()
 	}
 
 	return
