@@ -169,12 +169,7 @@ func deploy(states []*state.State) (err error) {
 		return
 	}
 
-	err = utils.Exec("", "ipsec", "start")
-	if err != nil {
-		return
-	}
-
-	err = utils.Exec("", "ipsec", "reload")
+	err = utils.Exec("", "ipsec", "restart")
 	if err != nil {
 		return
 	}
