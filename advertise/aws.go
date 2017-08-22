@@ -8,9 +8,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/routes"
-	"github.com/pritunl/pritunl-link/constants"
+	"strings"
 	"time"
 )
 
@@ -22,9 +23,10 @@ type awsMetaData struct {
 }
 
 type awsRoute struct {
-	DestinationCidrBlock string
-	InstanceId           string
-	NetworkInterfaceId   string
+	DestinationCidrBlock     string
+	DestinationIpv6CidrBlock string
+	InstanceId               string
+	NetworkInterfaceId       string
 }
 
 func awsGetSession(region string) (sess *session.Session, err error) {
@@ -157,6 +159,11 @@ func awsGetRouteTables(region, vpcId string) (
 				destinationCidrBlock = *route.DestinationCidrBlock
 			}
 
+			destinationIpv6CidrBlock := ""
+			if route.DestinationIpv6CidrBlock != nil {
+				destinationIpv6CidrBlock = *route.DestinationIpv6CidrBlock
+			}
+
 			instanceId := ""
 			if route.InstanceId != nil {
 				instanceId = *route.InstanceId
@@ -168,9 +175,10 @@ func awsGetRouteTables(region, vpcId string) (
 			}
 
 			rte := &awsRoute{
-				DestinationCidrBlock: destinationCidrBlock,
-				InstanceId:           instanceId,
-				NetworkInterfaceId:   networkInterfaceId,
+				DestinationCidrBlock:     destinationCidrBlock,
+				DestinationIpv6CidrBlock: destinationIpv6CidrBlock,
+				InstanceId:               instanceId,
+				NetworkInterfaceId:       networkInterfaceId,
 			}
 
 			rtes = append(rtes, rte)
@@ -193,6 +201,8 @@ func awsGetRouteTables(region, vpcId string) (
 
 func AwsAddRoute(network string) (err error) {
 	time.Sleep(150 * time.Millisecond)
+
+	ipv6 := strings.Contains(network, ":")
 
 	if constants.Interrupt {
 		err = &errortypes.UnknownError{
@@ -223,9 +233,16 @@ func AwsAddRoute(network string) (err error) {
 		replace := false
 
 		for _, route := range rtes {
-			if route.DestinationCidrBlock != network {
-				continue
+			if ipv6 {
+				if route.DestinationIpv6CidrBlock != network {
+					continue
+				}
+			} else {
+				if route.DestinationCidrBlock != network {
+					continue
+				}
 			}
+
 			exists = true
 
 			if data.InterfaceId != "" {
@@ -254,7 +271,11 @@ func AwsAddRoute(network string) (err error) {
 				input.SetInstanceId(data.InstanceId)
 			}
 
-			input.SetDestinationCidrBlock(network)
+			if ipv6 {
+				input.SetDestinationIpv6CidrBlock(network)
+			} else {
+				input.SetDestinationCidrBlock(network)
+			}
 			input.SetRouteTableId(tableId)
 
 			_, err = ec2Svc.ReplaceRoute(input)
@@ -280,7 +301,11 @@ func AwsAddRoute(network string) (err error) {
 			}
 		} else {
 			input := &ec2.CreateRouteInput{}
-			input.SetDestinationCidrBlock(network)
+			if ipv6 {
+				input.SetDestinationIpv6CidrBlock(network)
+			} else {
+				input.SetDestinationCidrBlock(network)
+			}
 			input.SetRouteTableId(tableId)
 
 			if data.InterfaceId != "" {
@@ -299,7 +324,11 @@ func AwsAddRoute(network string) (err error) {
 					input.SetInstanceId(data.InstanceId)
 				}
 
-				input.SetDestinationCidrBlock(network)
+				if ipv6 {
+					input.SetDestinationIpv6CidrBlock(network)
+				} else {
+					input.SetDestinationCidrBlock(network)
+				}
 				input.SetRouteTableId(tableId)
 
 				_, err = ec2Svc.ReplaceRoute(input)
@@ -333,6 +362,8 @@ func AwsDeleteRoute(route *routes.AwsRoute) (err error) {
 	if config.Config.DeleteRoutes {
 		time.Sleep(150 * time.Millisecond)
 
+		ipv6 := strings.Contains(route.DestNetwork, ":")
+
 		if constants.Interrupt {
 			err = &errortypes.UnknownError{
 				errors.Wrap(err, "advertise: Interrupt"),
@@ -357,7 +388,11 @@ func AwsDeleteRoute(route *routes.AwsRoute) (err error) {
 		for tableId := range tables {
 			input := &ec2.DeleteRouteInput{}
 
-			input.SetDestinationCidrBlock(route.DestNetwork)
+			if ipv6 {
+				input.SetDestinationIpv6CidrBlock(route.DestNetwork)
+			} else {
+				input.SetDestinationCidrBlock(route.DestNetwork)
+			}
 			input.SetRouteTableId(tableId)
 
 			ec2Svc.DeleteRoute(input)
