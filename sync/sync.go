@@ -67,6 +67,8 @@ func SyncLocalAddress(redeploy bool) (err error) {
 		return
 	}
 
+	changed := false
+
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		err = &errortypes.ReadError{
@@ -78,16 +80,35 @@ func SyncLocalAddress(redeploy bool) (err error) {
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				changed := state.LocalAddress != ipnet.IP.String()
+				if state.LocalAddress != ipnet.IP.String() {
+					changed = true
+				}
 				state.LocalAddress = ipnet.IP.String()
 
 				if changed && redeploy {
 					ipsec.Redeploy()
 				}
 
-				return
+				break
 			}
 		}
+	}
+
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() == nil {
+				if state.Address6 != ipnet.IP.String() {
+					changed = true
+				}
+				state.Address6 = ipnet.IP.String()
+
+				break
+			}
+		}
+	}
+
+	if changed && redeploy {
+		ipsec.Redeploy()
 	}
 
 	return
