@@ -46,6 +46,7 @@ var (
 type stateData struct {
 	Version       string            `json:"version"`
 	PublicAddress string            `json:"public_address"`
+	Address6      string            `json:"address6"`
 	Status        map[string]string `json:"status"`
 	Errors        []string          `json:"errors"`
 }
@@ -148,6 +149,7 @@ func GetState(uri string) (state *State, err error) {
 	data := &stateData{
 		Version:       constants.Version,
 		PublicAddress: GetPublicAddress(),
+		Address6:      GetAddress6(),
 		Status:        Status[uriData.User.Username()],
 	}
 	dataBuf := &bytes.Buffer{}
