@@ -41,6 +41,7 @@ type ConfigData struct {
 	Provider                   string     `json:"provider"`
 	PublicAddress              string     `json:"public_address"`
 	LocalAddress               string     `json:"local_address"`
+	Address6                   string     `json:"address6"`
 	Uris                       []string   `json:"uris"`
 	SkipVerify                 bool       `json:"skip_verify"`
 	DeleteRoutes               bool       `json:"delete_routes"`

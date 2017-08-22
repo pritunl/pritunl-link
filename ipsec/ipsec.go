@@ -208,6 +208,7 @@ func update(states []*state.State) (err error) {
 	logrus.WithFields(logrus.Fields{
 		"local_address":  state.GetLocalAddress(),
 		"public_address": state.GetPublicAddress(),
+		"address6":       state.GetAddress6(),
 	}).Info("state: Update advertisement")
 
 	err = advertise.Ports(states)
@@ -260,6 +261,7 @@ func runDeploy() {
 					logrus.WithFields(logrus.Fields{
 						"local_address":  state.GetLocalAddress(),
 						"public_address": state.GetPublicAddress(),
+						"address6":       state.GetAddress6(),
 					}).Info("state: Deploying state")
 
 					err := deploy(states)
