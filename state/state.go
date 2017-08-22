@@ -7,6 +7,7 @@ import (
 var (
 	LocalAddress  = ""
 	PublicAddress = ""
+	Address6      = ""
 	Status        = map[string]map[string]string{}
 )
 
@@ -38,4 +39,12 @@ func GetPublicAddress() string {
 		return addr
 	}
 	return PublicAddress
+}
+
+func GetAddress6() string {
+	addr := config.Config.Address6
+	if addr != "" {
+		return addr
+	}
+	return Address6
 }
