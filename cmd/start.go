@@ -19,7 +19,7 @@ func Start() (err error) {
 	sync.Init()
 
 	sig := make(chan os.Signal, 2)
-	signal.Notify(sig, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 	<-sig
 
 	constants.Interrupt = true
