@@ -82,6 +82,7 @@ elif cmd == 'build' or cmd == 'build-test':
                 'pkgver="(.*)"',
                 'pkgver="%s"' % cur_version,
                 pkgbuild_file.read(),
+                count=1,
             )
 
         with open(pkgbuild_path, 'w') as pkgbuild_file:
