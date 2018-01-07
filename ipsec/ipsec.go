@@ -62,6 +62,14 @@ func writeConf() (err error) {
 	data := fmt.Sprintf("include %s/*.conf", constants.IpsecDirPath)
 
 	pth := path.Join(constants.IpsecConfPath)
+
+	curData, _ := ioutil.ReadFile(pth)
+	if curData != nil {
+		if strings.Contains(string(curData), data) {
+			return
+		}
+	}
+
 	err = ioutil.WriteFile(pth, []byte(data), 0644)
 	if err != nil {
 		err = errortypes.WriteError{
