@@ -149,7 +149,7 @@ func writeTemplates(states []*state.State) (err error) {
 				)
 			}
 
-			err = utils.ExecSilent(
+			err = utils.Exec(
 				"",
 				"iptables",
 				"-t", "nat",
@@ -163,7 +163,7 @@ func writeTemplates(states []*state.State) (err error) {
 			if err != nil {
 				return
 			}
-			err = utils.ExecSilent(
+			err = utils.Exec(
 				"",
 				"iptables",
 				"-t", "nat",
@@ -177,7 +177,7 @@ func writeTemplates(states []*state.State) (err error) {
 			if err != nil {
 				return
 			}
-			err = utils.ExecSilent(
+			err = utils.Exec(
 				"",
 				"iptables",
 				"-t", "nat",
@@ -191,7 +191,7 @@ func writeTemplates(states []*state.State) (err error) {
 			if err != nil {
 				return
 			}
-			err = utils.ExecSilent(
+			err = utils.Exec(
 				"",
 				"iptables",
 				"-t", "nat",
@@ -206,7 +206,7 @@ func writeTemplates(states []*state.State) (err error) {
 				return
 			}
 
-			err = utils.ExecSilent(
+			err = utils.Exec(
 				"",
 				"iptables",
 				"-t", "nat",
@@ -218,7 +218,7 @@ func writeTemplates(states []*state.State) (err error) {
 			if err != nil {
 				return
 			}
-			err = utils.ExecSilent(
+			err = utils.Exec(
 				"",
 				"iptables",
 				"-t", "nat",
@@ -231,7 +231,7 @@ func writeTemplates(states []*state.State) (err error) {
 				return
 			}
 
-			err = utils.ExecSilent(
+			err = utils.Exec(
 				"",
 				"iptables",
 				"-t", "nat",
@@ -243,7 +243,7 @@ func writeTemplates(states []*state.State) (err error) {
 			if err != nil {
 				return
 			}
-			err = utils.ExecSilent(
+			err = utils.Exec(
 				"",
 				"iptables",
 				"-t", "mangle",
