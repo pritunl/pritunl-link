@@ -121,6 +121,145 @@ func writeTemplates(states []*state.State) (err error) {
 			}
 		}
 
+		if stat.Type == state.DirectServer {
+			clientLocal := ""
+			if len(stat.Links) > 0 && len(stat.Links[0].RightSubnets) > 0 {
+				clientLocal = stat.Links[0].RightSubnets[0]
+			}
+
+			// TODO
+			for i := 0; i < 10; i++ {
+				utils.ExecSilent(
+					"",
+					"iptables",
+					"-t", "nat",
+					"-D", "PREROUTING", "1",
+				)
+				utils.ExecSilent(
+					"",
+					"iptables",
+					"-t", "nat",
+					"-D", "POSTROUTING", "1",
+				)
+				utils.ExecSilent(
+					"",
+					"iptables",
+					"-t", "mangle",
+					"-D", "FORWARD", "1",
+				)
+			}
+
+			err = utils.ExecSilent(
+				"",
+				"iptables",
+				"-t", "nat",
+				"-A", "PREROUTING",
+				"-d", state.GetLocalAddress(),
+				"-p", "udp",
+				"-m", "udp",
+				"--dport", "500",
+				"-j", "ACCEPT",
+			)
+			if err != nil {
+				return
+			}
+			err = utils.ExecSilent(
+				"",
+				"iptables",
+				"-t", "nat",
+				"-A", "PREROUTING",
+				"-d", state.GetLocalAddress(),
+				"-p", "udp",
+				"-m", "udp",
+				"--dport", "4500",
+				"-j", "ACCEPT",
+			)
+			if err != nil {
+				return
+			}
+			err = utils.ExecSilent(
+				"",
+				"iptables",
+				"-t", "nat",
+				"-A", "PREROUTING",
+				"-d", state.GetPublicAddress(),
+				"-p", "udp",
+				"-m", "udp",
+				"--dport", "500",
+				"-j", "ACCEPT",
+			)
+			if err != nil {
+				return
+			}
+			err = utils.ExecSilent(
+				"",
+				"iptables",
+				"-t", "nat",
+				"-A", "PREROUTING",
+				"-d", state.GetPublicAddress(),
+				"-p", "udp",
+				"-m", "udp",
+				"--dport", "4500",
+				"-j", "ACCEPT",
+			)
+			if err != nil {
+				return
+			}
+
+			err = utils.ExecSilent(
+				"",
+				"iptables",
+				"-t", "nat",
+				"-A", "PREROUTING",
+				"-d", state.GetLocalAddress(),
+				"-j", "DNAT",
+				"--to-destination", clientLocal,
+			)
+			if err != nil {
+				return
+			}
+			err = utils.ExecSilent(
+				"",
+				"iptables",
+				"-t", "nat",
+				"-A", "PREROUTING",
+				"-d", state.GetPublicAddress(),
+				"-j", "DNAT",
+				"--to-destination", clientLocal,
+			)
+			if err != nil {
+				return
+			}
+
+			err = utils.ExecSilent(
+				"",
+				"iptables",
+				"-t", "nat",
+				"-A", "POSTROUTING",
+				"-s", clientLocal,
+				"-o", "eth0", // TODO
+				"-j", "MASQUERADE",
+			)
+			if err != nil {
+				return
+			}
+			err = utils.ExecSilent(
+				"",
+				"iptables",
+				"-t", "mangle",
+				"-A", "FORWARD",
+				"-s", clientLocal,
+				"-p", "tcp",
+				"-m", "tcp",
+				"--tcp-flags", "SYN,RST SYN",
+				"-j", "TCPMSS",
+				"--set-mss", "1320",
+			)
+			if err != nil {
+				return
+			}
+		}
+
 		pth := path.Join(constants.IpsecDirPath,
 			fmt.Sprintf("%s.conf", stat.Id))
 		err = ioutil.WriteFile(pth, confBuf.Bytes(), 0644)
