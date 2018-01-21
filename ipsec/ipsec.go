@@ -122,10 +122,11 @@ func writeTemplates(states []*state.State) (err error) {
 		}
 
 		if stat.Type == state.DirectServer {
-			clientLocal := ""
+			clientLocalNet := ""
 			if len(stat.Links) > 0 && len(stat.Links[0].RightSubnets) > 0 {
-				clientLocal = stat.Links[0].RightSubnets[0]
+				clientLocalNet = stat.Links[0].RightSubnets[0]
 			}
+			clientLocal := strings.SplitN(clientLocalNet, "/", 2)[0]
 
 			// TODO
 			for i := 0; i < 10; i++ {
@@ -236,7 +237,7 @@ func writeTemplates(states []*state.State) (err error) {
 				"iptables",
 				"-t", "nat",
 				"-A", "POSTROUTING",
-				"-s", clientLocal,
+				"-s", clientLocalNet,
 				"-o", "eth0", // TODO
 				"-j", "MASQUERADE",
 			)
@@ -248,7 +249,7 @@ func writeTemplates(states []*state.State) (err error) {
 				"iptables",
 				"-t", "mangle",
 				"-A", "FORWARD",
-				"-s", clientLocal,
+				"-s", clientLocalNet,
 				"-p", "tcp",
 				"-m", "tcp",
 				"--tcp-flags", "SYN,RST SYN",
