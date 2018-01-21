@@ -252,7 +252,7 @@ func writeTemplates(states []*state.State) (err error) {
 				"-s", clientLocalNet,
 				"-p", "tcp",
 				"-m", "tcp",
-				"--tcp-flags", "SYN,RST SYN",
+				"--tcp-flags", "SYN,RST", "SYN",
 				"-j", "TCPMSS",
 				"--set-mss", "1320",
 			)
