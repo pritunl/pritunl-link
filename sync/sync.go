@@ -131,7 +131,7 @@ func runSyncLocalAddress() {
 }
 
 func SyncPublicAddress(redeploy bool) (err error) {
-	if constants.Interrupt {
+	if constants.Interrupt || state.IsDirectClient {
 		return
 	}
 
