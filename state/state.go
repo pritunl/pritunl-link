@@ -5,10 +5,11 @@ import (
 )
 
 var (
-	LocalAddress  = ""
-	PublicAddress = ""
-	Address6      = ""
-	Status        = map[string]map[string]string{}
+	LocalAddress   = ""
+	PublicAddress  = ""
+	Address6       = ""
+	Status         = map[string]map[string]string{}
+	IsDirectClient = false
 )
 
 type State struct {

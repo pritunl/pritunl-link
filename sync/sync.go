@@ -39,6 +39,10 @@ func SyncStates() {
 
 	total := 0
 	for _, stat := range states {
+		if stat.Type == state.DirectClient {
+			state.IsDirectClient = true
+		}
+
 		total += len(stat.Links)
 		io.WriteString(hsh, stat.Hash)
 	}
