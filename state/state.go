@@ -13,6 +13,7 @@ var (
 
 type State struct {
 	Id     string  `json:"id"`
+	Type   string  `json:"type"`
 	Secret string  `json:"-"`
 	Hash   string  `json:"hash"`
 	Links  []*Link `json:"links"`
