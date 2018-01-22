@@ -292,6 +292,13 @@ func deploy(states []*state.State) (err error) {
 		return
 	}
 
+	for _, stat := range states {
+		if stat.Type == state.DirectClient {
+			state.IsDirectClient = true
+			break
+		}
+	}
+
 	err = utils.NetInit()
 	if err != nil {
 		return
@@ -325,6 +332,18 @@ func deploy(states []*state.State) (err error) {
 	err = advertise.Routes(states)
 	if err != nil {
 		return
+	}
+
+	isDirectClient := false
+	for _, stat := range states {
+		if stat.Type == state.DirectClient {
+			isDirectClient = true
+			break
+		}
+	}
+
+	if isDirectClient {
+		state.IsDirectClient = isDirectClient
 	}
 
 	return
