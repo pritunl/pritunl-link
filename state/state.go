@@ -5,11 +5,12 @@ import (
 )
 
 var (
-	LocalAddress   = ""
-	PublicAddress  = ""
-	Address6       = ""
-	Status         = map[string]map[string]string{}
-	IsDirectClient = false
+	DefaultInterface = ""
+	LocalAddress     = ""
+	PublicAddress    = ""
+	Address6         = ""
+	Status           = map[string]map[string]string{}
+	IsDirectClient   = false
 )
 
 type State struct {
@@ -25,6 +26,14 @@ type Link struct {
 	Right        string   `json:"right"`
 	LeftSubnets  []string `json:"left_subnets"`
 	RightSubnets []string `json:"right_subnets"`
+}
+
+func GetDefaultInterface() string {
+	addr := config.Config.LocalAddress
+	if addr != "" {
+		return addr
+	}
+	return LocalAddress
 }
 
 func GetLocalAddress() string {
