@@ -394,12 +394,6 @@ func update(states []*state.State) (err error) {
 		return
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"local_address":  state.GetLocalAddress(),
-		"public_address": state.GetPublicAddress(),
-		"address6":       state.GetAddress6(),
-	}).Info("state: Update advertisement")
-
 	err = advertise.Ports(states)
 	if err != nil {
 		return
