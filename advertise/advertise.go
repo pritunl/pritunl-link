@@ -24,6 +24,11 @@ func Routes(states []*state.State) (err error) {
 	networks := []string{}
 
 	for _, stat := range states {
+		if stat.Type == state.DirectClient ||
+			stat.Type == state.DirectServer {
+
+			continue
+		}
 		for _, link := range stat.Links {
 			for _, network := range link.RightSubnets {
 				networks = append(networks, network)
