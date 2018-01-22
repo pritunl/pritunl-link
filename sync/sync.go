@@ -12,9 +12,11 @@ import (
 	"github.com/pritunl/pritunl-link/ipsec"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/status"
+	"github.com/pritunl/pritunl-link/utils"
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -59,6 +61,59 @@ func runSyncStates() {
 	for {
 		time.Sleep(1 * time.Second)
 		SyncStates()
+		fmt.Println(state.Status)
+	}
+}
+
+func SyncDefaultIface(redeploy bool) (err error) {
+	output, err := utils.ExecCombinedOutput("", "route", "-n")
+	if err != nil {
+		return
+	}
+
+	defaultIface := ""
+	outputLines := strings.Split(output, "\n")
+	for _, line := range outputLines {
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		if fields[0] == "0.0.0.0" {
+			defaultIface = strings.TrimSpace(fields[len(fields)-1])
+		}
+	}
+
+	if defaultIface != "" {
+		curDefaultIface := state.DefaultInterface
+		state.DefaultInterface = defaultIface
+
+		if curDefaultIface != defaultIface && redeploy {
+			logrus.WithFields(logrus.Fields{
+				"old_default_interface": curDefaultIface,
+				"default_interface":     defaultIface,
+			}).Info("sync: Default interface changed redeploying")
+
+			ipsec.Redeploy()
+		}
+	} else {
+		logrus.WithFields(logrus.Fields{
+			"output": output,
+		}).Warn("sync: Failed to find default interface")
+	}
+
+	return
+}
+
+func runSyncDefaultIface() {
+	for {
+		time.Sleep(5 * time.Second)
+		err := SyncDefaultIface(true)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err,
+			}).Info("sync: Failed to get default interface")
+		}
 	}
 }
 
@@ -245,9 +300,11 @@ func runSyncConfig() {
 }
 
 func Init() {
+	SyncDefaultIface(false)
 	SyncLocalAddress(false)
 	SyncPublicAddress(false)
 	SyncStates()
+	go runSyncDefaultIface()
 	go runSyncLocalAddress()
 	go runSyncPublicAddress()
 	go runSyncStates()
