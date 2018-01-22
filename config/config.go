@@ -39,6 +39,7 @@ type UnifiData struct {
 type ConfigData struct {
 	loaded                     bool       `json:"-"`
 	Provider                   string     `json:"provider"`
+	DefaultInterface           string     `json:"default_interface"`
 	PublicAddress              string     `json:"public_address"`
 	LocalAddress               string     `json:"local_address"`
 	Address6                   string     `json:"address6"`
