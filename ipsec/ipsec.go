@@ -126,7 +126,24 @@ func writeTemplates(states []*state.State) (err error) {
 			if len(stat.Links) > 0 && len(stat.Links[0].RightSubnets) > 0 {
 				clientLocalNet = stat.Links[0].RightSubnets[0]
 			}
+
 			clientLocal := strings.SplitN(clientLocalNet, "/", 2)[0]
+			localAddress := state.GetLocalAddress()
+			publicAddress := state.GetPublicAddress()
+			defaultIface := state.GetDefaultInterface()
+
+			if clientLocal == "" || localAddress == "" ||
+				publicAddress == "" || defaultIface == "" {
+
+				logrus.WithFields(logrus.Fields{
+					"client_local_address": clientLocal,
+					"local_address":        localAddress,
+					"public_address":       publicAddress,
+					"default_interface":    defaultIface,
+				}).Warn("ipsec: Missing required values for deploy")
+
+				continue
+			}
 
 			// TODO
 			for i := 0; i < 10; i++ {
@@ -155,7 +172,7 @@ func writeTemplates(states []*state.State) (err error) {
 				"iptables",
 				"-t", "nat",
 				"-A", "PREROUTING",
-				"-d", state.GetLocalAddress(),
+				"-d", localAddress,
 				"-p", "udp",
 				"-m", "udp",
 				"--dport", "500",
@@ -169,7 +186,7 @@ func writeTemplates(states []*state.State) (err error) {
 				"iptables",
 				"-t", "nat",
 				"-A", "PREROUTING",
-				"-d", state.GetLocalAddress(),
+				"-d", localAddress,
 				"-p", "udp",
 				"-m", "udp",
 				"--dport", "4500",
@@ -183,7 +200,7 @@ func writeTemplates(states []*state.State) (err error) {
 				"iptables",
 				"-t", "nat",
 				"-A", "PREROUTING",
-				"-d", state.GetPublicAddress(),
+				"-d", publicAddress,
 				"-p", "udp",
 				"-m", "udp",
 				"--dport", "500",
@@ -197,7 +214,7 @@ func writeTemplates(states []*state.State) (err error) {
 				"iptables",
 				"-t", "nat",
 				"-A", "PREROUTING",
-				"-d", state.GetPublicAddress(),
+				"-d", publicAddress,
 				"-p", "udp",
 				"-m", "udp",
 				"--dport", "4500",
@@ -212,7 +229,7 @@ func writeTemplates(states []*state.State) (err error) {
 				"iptables",
 				"-t", "nat",
 				"-A", "PREROUTING",
-				"-d", state.GetLocalAddress(),
+				"-d", localAddress,
 				"-j", "DNAT",
 				"--to-destination", clientLocal,
 			)
@@ -224,7 +241,7 @@ func writeTemplates(states []*state.State) (err error) {
 				"iptables",
 				"-t", "nat",
 				"-A", "PREROUTING",
-				"-d", state.GetPublicAddress(),
+				"-d", publicAddress,
 				"-j", "DNAT",
 				"--to-destination", clientLocal,
 			)
@@ -238,7 +255,7 @@ func writeTemplates(states []*state.State) (err error) {
 				"-t", "nat",
 				"-A", "POSTROUTING",
 				"-s", clientLocalNet,
-				"-o", "eth0", // TODO
+				"-o", defaultIface,
 				"-j", "MASQUERADE",
 			)
 			if err != nil {
