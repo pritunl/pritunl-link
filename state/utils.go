@@ -17,6 +17,7 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/pritunl/pritunl-link/iptables"
 	"github.com/pritunl/pritunl-link/utils"
 	"io/ioutil"
 	"net/http"
@@ -373,6 +374,8 @@ func cleanup(uri string) (err error) {
 
 func CleanUp() {
 	uris := config.Config.Uris
+
+	iptables.ClearIpTables()
 
 	for _, uri := range uris {
 		go cleanup(uri)
