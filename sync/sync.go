@@ -172,7 +172,7 @@ func SyncPublicAddress(redeploy bool) (err error) {
 		return
 	}
 
-	if data.Ip != "" {
+	if data.Ip != "" && !state.IsDirectClient {
 		changed := state.PublicAddress != data.Ip
 		state.PublicAddress = data.Ip
 
