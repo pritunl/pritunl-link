@@ -442,9 +442,10 @@ func runDeploy() {
 					update(states)
 				} else {
 					logrus.WithFields(logrus.Fields{
-						"local_address":  state.GetLocalAddress(),
-						"public_address": state.GetPublicAddress(),
-						"address6":       state.GetAddress6(),
+						"default_interface": state.GetDefaultInterface(),
+						"local_address":     state.GetLocalAddress(),
+						"public_address":    state.GetPublicAddress(),
+						"address6":          state.GetAddress6(),
 					}).Info("state: Deploying state")
 
 					err := deploy(states)
