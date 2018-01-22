@@ -9,6 +9,7 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/pritunl/pritunl-link/iptables"
 	"github.com/pritunl/pritunl-link/requires"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
@@ -36,6 +37,144 @@ type templateData struct {
 	Right        string
 	RightSubnets string
 	PreSharedKey string
+}
+
+func putIpTables(stat *state.State) (err error) {
+	clientLocalNet := ""
+	if len(stat.Links) > 0 && len(stat.Links[0].RightSubnets) > 0 {
+		clientLocalNet = stat.Links[0].RightSubnets[0]
+	}
+
+	clientLocal := strings.SplitN(clientLocalNet, "/", 2)[0]
+	localAddress := state.GetLocalAddress()
+	publicAddress := state.GetPublicAddress()
+	defaultIface := state.GetDefaultInterface()
+
+	if clientLocal == "" || localAddress == "" ||
+		publicAddress == "" || defaultIface == "" {
+
+		logrus.WithFields(logrus.Fields{
+			"client_local_address": clientLocal,
+			"local_address":        localAddress,
+			"public_address":       publicAddress,
+			"default_interface":    defaultIface,
+		}).Warn("ipsec: Missing required values for iptables")
+
+		return
+	}
+
+	err = iptables.UpsertRule(
+		"nat",
+		"PREROUTING",
+		"-d", localAddress,
+		"-p", "udp",
+		"-m", "udp",
+		"--dport", "500",
+		"-j", "ACCEPT",
+		"-m", "comment",
+		"--comment", "pritunl-zero",
+	)
+	if err != nil {
+		return
+	}
+	err = iptables.UpsertRule(
+		"nat",
+		"PREROUTING",
+		"-d", localAddress,
+		"-p", "udp",
+		"-m", "udp",
+		"--dport", "4500",
+		"-j", "ACCEPT",
+		"-m", "comment",
+		"--comment", "pritunl-zero",
+	)
+	if err != nil {
+		return
+	}
+	err = iptables.UpsertRule(
+		"nat",
+		"PREROUTING",
+		"-d", publicAddress,
+		"-p", "udp",
+		"-m", "udp",
+		"--dport", "500",
+		"-j", "ACCEPT",
+		"-m", "comment",
+		"--comment", "pritunl-zero",
+	)
+	if err != nil {
+		return
+	}
+	err = iptables.UpsertRule(
+		"nat",
+		"PREROUTING",
+		"-d", publicAddress,
+		"-p", "udp",
+		"-m", "udp",
+		"--dport", "4500",
+		"-j", "ACCEPT",
+		"-m", "comment",
+		"--comment", "pritunl-zero",
+	)
+	if err != nil {
+		return
+	}
+
+	err = iptables.UpsertRule(
+		"nat",
+		"PREROUTING",
+		"-d", localAddress,
+		"-j", "DNAT",
+		"--to-destination", clientLocal,
+		"-m", "comment",
+		"--comment", "pritunl-zero",
+	)
+	if err != nil {
+		return
+	}
+	err = iptables.UpsertRule(
+		"nat",
+		"PREROUTING",
+		"-d", publicAddress,
+		"-j", "DNAT",
+		"--to-destination", clientLocal,
+		"-m", "comment",
+		"--comment", "pritunl-zero",
+	)
+	if err != nil {
+		return
+	}
+
+	err = iptables.UpsertRule(
+		"nat",
+		"POSTROUTING",
+		"-s", clientLocalNet,
+		"-o", defaultIface,
+		"-j", "MASQUERADE",
+		"-m", "comment",
+		"--comment", "pritunl-zero",
+	)
+	if err != nil {
+		return
+	}
+
+	err = iptables.UpsertRule(
+		"mangle",
+		"FORWARD",
+		"-s", clientLocalNet,
+		"-p", "tcp",
+		"-m", "tcp",
+		"--tcp-flags", "SYN,RST", "SYN",
+		"-j", "TCPMSS",
+		"--set-mss", "1320",
+		"-m", "comment",
+		"--comment", "pritunl-zero",
+	)
+	if err != nil {
+		return
+	}
+
+	return
 }
 
 func clearDir() (err error) {
@@ -89,6 +228,8 @@ func writeTemplates(states []*state.State) (err error) {
 		return
 	}
 
+	iptablesState := false
+
 	for _, stat := range states {
 		confBuf := &bytes.Buffer{}
 
@@ -121,158 +262,10 @@ func writeTemplates(states []*state.State) (err error) {
 			}
 		}
 
-		if stat.Type == state.DirectServer {
-			clientLocalNet := ""
-			if len(stat.Links) > 0 && len(stat.Links[0].RightSubnets) > 0 {
-				clientLocalNet = stat.Links[0].RightSubnets[0]
-			}
+		if stat.Type == state.DirectServer && len(stat.Links) != 0 {
+			iptablesState = true
 
-			clientLocal := strings.SplitN(clientLocalNet, "/", 2)[0]
-			localAddress := state.GetLocalAddress()
-			publicAddress := state.GetPublicAddress()
-			defaultIface := state.GetDefaultInterface()
-
-			if clientLocal == "" || localAddress == "" ||
-				publicAddress == "" || defaultIface == "" {
-
-				logrus.WithFields(logrus.Fields{
-					"client_local_address": clientLocal,
-					"local_address":        localAddress,
-					"public_address":       publicAddress,
-					"default_interface":    defaultIface,
-				}).Warn("ipsec: Missing required values for deploy")
-
-				continue
-			}
-
-			// TODO
-			for i := 0; i < 10; i++ {
-				utils.ExecSilent(
-					"",
-					"iptables",
-					"-t", "nat",
-					"-D", "PREROUTING", "1",
-				)
-				utils.ExecSilent(
-					"",
-					"iptables",
-					"-t", "nat",
-					"-D", "POSTROUTING", "1",
-				)
-				utils.ExecSilent(
-					"",
-					"iptables",
-					"-t", "mangle",
-					"-D", "FORWARD", "1",
-				)
-			}
-
-			err = utils.Exec(
-				"",
-				"iptables",
-				"-t", "nat",
-				"-A", "PREROUTING",
-				"-d", localAddress,
-				"-p", "udp",
-				"-m", "udp",
-				"--dport", "500",
-				"-j", "ACCEPT",
-			)
-			if err != nil {
-				return
-			}
-			err = utils.Exec(
-				"",
-				"iptables",
-				"-t", "nat",
-				"-A", "PREROUTING",
-				"-d", localAddress,
-				"-p", "udp",
-				"-m", "udp",
-				"--dport", "4500",
-				"-j", "ACCEPT",
-			)
-			if err != nil {
-				return
-			}
-			err = utils.Exec(
-				"",
-				"iptables",
-				"-t", "nat",
-				"-A", "PREROUTING",
-				"-d", publicAddress,
-				"-p", "udp",
-				"-m", "udp",
-				"--dport", "500",
-				"-j", "ACCEPT",
-			)
-			if err != nil {
-				return
-			}
-			err = utils.Exec(
-				"",
-				"iptables",
-				"-t", "nat",
-				"-A", "PREROUTING",
-				"-d", publicAddress,
-				"-p", "udp",
-				"-m", "udp",
-				"--dport", "4500",
-				"-j", "ACCEPT",
-			)
-			if err != nil {
-				return
-			}
-
-			err = utils.Exec(
-				"",
-				"iptables",
-				"-t", "nat",
-				"-A", "PREROUTING",
-				"-d", localAddress,
-				"-j", "DNAT",
-				"--to-destination", clientLocal,
-			)
-			if err != nil {
-				return
-			}
-			err = utils.Exec(
-				"",
-				"iptables",
-				"-t", "nat",
-				"-A", "PREROUTING",
-				"-d", publicAddress,
-				"-j", "DNAT",
-				"--to-destination", clientLocal,
-			)
-			if err != nil {
-				return
-			}
-
-			err = utils.Exec(
-				"",
-				"iptables",
-				"-t", "nat",
-				"-A", "POSTROUTING",
-				"-s", clientLocalNet,
-				"-o", defaultIface,
-				"-j", "MASQUERADE",
-			)
-			if err != nil {
-				return
-			}
-			err = utils.Exec(
-				"",
-				"iptables",
-				"-t", "mangle",
-				"-A", "FORWARD",
-				"-s", clientLocalNet,
-				"-p", "tcp",
-				"-m", "tcp",
-				"--tcp-flags", "SYN,RST", "SYN",
-				"-j", "TCPMSS",
-				"--set-mss", "1320",
-			)
+			err = putIpTables(stat)
 			if err != nil {
 				return
 			}
@@ -298,6 +291,13 @@ func writeTemplates(states []*state.State) (err error) {
 		return
 	}
 
+	if !iptablesState {
+		err = iptables.ClearIpTables()
+		if err != nil {
+			return
+		}
+	}
+
 	return
 }
 
@@ -314,6 +314,11 @@ func deploy(states []*state.State) (err error) {
 			state.IsDirectClient = true
 			break
 		}
+	}
+
+	err = iptables.ClearIpTables()
+	if err != nil {
+		return
 	}
 
 	err = utils.NetInit()
