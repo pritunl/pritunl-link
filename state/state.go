@@ -29,11 +29,11 @@ type Link struct {
 }
 
 func GetDefaultInterface() string {
-	addr := config.Config.LocalAddress
+	addr := config.Config.DefaultInterface
 	if addr != "" {
 		return addr
 	}
-	return LocalAddress
+	return DefaultInterface
 }
 
 func GetLocalAddress() string {
