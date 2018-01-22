@@ -157,18 +157,18 @@ func SyncLocalAddress(redeploy bool) (err error) {
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() == nil {
-				localAddress6 := ipnet.IP.String()
-				curLocalAddress6 := state.Address6
+				address6 := ipnet.IP.String()
+				curAddress6 := state.Address6
 
-				if curLocalAddress6 != localAddress6 {
+				if curAddress6 != address6 {
 					changed = true
 				}
-				state.Address6 = localAddress6
+				state.Address6 = address6
 
 				if changed && redeploy {
 					logrus.WithFields(logrus.Fields{
-						"old_address6": curLocalAddress6,
-						"address6":     localAddress6,
+						"old_address6": curAddress6,
+						"address6":     address6,
 					}).Info("sync: Address6 changed redeploying")
 				}
 
