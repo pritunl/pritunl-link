@@ -135,13 +135,19 @@ func SyncLocalAddress(redeploy bool) (err error) {
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				if state.LocalAddress != ipnet.IP.String() {
+				localAddress := ipnet.IP.String()
+				curLocalAddress := state.LocalAddress
+
+				if curLocalAddress != localAddress {
 					changed = true
 				}
-				state.LocalAddress = ipnet.IP.String()
+				state.LocalAddress = localAddress
 
 				if changed && redeploy {
-					ipsec.Redeploy()
+					logrus.WithFields(logrus.Fields{
+						"old_local_address": curLocalAddress,
+						"local_address":     localAddress,
+					}).Info("sync: Local address changed redeploying")
 				}
 
 				break
@@ -152,10 +158,20 @@ func SyncLocalAddress(redeploy bool) (err error) {
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() == nil {
-				if state.Address6 != ipnet.IP.String() {
+				localAddress6 := ipnet.IP.String()
+				curLocalAddress6 := state.LocalAddress
+
+				if curLocalAddress6 != localAddress6 {
 					changed = true
 				}
-				state.Address6 = ipnet.IP.String()
+				state.Address6 = localAddress6
+
+				if changed && redeploy {
+					logrus.WithFields(logrus.Fields{
+						"old_local_address6": curLocalAddress6,
+						"local_address6":     localAddress6,
+					}).Info("sync: Local address6 changed redeploying")
+				}
 
 				break
 			}
@@ -228,10 +244,17 @@ func SyncPublicAddress(redeploy bool) (err error) {
 	}
 
 	if data.Ip != "" && !state.IsDirectClient {
-		changed := state.PublicAddress != data.Ip
-		state.PublicAddress = data.Ip
+		publicAddress := data.Ip
+		curPublicAddress := state.PublicAddress
 
-		if changed && redeploy {
+		state.PublicAddress = publicAddress
+
+		if curPublicAddress != publicAddress && redeploy {
+			logrus.WithFields(logrus.Fields{
+				"old_public_address": curPublicAddress,
+				"public_address":     publicAddress,
+			}).Info("sync: Public address changed redeploying")
+
 			ipsec.Redeploy()
 		}
 	}
