@@ -96,6 +96,27 @@ func ExecOutput(dir, name string, arg ...string) (output string, err error) {
 	return
 }
 
+func ExecCombinedOutput(dir, name string, arg ...string) (
+	output string, err error) {
+
+	cmd := exec.Command(name, arg...)
+
+	if dir != "" {
+		cmd.Dir = dir
+	}
+
+	outputByt, err := cmd.CombinedOutput()
+	if err != nil {
+		err = &errortypes.ExecError{
+			errors.Wrapf(err, "utils: Failed to exec '%s'", name),
+		}
+		return
+	}
+	output = string(outputByt)
+
+	return
+}
+
 func ExecSilent(dir, name string, arg ...string) (err error) {
 	cmd := exec.Command(name, arg...)
 	cmd.Stdout = ioutil.Discard
