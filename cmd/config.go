@@ -5,6 +5,21 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 )
 
+func DefaultInterface(iface string) (err error) {
+	config.Config.DefaultInterface = iface
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"default_interface": config.Config.DefaultInterface,
+	}).Info("cmd.config: Default interface set")
+
+	return
+}
+
 func LocalAddress(address string) (err error) {
 	config.Config.LocalAddress = address
 
