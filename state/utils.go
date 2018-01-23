@@ -29,6 +29,7 @@ import (
 
 var (
 	transport = &http.Transport{
+		DisableKeepAlives: true,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
@@ -38,6 +39,9 @@ var (
 		Timeout:   10 * time.Second,
 	}
 	clientSec = &http.Client{
+		Transport: &http.Transport{
+			DisableKeepAlives: true,
+		},
 		Timeout: 10 * time.Second,
 	}
 	stateCaches = map[string]*stateCache{}
