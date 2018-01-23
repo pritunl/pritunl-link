@@ -209,8 +209,15 @@ func GetState(uri string) (state *State, err error) {
 		client = clientSec
 	}
 
+	start := time.Now()
+
 	res, err := client.Do(req)
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"duration": time.Since(start),
+			"error":    err,
+		}).Warn("state: Request failed")
+
 		state = getStateCache(uri)
 		if state == nil {
 			err = &errortypes.RequestError{
