@@ -322,9 +322,21 @@ func runSyncConfig() {
 }
 
 func Init() {
-	SyncDefaultIface(false)
-	SyncLocalAddress(false)
-	SyncPublicAddress(false)
+	err := SyncDefaultIface(false)
+	if err != nil {
+		time.Sleep(6 * time.Second)
+		SyncDefaultIface(false)
+	}
+	err = SyncLocalAddress(false)
+	if err != nil {
+		time.Sleep(6 * time.Second)
+		SyncLocalAddress(false)
+	}
+	err = SyncPublicAddress(false)
+	if err != nil {
+		time.Sleep(8 * time.Second)
+		SyncPublicAddress(false)
+	}
 	SyncStates()
 	go runSyncDefaultIface()
 	go runSyncLocalAddress()
