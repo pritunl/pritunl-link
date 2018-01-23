@@ -310,7 +310,7 @@ func deploy(states []*state.State) (err error) {
 	}
 
 	for _, stat := range states {
-		if stat.Type == state.DirectClient {
+		if stat.Type == state.DirectClient && len(stat.Links) != 0 {
 			state.IsDirectClient = true
 			break
 		}
@@ -358,7 +358,7 @@ func deploy(states []*state.State) (err error) {
 
 	isDirectClient := false
 	for _, stat := range states {
-		if stat.Type == state.DirectClient {
+		if stat.Type == state.DirectClient && len(stat.Links) != 0 {
 			isDirectClient = true
 			break
 		}
