@@ -217,12 +217,14 @@ func GetState(uri string) (state *State, err error) {
 
 	res, err := client.Do(req)
 	if err != nil {
+		state = getStateCache(uri)
+
 		logrus.WithFields(logrus.Fields{
-			"duration": time.Since(start),
-			"error":    err,
+			"duration":  utils.ToFixed(time.Since(start).Seconds(), 2),
+			"has_cache": state != nil,
+			"error":     err,
 		}).Warn("state: Request failed")
 
-		state = getStateCache(uri)
 		if state == nil {
 			err = &errortypes.RequestError{
 				errors.Wrap(err, "state: Request put error"),
