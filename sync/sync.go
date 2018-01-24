@@ -324,17 +324,17 @@ func runSyncConfig() {
 func Init() {
 	err := SyncDefaultIface(false)
 	if err != nil {
-		time.Sleep(6 * time.Second)
+		time.Sleep(5 * time.Second)
 		SyncDefaultIface(false)
 	}
 	err = SyncLocalAddress(false)
 	if err != nil {
-		time.Sleep(6 * time.Second)
+		time.Sleep(5 * time.Second)
 		SyncLocalAddress(false)
 	}
 	err = SyncPublicAddress(false)
 	if err != nil {
-		time.Sleep(8 * time.Second)
+		time.Sleep(10 * time.Second)
 		SyncPublicAddress(false)
 	}
 	SyncStates()
