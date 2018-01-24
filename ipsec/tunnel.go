@@ -52,7 +52,7 @@ func StartTunnel(stat *state.State) (err error) {
 
 	err = utils.Exec("",
 		"ip", "addr",
-		"add", directAddr,
+		"add", directAddr+"/"+GetDirectCidr(),
 		"dev", DirectIface,
 	)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/utils"
 	"net"
+	"strings"
 )
 
 func GetDirectSubnet() (network *net.IPNet, err error) {
@@ -23,6 +24,17 @@ func GetDirectSubnet() (network *net.IPNet, err error) {
 	}
 
 	return
+}
+
+func GetDirectCidr() string {
+	networkStr := config.Config.DirectSubnet
+	if networkStr == "" {
+		networkStr = defaultDirectNetwork
+	}
+
+	networkSpl := strings.Split(networkStr, "/")
+
+	return networkSpl[len(networkSpl)-1]
 }
 
 func GetDirectServerIp() (ip net.IP, err error) {
