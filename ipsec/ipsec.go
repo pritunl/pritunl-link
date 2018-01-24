@@ -340,6 +340,11 @@ func deploy(states []*state.State) (err error) {
 			isDirect = true
 
 			if stat.Type == state.DirectClient {
+				err = StartTunnel(stat)
+				if err != nil {
+					return
+				}
+
 				state.DirectIpsecState = stat
 				break
 			}
@@ -347,6 +352,7 @@ func deploy(states []*state.State) (err error) {
 	}
 
 	if !isDirect {
+		StopTunnel()
 		state.DirectIpsecState = nil
 	}
 
