@@ -249,17 +249,11 @@ func writeTemplates(states []*state.State) (err error) {
 			leftSubnets := strings.Join(link.LeftSubnets, ",")
 			rightSubnets := strings.Join(link.RightSubnets, ",")
 
-			if stat.Type == state.DirectServer ||
-				stat.Type == state.DirectClient {
-
-				state.DirectIpsecId = stat.Id
-
-				if GetDirectMode() == DirectPolicy {
-					if stat.Type == state.DirectServer {
-						leftSubnets = "0.0.0.0/0"
-					} else if stat.Type == state.DirectClient {
-						rightSubnets = "0.0.0.0/0"
-					}
+			if GetDirectMode() == DirectPolicy {
+				if stat.Type == state.DirectServer {
+					leftSubnets = "0.0.0.0/0"
+				} else if stat.Type == state.DirectClient {
+					rightSubnets = "0.0.0.0/0"
 				}
 			}
 
@@ -346,14 +340,14 @@ func deploy(states []*state.State) (err error) {
 			isDirect = true
 
 			if stat.Type == state.DirectClient {
-				state.IsDirectClient = true
+				state.DirectIpsecState = stat
 				break
 			}
 		}
 	}
 
 	if !isDirect {
-		state.DirectIpsecId = ""
+		state.DirectIpsecState = nil
 	}
 
 	err = iptables.ClearIpTables()
@@ -403,10 +397,7 @@ func deploy(states []*state.State) (err error) {
 			break
 		}
 	}
-
-	if isDirectClient {
-		state.IsDirectClient = isDirectClient
-	}
+	state.IsDirectClient = isDirectClient
 
 	return
 }
@@ -544,5 +535,6 @@ func init() {
 	module.Handler = func() {
 		go runDeploy()
 		go runUpdateAdvertise()
+		go runRoutes()
 	}
 }
