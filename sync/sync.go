@@ -84,10 +84,10 @@ func SyncDefaultIface(redeploy bool) (err error) {
 	}
 
 	if defaultIface != "" {
-		curDefaultIface := state.DefaultInterface
+		curDefaultIface := state.GetDefaultInterface()
 		state.DefaultInterface = defaultIface
 
-		if curDefaultIface != defaultIface && redeploy {
+		if curDefaultIface != state.GetDefaultInterface() && redeploy {
 			logrus.WithFields(logrus.Fields{
 				"old_default_interface": curDefaultIface,
 				"default_interface":     defaultIface,
@@ -95,7 +95,7 @@ func SyncDefaultIface(redeploy bool) (err error) {
 
 			ipsec.Redeploy()
 		}
-	} else {
+	} else if config.Config.DefaultInterface == "" {
 		logrus.WithFields(logrus.Fields{
 			"output": output,
 		}).Warn("sync: Failed to find default interface")
