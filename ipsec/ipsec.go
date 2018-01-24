@@ -246,12 +246,23 @@ func writeTemplates(states []*state.State) (err error) {
 		confBuf := &bytes.Buffer{}
 
 		for i, link := range stat.Links {
+			leftSubnets := strings.Join(link.LeftSubnets, ",")
+			rightSubnets := strings.Join(link.RightSubnets, ",")
+
+			if GetDirectMode() == DirectPolicy {
+				if stat.Type == state.DirectServer {
+					leftSubnets = "0.0.0.0/0"
+				} else if stat.Type == state.DirectClient {
+					rightSubnets = "0.0.0.0/0"
+				}
+			}
+
 			data := &templateData{
 				Id:           fmt.Sprintf("%s-%d", stat.Id, i),
 				Left:         publicAddr,
-				LeftSubnets:  strings.Join(link.LeftSubnets, ","),
+				LeftSubnets:  leftSubnets,
 				Right:        link.Right,
-				RightSubnets: strings.Join(link.RightSubnets, ","),
+				RightSubnets: rightSubnets,
 				PreSharedKey: link.PreSharedKey,
 			}
 
