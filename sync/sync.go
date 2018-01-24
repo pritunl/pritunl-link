@@ -71,6 +71,7 @@ func SyncDefaultIface(redeploy bool) (err error) {
 	}
 
 	defaultIface := ""
+	defaultGateway := ""
 	outputLines := strings.Split(output, "\n")
 	for _, line := range outputLines {
 		fields := strings.Fields(line)
@@ -80,6 +81,7 @@ func SyncDefaultIface(redeploy bool) (err error) {
 
 		if fields[0] == "0.0.0.0" {
 			defaultIface = strings.TrimSpace(fields[len(fields)-1])
+			defaultGateway = strings.TrimSpace(fields[1])
 		}
 	}
 
@@ -90,7 +92,7 @@ func SyncDefaultIface(redeploy bool) (err error) {
 		if curDefaultIface != state.GetDefaultInterface() && redeploy {
 			logrus.WithFields(logrus.Fields{
 				"old_default_interface": curDefaultIface,
-				"default_interface":     defaultIface,
+				"default_interface":     state.GetDefaultGateway(),
 			}).Info("sync: Default interface changed redeploying")
 
 			ipsec.Redeploy()
@@ -99,6 +101,24 @@ func SyncDefaultIface(redeploy bool) (err error) {
 		logrus.WithFields(logrus.Fields{
 			"output": output,
 		}).Warn("sync: Failed to find default interface")
+	}
+
+	if defaultGateway != "" {
+		curDefaultGateway := state.GetDefaultGateway()
+		state.DefaultGateway = defaultGateway
+
+		if curDefaultGateway != state.GetDefaultGateway() && redeploy {
+			logrus.WithFields(logrus.Fields{
+				"old_default_gateway": curDefaultGateway,
+				"default_gateway":     state.GetDefaultGateway(),
+			}).Info("sync: Default gateway changed redeploying")
+
+			ipsec.Redeploy()
+		}
+	} else if config.Config.DefaultGateway == "" {
+		logrus.WithFields(logrus.Fields{
+			"output": output,
+		}).Warn("sync: Failed to find default gateway")
 	}
 
 	return
