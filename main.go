@@ -23,6 +23,8 @@ Commands:
   default-gateway           Manually set default gateaway
   local-address             Manually set local IP address
   public-address            Manually set public IP address
+  direct-ssh-on             Enable direct SSH
+  direct-ssh-off            Disable direct SSH
   verify-on                 Enable HTTPS certificate verification when connecting to Pritunl server
   verify-off                Disable HTTPS certificate verification when connecting to Pritunl server
   disconnected-timeout-on   Enable restart when disconnected for duration of timeout
@@ -109,6 +111,20 @@ func main() {
 	case "public-address":
 		Init()
 		err := cmd.PublicAddress(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "direct-ssh-on":
+		Init()
+		err := cmd.DirectSshOn()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "direct-ssh-off":
+		Init()
+		err := cmd.DirectSshOff()
 		if err != nil {
 			panic(err)
 		}

@@ -131,3 +131,29 @@ func AdvertiseUpdateOff() (err error) {
 
 	return
 }
+
+func DirectSshOn() (err error) {
+	config.Config.DirectSsh = true
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.Info("cmd.config: Direct SSH enabled")
+
+	return
+}
+
+func DirectSshOff() (err error) {
+	config.Config.DirectSsh = false
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.Info("cmd.config: Direct SSH disabled")
+
+	return
+}
