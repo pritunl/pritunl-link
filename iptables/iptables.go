@@ -58,3 +58,9 @@ func UpsertRule(table string, rule ...string) (err error) {
 
 	return
 }
+
+func DeleteRule(table string, rule ...string) {
+	args := []string{"-t", table, "-D"}
+	args = append(args, rule...)
+	utils.ExecSilent("", "iptables", args...)
+}
