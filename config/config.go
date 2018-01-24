@@ -40,6 +40,7 @@ type ConfigData struct {
 	loaded                     bool       `json:"-"`
 	Provider                   string     `json:"provider"`
 	DefaultInterface           string     `json:"default_interface"`
+	DefaultGateway             string     `json:"default_gateway"`
 	PublicAddress              string     `json:"public_address"`
 	LocalAddress               string     `json:"local_address"`
 	DirectSubnet               string     `json:"direct_subnet"`
