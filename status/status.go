@@ -1,23 +1,15 @@
 package status
 
 import (
-	"github.com/Sirupsen/logrus"
-	"github.com/pritunl/pritunl-link/config"
-	"github.com/pritunl/pritunl-link/constants"
-	"github.com/pritunl/pritunl-link/ipsec"
-	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
 	"strings"
-	"time"
 )
 
-var (
-	offlineTime time.Time
-)
+type Status map[string]map[string]string
 
-func Update(total int) (err error) {
-	connected := 0
-	status := map[string]map[string]string{}
+func Get() (status Status, connected int, err error) {
+	connected = 0
+	status = Status{}
 
 	output, err := utils.ExecOutput("", "ipsec", "status")
 	if err != nil {
@@ -73,40 +65,6 @@ func Update(total int) (err error) {
 				connected += 1
 			}
 		}
-	}
-
-	state.Status = status
-
-	if connected < total {
-		if !offlineTime.IsZero() {
-			timeout := constants.DefaultDiconnectedTimeout
-
-			disconnectedTimeout := config.Config.DisconnectedTimeout
-			if disconnectedTimeout != 0 {
-				timeout = time.Duration(disconnectedTimeout) * time.Second
-			}
-
-			if !config.Config.DisableDisconnectedRestart {
-				if time.Since(offlineTime) > timeout {
-					logrus.Warn("status: Disconnected timeout restarting")
-
-					err = utils.Exec("", "ipsec", "restart")
-					if err != nil {
-						return
-					}
-
-					ipsec.Redeploy()
-
-					offlineTime = time.Time{}
-				}
-			} else {
-				offlineTime = time.Time{}
-			}
-		} else {
-			offlineTime = time.Now()
-		}
-	} else {
-		offlineTime = time.Time{}
 	}
 
 	return

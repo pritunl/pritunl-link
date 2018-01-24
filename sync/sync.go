@@ -11,7 +11,6 @@ import (
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/ipsec"
 	"github.com/pritunl/pritunl-link/state"
-	"github.com/pritunl/pritunl-link/status"
 	"github.com/pritunl/pritunl-link/utils"
 	"io"
 	"net"
@@ -52,7 +51,26 @@ func SyncStates() {
 		state.Hash = newHash
 	}
 
-	status.Update(total)
+	timeout, err := state.Update(total)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"default_interface": state.GetDefaultInterface(),
+			"local_address":     state.GetLocalAddress(),
+			"public_address":    state.GetPublicAddress(),
+			"address6":          state.GetAddress6(),
+		}).Info("sync: Failed to get status")
+	}
+
+	if timeout {
+		logrus.Warn("sync: Disconnected timeout restarting")
+
+		err = utils.Exec("", "ipsec", "restart")
+		if err != nil {
+			return
+		}
+
+		ipsec.Redeploy()
+	}
 
 	return
 }
