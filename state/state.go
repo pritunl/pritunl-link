@@ -6,6 +6,7 @@ import (
 
 var (
 	DefaultInterface = ""
+	DefaultGateway   = ""
 	LocalAddress     = ""
 	PublicAddress    = ""
 	Address6         = ""
@@ -29,11 +30,19 @@ type Link struct {
 }
 
 func GetDefaultInterface() string {
-	addr := config.Config.DefaultInterface
-	if addr != "" {
-		return addr
+	iface := config.Config.DefaultInterface
+	if iface != "" {
+		return iface
 	}
 	return DefaultInterface
+}
+
+func GetDefaultGateway() string {
+	gateway := config.Config.DefaultGateway
+	if gateway != "" {
+		return gateway
+	}
+	return DefaultGateway
 }
 
 func GetLocalAddress() string {
