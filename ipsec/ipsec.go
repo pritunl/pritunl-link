@@ -127,6 +127,60 @@ func putIpTables(stat *state.State) (err error) {
 		return
 	}
 
+	if config.Config.DirectSsh {
+		err = iptables.UpsertRule(
+			"nat",
+			"PREROUTING",
+			"-d", localAddress,
+			"-p", "tcp",
+			"-m", "tcp",
+			"--dport", "22",
+			"-j", "ACCEPT",
+			"-m", "comment",
+			"--comment", "pritunl-zero",
+		)
+		if err != nil {
+			return
+		}
+		err = iptables.UpsertRule(
+			"nat",
+			"PREROUTING",
+			"-d", publicAddress,
+			"-p", "tcp",
+			"-m", "tcp",
+			"--dport", "22",
+			"-j", "ACCEPT",
+			"-m", "comment",
+			"--comment", "pritunl-zero",
+		)
+		if err != nil {
+			return
+		}
+	} else {
+		iptables.DeleteRule(
+			"nat",
+			"PREROUTING",
+			"-d", localAddress,
+			"-p", "tcp",
+			"-m", "tcp",
+			"--dport", "22",
+			"-j", "ACCEPT",
+			"-m", "comment",
+			"--comment", "pritunl-zero",
+		)
+		iptables.DeleteRule(
+			"nat",
+			"PREROUTING",
+			"-d", publicAddress,
+			"-p", "tcp",
+			"-m", "tcp",
+			"--dport", "22",
+			"-j", "ACCEPT",
+			"-m", "comment",
+			"--comment", "pritunl-zero",
+		)
+	}
+
 	directSource := directClientIp
 	if directMode == DirectPolicy {
 		directSource = clientLocal

@@ -45,6 +45,7 @@ type ConfigData struct {
 	LocalAddress               string     `json:"local_address"`
 	DirectSubnet               string     `json:"direct_subnet"`
 	DiretMode                  string     `json:"direct_mode"`
+	DirectSsh                  bool       `json:"direct_ssh"`
 	Address6                   string     `json:"address6"`
 	Uris                       []string   `json:"uris"`
 	SkipVerify                 bool       `json:"skip_verify"`
