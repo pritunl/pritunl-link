@@ -5,7 +5,13 @@ import (
 )
 
 const (
-	confTemplateStr = `conn {{.Id}}
+	DirectGre    = "gre"
+	DirectVxlan  = "vxlan"
+	DirectPolicy = "policy"
+
+	defaultDirectNetwork = "10.197.197.196/30"
+	defaultDirectMode    = DirectGre
+	confTemplateStr      = `conn {{.Id}}
 	ikelifetime=8h
 	keylife=1h
 	rekeymargin=9m
