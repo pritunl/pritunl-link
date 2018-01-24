@@ -12,7 +12,7 @@ var (
 	Address6         = ""
 	Status           = map[string]map[string]string{}
 	IsDirectClient   = false
-	DirectIpsecId    = ""
+	DirectIpsecState    *State
 )
 
 type State struct {
