@@ -40,15 +40,22 @@ type templateData struct {
 }
 
 func putIpTables(stat *state.State) (err error) {
-	clientLocalNet := ""
+	clientLocal := ""
 	if len(stat.Links) > 0 && len(stat.Links[0].RightSubnets) > 0 {
-		clientLocalNet = stat.Links[0].RightSubnets[0]
+		clientLocal = stat.Links[0].RightSubnets[0]
 	}
+	clientLocal = strings.SplitN(clientLocal, "/", 2)[0]
 
-	clientLocal := strings.SplitN(clientLocalNet, "/", 2)[0]
 	localAddress := state.GetLocalAddress()
 	publicAddress := state.GetPublicAddress()
 	defaultIface := state.GetDefaultInterface()
+	directMode := GetDirectMode()
+
+	directIp, err := GetDirectClientIp()
+	if err != nil {
+		return
+	}
+	directClientIp := directIp.String()
 
 	if clientLocal == "" || localAddress == "" ||
 		publicAddress == "" || defaultIface == "" {
@@ -120,12 +127,17 @@ func putIpTables(stat *state.State) (err error) {
 		return
 	}
 
+	directSource := directClientIp
+	if directMode == DirectPolicy {
+		directSource = clientLocal
+	}
+
 	err = iptables.UpsertRule(
 		"nat",
 		"PREROUTING",
 		"-d", localAddress,
 		"-j", "DNAT",
-		"--to-destination", clientLocal,
+		"--to-destination", directSource,
 		"-m", "comment",
 		"--comment", "pritunl-zero",
 	)
@@ -137,7 +149,7 @@ func putIpTables(stat *state.State) (err error) {
 		"PREROUTING",
 		"-d", publicAddress,
 		"-j", "DNAT",
-		"--to-destination", clientLocal,
+		"--to-destination", directSource,
 		"-m", "comment",
 		"--comment", "pritunl-zero",
 	)
@@ -148,7 +160,7 @@ func putIpTables(stat *state.State) (err error) {
 	err = iptables.UpsertRule(
 		"nat",
 		"POSTROUTING",
-		"-s", clientLocalNet,
+		"-s", directSource+"/32",
 		"-o", defaultIface,
 		"-j", "MASQUERADE",
 		"-m", "comment",
@@ -161,7 +173,7 @@ func putIpTables(stat *state.State) (err error) {
 	err = iptables.UpsertRule(
 		"mangle",
 		"FORWARD",
-		"-s", clientLocalNet,
+		"-s", directSource+"/32",
 		"-p", "tcp",
 		"-m", "tcp",
 		"--tcp-flags", "SYN,RST", "SYN",
