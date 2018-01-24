@@ -337,17 +337,18 @@ func deploy(states []*state.State) (err error) {
 		if (stat.Type == state.DirectClient ||
 			stat.Type == state.DirectServer) && len(stat.Links) != 0 {
 
+			err = StartTunnel(stat)
+			if err != nil {
+				return
+			}
+
 			isDirect = true
 
 			if stat.Type == state.DirectClient {
-				err = StartTunnel(stat)
-				if err != nil {
-					return
-				}
-
 				state.DirectIpsecState = stat
-				break
 			}
+
+			break
 		}
 	}
 
