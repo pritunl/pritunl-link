@@ -8,6 +8,7 @@ const (
 	DirectGre    = "gre"
 	DirectVxlan  = "vxlan"
 	DirectPolicy = "policy"
+	DirectIface  = "pritunl0"
 
 	defaultDirectNetwork = "10.197.197.196/30"
 	defaultDirectMode    = DirectGre
