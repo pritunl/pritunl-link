@@ -42,6 +42,8 @@ type ConfigData struct {
 	DefaultInterface           string     `json:"default_interface"`
 	PublicAddress              string     `json:"public_address"`
 	LocalAddress               string     `json:"local_address"`
+	DirectSubnet               string     `json:"direct_subnet"`
+	DiretMode                  string     `json:"direct_mode"`
 	Address6                   string     `json:"address6"`
 	Uris                       []string   `json:"uris"`
 	SkipVerify                 bool       `json:"skip_verify"`
