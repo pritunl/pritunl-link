@@ -65,6 +65,10 @@ func runSyncStates() {
 }
 
 func SyncDefaultIface(redeploy bool) (err error) {
+	if constants.Interrupt || state.IsDirectClient {
+		return
+	}
+
 	output, err := utils.ExecCombinedOutput("", "route", "-n")
 	if err != nil {
 		return
@@ -83,6 +87,10 @@ func SyncDefaultIface(redeploy bool) (err error) {
 			defaultIface = strings.TrimSpace(fields[len(fields)-1])
 			defaultGateway = strings.TrimSpace(fields[1])
 		}
+	}
+
+	if defaultIface == ipsec.DirectIface {
+		return
 	}
 
 	if defaultIface != "" {
@@ -137,7 +145,7 @@ func runSyncDefaultIface() {
 }
 
 func SyncLocalAddress(redeploy bool) (err error) {
-	if constants.Interrupt {
+	if constants.Interrupt || state.IsDirectClient {
 		return
 	}
 
