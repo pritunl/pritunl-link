@@ -112,7 +112,7 @@ func runRoutes() {
 
 		newRoutesPeer := ""
 		ipsecState := state.DirectIpsecState
-		if ipsecState != nil && len(ipsecState.Links) == 0 {
+		if ipsecState != nil && len(ipsecState.Links) > 0 {
 			newRoutesPeer = ipsecState.Links[0].Right
 		}
 		newRoutesGateway := state.GetDefaultGateway()

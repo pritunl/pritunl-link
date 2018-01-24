@@ -10,6 +10,8 @@ import (
 )
 
 func StartTunnel(stat *state.State) (err error) {
+	StopTunnel()
+
 	peerLocal := stat.Links[0].RightSubnets[0]
 	peerLocal = strings.SplitN(peerLocal, "/", 2)[0]
 
