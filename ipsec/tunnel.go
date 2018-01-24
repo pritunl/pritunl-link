@@ -1,6 +1,7 @@
 package ipsec
 
 import (
+	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/state"
@@ -9,11 +10,22 @@ import (
 	"strings"
 )
 
-func StartTunnel(stat *state.State) (err error) {
-	StopTunnel()
+var (
+	tunnelLocal  = ""
+	tunnelRemote = ""
+)
 
-	peerLocal := stat.Links[0].RightSubnets[0]
-	peerLocal = strings.SplitN(peerLocal, "/", 2)[0]
+func StartTunnel(stat *state.State) (err error) {
+	if GetDirectMode() != DirectGre {
+		StopTunnel()
+		return
+	}
+
+	peerLocal := ""
+	if len(stat.Links) > 0 && len(stat.Links[0].RightSubnets) > 0 {
+		peerLocal = stat.Links[0].RightSubnets[0]
+		peerLocal = strings.SplitN(peerLocal, "/", 2)[0]
+	}
 
 	if peerLocal == "" {
 		err = &errortypes.ReadError{
@@ -22,12 +34,32 @@ func StartTunnel(stat *state.State) (err error) {
 		return
 	}
 
+	newTunnelLocal := state.GetLocalAddress()
+	newTunnelRemote := peerLocal
+
+	if newTunnelLocal == tunnelLocal && newTunnelRemote == tunnelRemote {
+		return
+	}
+	StopTunnel()
+
+	if newTunnelLocal == "" || newTunnelRemote == "" {
+		return
+	}
+
+	tunnelLocal = newTunnelLocal
+	tunnelRemote = newTunnelRemote
+
+	logrus.WithFields(logrus.Fields{
+		"local":  newTunnelLocal,
+		"remote": newTunnelRemote,
+	}).Info("ipsec: Starting GRE tunnel")
+
 	err = utils.Exec("",
 		"ip", "tunnel",
 		"add", DirectIface,
 		"mode", "gre",
-		"local", state.GetLocalAddress(),
-		"remote", peerLocal,
+		"local", newTunnelLocal,
+		"remote", newTunnelRemote,
 	)
 	if err != nil {
 		return
@@ -65,8 +97,15 @@ func StartTunnel(stat *state.State) (err error) {
 }
 
 func StopTunnel() {
+	logrus.WithFields(logrus.Fields{
+		"local":  tunnelLocal,
+		"remote": tunnelRemote,
+	}).Info("ipsec: Stopping GRE tunnel")
+
 	utils.ExecSilent("",
 		"ip", "tunnel",
 		"del", DirectIface,
 	)
+	tunnelLocal = ""
+	tunnelRemote = ""
 }
