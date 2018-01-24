@@ -20,6 +20,7 @@ Commands:
   clear                     Clear all configured Pritunl server URIs
   list                      List Pritunl server URIs
   default-interface         Manually set default interface
+  default-gateway           Manually set default gateaway
   local-address             Manually set local IP address
   public-address            Manually set public IP address
   verify-on                 Enable HTTPS certificate verification when connecting to Pritunl server
@@ -87,6 +88,13 @@ func main() {
 	case "default-interface":
 		Init()
 		err := cmd.DefaultInterface(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "default-gateway":
+		Init()
+		err := cmd.DefaultGateway(flag.Arg(1))
 		if err != nil {
 			panic(err)
 		}

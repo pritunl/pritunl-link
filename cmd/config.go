@@ -20,6 +20,21 @@ func DefaultInterface(iface string) (err error) {
 	return
 }
 
+func DefaultGateway(gateway string) (err error) {
+	config.Config.DefaultGateway = gateway
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"default_gateway": config.Config.DefaultGateway,
+	}).Info("cmd.config: Default gateway set")
+
+	return
+}
+
 func LocalAddress(address string) (err error) {
 	config.Config.LocalAddress = address
 
