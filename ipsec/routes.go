@@ -4,6 +4,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/state"
+	"github.com/pritunl/pritunl-link/status"
 	"github.com/pritunl/pritunl-link/utils"
 	"time"
 )
@@ -14,24 +15,29 @@ var (
 	routesDefaultIface = ""
 )
 
-func getDirectStatus(stat *state.State) bool {
-	status := state.Status
-
-	if stat == nil {
-		return false
+func getDirectStatus(stat *state.State) (directStatus bool, err error) {
+	stats, _, err := status.Get()
+	if err != nil {
+		return
 	}
 
-	stateStatus, ok := status[stat.Id]
+	if stat == nil {
+		return
+	}
+
+	stateStatus, ok := stats[stat.Id]
 	if !ok {
-		return false
+		return
 	}
 
 	linkStatus, ok := stateStatus["0"]
 	if !ok {
-		return false
+		return
 	}
 
-	return linkStatus == "connected"
+	directStatus = linkStatus == "connected"
+
+	return
 }
 
 func addDirectRoute(peer, gateway, defaultIface string) (err error) {
@@ -101,11 +107,15 @@ func DelDirectRoute() {
 		"del", "0.0.0.0/0",
 		"dev", DirectIface,
 	)
+
+	routesPeer = ""
+	routesGateway = ""
+	routesDefaultIface = ""
 }
 
 func runRoutes() {
 	for {
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(300 * time.Millisecond)
 		if constants.Interrupt {
 			return
 		}
