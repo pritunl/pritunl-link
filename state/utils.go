@@ -305,7 +305,7 @@ func GetStates() (states []*State) {
 			logrus.WithFields(logrus.Fields{
 				"uri":   uri,
 				"error": err,
-			}).Info("sync: Failed to get state")
+			}).Info("state: Failed to get state")
 			continue
 		}
 
