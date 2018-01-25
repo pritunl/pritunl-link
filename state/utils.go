@@ -17,7 +17,6 @@ import (
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
-	"github.com/pritunl/pritunl-link/iptables"
 	"github.com/pritunl/pritunl-link/utils"
 	"io/ioutil"
 	"net/http"
@@ -34,11 +33,11 @@ var (
 			InsecureSkipVerify: true,
 		},
 	}
-	clientInsec = &http.Client{
+	ClientInsec = &http.Client{
 		Transport: transport,
 		Timeout:   10 * time.Second,
 	}
-	clientSec = &http.Client{
+	ClientSec = &http.Client{
 		Transport: &http.Transport{
 			DisableKeepAlives: true,
 		},
@@ -208,9 +207,9 @@ func GetState(uri string) (state *State, err error) {
 
 	var client *http.Client
 	if config.Config.SkipVerify {
-		client = clientInsec
+		client = ClientInsec
 	} else {
-		client = clientSec
+		client = ClientSec
 	}
 
 	start := time.Now()
@@ -318,83 +317,6 @@ func GetStates() (states []*State) {
 			delete(stateCaches, uri)
 		}
 	}
-
-	return
-}
-
-func cleanup(uri string) (err error) {
-	uriData, err := url.ParseRequestURI(uri)
-	if err != nil {
-		err = &errortypes.ParseError{
-			errors.Wrap(err, "state: Failed to parse uri"),
-		}
-		return
-	}
-
-	req, err := http.NewRequest(
-		"DELETE",
-		fmt.Sprintf("https://%s/link/state", uriData.Host),
-		nil,
-	)
-	if err != nil {
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "state: Request init error"),
-		}
-		return
-	}
-
-	hostId := uriData.User.Username()
-	hostSecret, _ := uriData.User.Password()
-	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	nonce := utils.RandStr(32)
-
-	authStr := strings.Join([]string{
-		hostId,
-		timestamp,
-		nonce,
-		"DELETE",
-		"/link/state",
-	}, "&")
-
-	hashFunc := hmac.New(sha512.New, []byte(hostSecret))
-	hashFunc.Write([]byte(authStr))
-	rawSignature := hashFunc.Sum(nil)
-	sig := base64.StdEncoding.EncodeToString(rawSignature)
-
-	req.Header.Set("Auth-Token", hostId)
-	req.Header.Set("Auth-Timestamp", timestamp)
-	req.Header.Set("Auth-Nonce", nonce)
-	req.Header.Set("Auth-Signature", sig)
-
-	var client *http.Client
-	if config.Config.SkipVerify {
-		client = clientInsec
-	} else {
-		client = clientSec
-	}
-
-	res, err := client.Do(req)
-	if err != nil {
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "state: Request delete error"),
-		}
-		return
-	}
-	defer res.Body.Close()
-
-	return
-}
-
-func CleanUp() {
-	uris := config.Config.Uris
-
-	iptables.ClearIpTables()
-
-	for _, uri := range uris {
-		go cleanup(uri)
-	}
-
-	time.Sleep(3 * time.Second)
 
 	return
 }

@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/Sirupsen/logrus"
+	"github.com/pritunl/pritunl-link/clean"
 	"github.com/pritunl/pritunl-link/constants"
-	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/sync"
 	"os"
 	"os/signal"
@@ -24,11 +24,11 @@ func Start() (err error) {
 
 	constants.Interrupt = true
 
-	state.CleanUp()
+	clean.CleanUp()
 
 	time.Sleep(1010 * time.Millisecond)
 
-	state.CleanUp()
+	clean.CleanUp()
 
 	return
 }
