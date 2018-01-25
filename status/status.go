@@ -13,6 +13,7 @@ func Get() (status Status, connected int, err error) {
 
 	output, err := utils.ExecOutput("", "ipsec", "status")
 	if err != nil {
+		err = nil
 		return
 	}
 
