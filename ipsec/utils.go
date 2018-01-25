@@ -63,7 +63,7 @@ func GetDirectClientIp() (ip net.IP, err error) {
 }
 
 func GetDirectMode() (mode string) {
-	mode = config.Config.DiretMode
+	mode = config.Config.DirectMode
 	if mode == "" {
 		mode = defaultDirectMode
 	}
