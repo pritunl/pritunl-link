@@ -97,10 +97,12 @@ func StartTunnel(stat *state.State) (err error) {
 }
 
 func StopTunnel() {
-	logrus.WithFields(logrus.Fields{
-		"local":  tunnelLocal,
-		"remote": tunnelRemote,
-	}).Info("ipsec: Stopping GRE tunnel")
+	if tunnelLocal != "" && tunnelRemote != "" {
+		logrus.WithFields(logrus.Fields{
+			"local":  tunnelLocal,
+			"remote": tunnelRemote,
+		}).Info("ipsec: Stopping GRE tunnel")
+	}
 
 	utils.ExecSilent("",
 		"ip", "tunnel",
