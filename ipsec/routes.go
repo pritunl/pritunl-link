@@ -121,13 +121,26 @@ func runRoutes() {
 		}
 
 		newRoutesPeer := ""
+		directStatus := false
 		ipsecState := state.DirectIpsecState
 		if ipsecState != nil && len(ipsecState.Links) > 0 {
 			newRoutesPeer = ipsecState.Links[0].Right
+
+			dirctStatus, err := getDirectStatus(ipsecState)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"error": err,
+				}).Error("sync: Failed to get status")
+
+				time.Sleep(3 * time.Second)
+
+				continue
+			}
+
+			directStatus = dirctStatus
 		}
 		newRoutesGateway := state.GetDefaultGateway()
 		newRoutesDefaultIface := state.GetDefaultInterface()
-		directStatus := getDirectStatus(ipsecState)
 
 		if newRoutesPeer != "" && directStatus {
 			if routesPeer != newRoutesPeer ||
