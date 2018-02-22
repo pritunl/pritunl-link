@@ -32,6 +32,13 @@ Commands:
   advertise-update-on       Enable recurring checks and updates of routing table and port forwarding
   advertise-update-off      Disable recurring checks and updates of routing table and port forwarding
   provider                  Manually set network provider
+  oracle-region             Set Oracle region
+  oracle-private-key        Set Oracle base64 private key
+  oracle-user-ocid          Set Oracle user ocid
+  oracle-tenancy-ocid       Set Oracle tenancy ocid
+  oracle-compartment-ocid   Set Oracle compartment ocid
+  oracle-vnc-ocid           Set Oracle vnc ocid
+  oracle-private-ip-ocid    Set Oracle private IP ocid
   unifi-username            Set Unifi username
   unifi-password            Set Unifi password
   unifi-controller          Set URL of Unifi controller
@@ -216,6 +223,55 @@ func main() {
 	case "unifi-port-off":
 		Init()
 		err := cmd.UnifiPortOff()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "oracle-region":
+		Init()
+		err := cmd.OracleRegion(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "oracle-private-key":
+		Init()
+		err := cmd.OraclePrivateKey(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "oracle-user-ocid":
+		Init()
+		err := cmd.OracleUserOcid(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "oracle-tenancy-ocid":
+		Init()
+		err := cmd.OracleTenancyOcid(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "oracle-compartment-ocid":
+		Init()
+		err := cmd.OracleCompartmentOcid(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "oracle-vnc-ocid":
+		Init()
+		err := cmd.OracleVncOcid(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "oracle-private-ip-ocid":
+		Init()
+		err := cmd.OraclePrivateIpOcid(flag.Arg(1))
 		if err != nil {
 			panic(err)
 		}
