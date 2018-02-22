@@ -86,6 +86,13 @@ func Routes(states []*state.State) (err error) {
 			}
 
 			break
+		case "oracle":
+			err = OracleAddRoute(network)
+			if err != nil {
+				return
+			}
+
+			break
 		case "unifi":
 			err = UnifiAddRoute(network)
 			if err != nil {

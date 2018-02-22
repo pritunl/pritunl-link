@@ -27,6 +27,16 @@ type GoogleData struct {
 	Instance string `json:"instance"`
 }
 
+type OracleData struct {
+	Region          string `json:"region"`
+	PrivateKey      string `json:"private_key"`
+	UserOcid        string `json:"user_ocid"`
+	TenancyOcid     string `json:"tenancy_ocid"`
+	CompartmentOcid string `json:"compartment_ocid"`
+	VncOcid         string `json:"vnc_ocid"`
+	PrivateIpOcid   string `json:"private_ip_ocid"`
+}
+
 type UnifiData struct {
 	DisablePort bool   `json:"disable_port"`
 	Controller  string `json:"controller"`
@@ -55,6 +65,7 @@ type ConfigData struct {
 	DisableDisconnectedRestart bool       `json:"disable_disconnected_restart"`
 	Aws                        AwsData    `json:"aws"`
 	Google                     GoogleData `json:"google"`
+	Oracle                     OracleData `json:"oracle"`
 	Unifi                      UnifiData  `json:"unifi"`
 }
 
