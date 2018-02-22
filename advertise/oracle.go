@@ -97,23 +97,6 @@ func oracleNewClient(region, privateKey, userOcid, tenancyOcid string) (
 		return
 	}
 
-	tables, err := client.ListRouteTables(
-		config.Config.Oracle.CompartmentOcid,
-		config.Config.Oracle.VncOcid,
-		nil,
-	)
-	if err != nil {
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "oracle: Failed to get routing tables"),
-		}
-		return
-	}
-
-	for _, table := range tables.RouteTables {
-		fmt.Println(table.ID)
-		fmt.Println(table.DisplayName)
-	}
-
 	return
 }
 

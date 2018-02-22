@@ -52,6 +52,15 @@ func Routes(states []*state.State) (err error) {
 		}
 	}
 
+	if curRoutes.Oracle != nil {
+		for _, route := range curRoutes.Oracle {
+			err = OracleDeleteRoute(route)
+			if err != nil {
+				return
+			}
+		}
+	}
+
 	if curRoutes.Aws != nil {
 		for _, route := range curRoutes.Aws {
 			err = AwsDeleteRoute(route)
