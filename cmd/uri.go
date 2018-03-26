@@ -34,14 +34,25 @@ func Add(uri string) (err error) {
 }
 
 func Remove(uri string) (err error) {
+	exists := false
+
 	for i, u := range config.Config.Uris {
 		if uri == u {
+			exists = true
+
 			config.Config.Uris = append(
 				config.Config.Uris[:i],
 				config.Config.Uris[i+1:]...,
 			)
 
 			break
+		}
+	}
+
+	if exists {
+		err = config.Save()
+		if err != nil {
+			return
 		}
 	}
 
