@@ -20,8 +20,8 @@ const (
 	authby=secret
 	keyexchange=ikev2
 	mobike=no
-	dpddelay=10s
-	dpdtimeout=30s
+	dpddelay=5s
+	dpdtimeout=20s
 	dpdaction=restart
 	left=%defaultroute
 	leftid={{.Left}}
