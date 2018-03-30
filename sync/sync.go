@@ -85,8 +85,6 @@ func SyncStates() {
 				}).Info("sync: Failed to up link")
 			}
 		}
-
-		ipsec.Redeploy()
 	}
 
 	return
