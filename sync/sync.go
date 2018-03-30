@@ -68,23 +68,20 @@ func SyncStates() {
 	if resetLinks != nil && len(resetLinks) != 0 {
 		logrus.Warn("sync: Disconnected timeout restarting")
 
-		err = utils.Exec("", "ipsec", "reload")
-		if err != nil {
-			return
-		}
+		ipsec.Redeploy()
 
-		for _, linkId := range resetLinks {
-			utils.Exec("", "ipsec", "down", linkId)
-
-			time.Sleep(300 * time.Millisecond)
-
-			err = utils.Exec("", "ipsec", "up", linkId)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"link_id": linkId,
-				}).Info("sync: Failed to up link")
-			}
-		}
+		//for _, linkId := range resetLinks {
+		//	utils.Exec("", "ipsec", "down", linkId)
+		//
+		//	time.Sleep(300 * time.Millisecond)
+		//
+		//	err = utils.Exec("", "ipsec", "up", linkId)
+		//	if err != nil {
+		//		logrus.WithFields(logrus.Fields{
+		//			"link_id": linkId,
+		//		}).Info("sync: Failed to up link")
+		//	}
+		//}
 	}
 
 	return
