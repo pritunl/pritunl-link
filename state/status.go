@@ -1,6 +1,8 @@
 package state
 
 import (
+	"fmt"
+	"github.com/dropbox/godropbox/container/set"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/status"
@@ -11,15 +13,32 @@ var (
 	offlineTime time.Time
 )
 
-func Update(total int) (timeout bool, err error) {
-	stats, connected, err := status.Get()
+func Update(names set.Set) (resetLinks []string, err error) {
+	resetLinks = []string{}
+
+	stats, _, err := status.Get()
 	if err != nil {
 		return
 	}
 
 	Status = stats
 
-	if connected < total {
+	unknown := set.NewSet()
+	for stateId, conns := range stats {
+		for connId, connStatus := range conns {
+			id := fmt.Sprintf("%s-%s", stateId, connId)
+
+			if connStatus == "connected" {
+				if names.Contains(id) {
+					names.Remove(id)
+				} else {
+					unknown.Add(id)
+				}
+			}
+		}
+	}
+
+	if names.Len() > 0 {
 		if !offlineTime.IsZero() {
 			disconnectedTimeout := constants.DefaultDiconnectedTimeout
 
@@ -31,7 +50,9 @@ func Update(total int) (timeout bool, err error) {
 
 			if !config.Config.DisableDisconnectedRestart {
 				if time.Since(offlineTime) > disconnectedTimeout {
-					timeout = true
+					for nameInf := range names.Iter() {
+						resetLinks = append(resetLinks, nameInf.(string))
+					}
 					offlineTime = time.Time{}
 				}
 			} else {

@@ -4,7 +4,9 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"github.com/Sirupsen/logrus"
+	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
@@ -38,9 +40,11 @@ func SyncStates() {
 	states := state.GetStates()
 	hsh := md5.New()
 
-	total := 0
+	names := set.NewSet()
 	for _, stat := range states {
-		total += len(stat.Links)
+		for i := range stat.Links {
+			names.Add(fmt.Sprintf("%s-%d", stat.Id, i))
+		}
 		io.WriteString(hsh, stat.Hash)
 	}
 
@@ -51,7 +55,7 @@ func SyncStates() {
 		state.Hash = newHash
 	}
 
-	timeout, err := state.Update(total)
+	resetLinks, err := state.Update(names)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"default_interface": state.GetDefaultInterface(),
@@ -61,12 +65,25 @@ func SyncStates() {
 		}).Info("sync: Failed to get status")
 	}
 
-	if timeout {
+	if resetLinks != nil && len(resetLinks) != 0 {
 		logrus.Warn("sync: Disconnected timeout restarting")
 
-		err = utils.Exec("", "ipsec", "restart")
+		err = utils.Exec("", "ipsec", "reload")
 		if err != nil {
 			return
+		}
+
+		for _, linkId := range resetLinks {
+			utils.Exec("", "ipsec", "down", linkId)
+
+			time.Sleep(300 * time.Millisecond)
+
+			err = utils.Exec("", "ipsec", "up", linkId)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"link_id": linkId,
+				}).Info("sync: Failed to up link")
+			}
 		}
 
 		ipsec.Redeploy()
