@@ -386,6 +386,8 @@ func deploy(states []*state.State) (err error) {
 		return
 	}
 
+	utils.Exec("", "ipsec", "start")
+
 	isDirect := false
 	for _, stat := range states {
 		if (stat.Type == state.DirectClient ||
