@@ -33,10 +33,8 @@ var (
 type templateData struct {
 	Id           string
 	Left         string
-	LeftId       string
 	LeftSubnets  string
 	Right        string
-	RightId      string
 	RightSubnets string
 	PreSharedKey string
 }
@@ -316,10 +314,8 @@ func writeTemplates(states []*state.State) (err error) {
 			data := &templateData{
 				Id:           fmt.Sprintf("%s-%d", stat.Id, i),
 				Left:         publicAddr,
-				LeftId:       fmt.Sprintf("%s-%s", stat.Id, publicAddr),
 				LeftSubnets:  leftSubnets,
 				Right:        link.Right,
-				RightId:      fmt.Sprintf("%s-%s", stat.Id, link.Right),
 				RightSubnets: rightSubnets,
 				PreSharedKey: link.PreSharedKey,
 			}

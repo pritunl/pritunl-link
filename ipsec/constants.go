@@ -24,14 +24,14 @@ const (
 	dpdtimeout=20s
 	dpdaction=restart
 	left=%defaultroute
-	leftid={{.LeftId}}
+	leftid={{.Left}}
 	leftsubnet={{.LeftSubnets}}
 	right={{.Right}}
-	rightid={{.RightId}}
+	rightid={{.Right}}
 	rightsubnet={{.RightSubnets}}
 	auto=start
 `
-	secretsTemplateStr = `{{.LeftId}} {{.RightId}} : PSK "{{.PreSharedKey}}"
+	secretsTemplateStr = `{{.Left}} {{.Right}} : PSK "{{.PreSharedKey}}"
 `
 )
 
