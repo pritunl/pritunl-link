@@ -17,46 +17,59 @@ func Get() (status Status, connected int, err error) {
 		return
 	}
 
+	var isIkeState bool
+	var ikeState string
+
 	for _, line := range strings.Split(output, "\n") {
 		lines := strings.SplitN(line, ":", 2)
 		if len(lines) != 2 {
 			continue
 		}
 
-		if !strings.HasSuffix(lines[0], "]") {
-			continue
-		}
+		isIkeState = strings.HasSuffix(lines[0], "]")
 
-		connId := strings.SplitN(strings.SplitN(lines[0], "[", 2)[0], "-", 2)
-		connState := strings.SplitN(
-			strings.TrimSpace(lines[1]), " ", 2)[0]
+		if isIkeState {
+			ikeState = strings.SplitN(
+				strings.TrimSpace(lines[1]), " ", 2)[0]
+		} else {
 
-		if len(connId) != 2 {
-			continue
-		}
+			if !strings.Contains(lines[1], "reqid") {
+				continue
+			}
 
-		switch connState {
-		case "ESTABLISHED":
-			connState = "connected"
-			break
-		case "CONNECTING":
-			connState = "connecting"
-			break
-		default:
-			connState = "disconnected"
-		}
+			connId := strings.SplitN(strings.SplitN(lines[0], "{", 2)[0], "-", 2)
+			connState := strings.SplitN(strings.TrimSpace(lines[1]), ",", 2)[0]
 
-		if _, ok := status[connId[0]]; !ok {
-			status[connId[0]] = map[string]string{}
-		}
+			if len(connId) != 2 {
+				continue
+			}
 
-		if _, ok := status[connId[0]][connId[1]]; !ok {
-			status[connId[0]][connId[1]] = connState
-		} else if (status[connId[0]][connId[1]] == "disconnected") ||
-			(status[connId[0]][connId[1]] == "connecting" &&
-				connState == "connected") {
+			switch ikeState {
+			case "ESTABLISHED":
+				if connState == "INSTALLED" {
+					connState = "connected"
+				} else {
+					connState = "disconnected"
+				}
+				break
+			case "CONNECTING":
+				connState = "connecting"
+			default:
+				connState = "disconnected"
+			}
 
-			status[connId[0]][connId[1]] = connState
+			if _, ok := status[connId[0]]; !ok {
+				status[connId[0]] = map[string]string{}
+			}
+
+			if _, ok := status[connId[0]][connId[1]]; !ok {
+				status[connId[0]][connId[1]] = connState
+			} else if (status[connId[0]][connId[1]] == "disconnected") ||
+				(status[connId[0]][connId[1]] == "connecting" &&
+					connState == "connected") {
+
+				status[connId[0]][connId[1]] = connState
+			}
 		}
 	}
 
