@@ -17,8 +17,8 @@ func Get() (status Status, connected int, err error) {
 		return
 	}
 
-	var isIkeState bool
-	var ikeState string
+	isIkeState := false
+	ikeState := ""
 
 	for _, line := range strings.Split(output, "\n") {
 		lines := strings.SplitN(line, ":", 2)
@@ -32,13 +32,14 @@ func Get() (status Status, connected int, err error) {
 			ikeState = strings.SplitN(
 				strings.TrimSpace(lines[1]), " ", 2)[0]
 		} else {
-
 			if !strings.Contains(lines[1], "reqid") {
 				continue
 			}
 
-			connId := strings.SplitN(strings.SplitN(lines[0], "{", 2)[0], "-", 2)
-			connState := strings.SplitN(strings.TrimSpace(lines[1]), ",", 2)[0]
+			connId := strings.SplitN(strings.SplitN(
+				lines[0], "{", 2)[0], "-", 2)
+			connState := strings.SplitN(
+				strings.TrimSpace(lines[1]), ",", 2)[0]
 
 			if len(connId) != 2 {
 				continue
