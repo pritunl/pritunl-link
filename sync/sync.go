@@ -379,9 +379,9 @@ func SyncPublicAddress6(redeploy bool) (err error) {
 
 	if data.Ip != "" && !state.IsDirectClient {
 		publicAddress := data.Ip
-		curPublicAddress := state.PublicAddress
+		curPublicAddress := state.Address6
 
-		state.PublicAddress = publicAddress
+		state.Address6 = publicAddress
 
 		if curPublicAddress != publicAddress && redeploy {
 			logrus.WithFields(logrus.Fields{
