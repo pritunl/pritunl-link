@@ -185,7 +185,11 @@ func GetState(uri string) (state *State, err error) {
 	hostId := uriData.User.Username()
 	hostSecret, _ := uriData.User.Password()
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	nonce := utils.RandStr(32)
+
+	nonce, err := utils.RandStr(32)
+	if err != nil {
+		return
+	}
 
 	authStr := strings.Join([]string{
 		hostId,
