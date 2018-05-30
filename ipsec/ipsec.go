@@ -294,6 +294,11 @@ func writeTemplates(states []*state.State) (err error) {
 		return
 	}
 
+	publicAddr6 := state.GetAddress6()
+	if publicAddr6 == "" {
+		return
+	}
+
 	iptablesState := false
 
 	for _, stat := range states {
@@ -311,9 +316,16 @@ func writeTemplates(states []*state.State) (err error) {
 				}
 			}
 
+			left := ""
+			if stat.Ipv6 {
+				left = publicAddr6
+			} else {
+				left = publicAddr
+			}
+
 			data := &templateData{
 				Id:           fmt.Sprintf("%s-%d", stat.Id, i),
-				Left:         publicAddr,
+				Left:         left,
 				LeftSubnets:  leftSubnets,
 				Right:        link.Right,
 				RightSubnets: rightSubnets,
