@@ -20,7 +20,7 @@ func Exists(pth string) (exists bool, err error) {
 		return
 	}
 
-	err = errortypes.ReadError{
+	err = &errortypes.ReadError{
 		errors.Wrapf(err, "utils: Failed to stat %s", pth),
 	}
 	return
@@ -38,7 +38,7 @@ func ExistsDir(pth string) (exists bool, err error) {
 		return
 	}
 
-	err = errortypes.ReadError{
+	err = &errortypes.ReadError{
 		errors.Wrapf(err, "utils: Failed to stat %s", pth),
 	}
 	return
@@ -56,7 +56,7 @@ func ExistsFile(pth string) (exists bool, err error) {
 		return
 	}
 
-	err = errortypes.ReadError{
+	err = &errortypes.ReadError{
 		errors.Wrapf(err, "utils: Failed to stat %s", pth),
 	}
 	return
@@ -125,7 +125,7 @@ func RemoveAll(path string) (err error) {
 
 	err = cmd.Run()
 	if err != nil {
-		err = errortypes.ExecError{
+		err = &errortypes.ExecError{
 			errors.Wrapf(err, "package: Failed to remove path %s", path),
 		}
 		return
@@ -146,7 +146,7 @@ func Copy(sourcePath, destPath string) (err error) {
 
 	err = cmd.Run()
 	if err != nil {
-		err = errortypes.ExecError{
+		err = &errortypes.ExecError{
 			errors.Wrapf(err, "package: Failed to copy %s to %s",
 				sourcePath, destPath),
 		}
@@ -169,7 +169,7 @@ func CopyAll(sourcePath, destPath string) (err error) {
 
 	err = cmd.Run()
 	if err != nil {
-		err = errortypes.ExecError{
+		err = &errortypes.ExecError{
 			errors.Wrapf(err, "package: Failed to copy %s to %s",
 				sourcePath, destPath),
 		}
@@ -191,7 +191,7 @@ func MkdirAll(path string) (err error) {
 
 	err = cmd.Run()
 	if err != nil {
-		err = errortypes.ExecError{
+		err = &errortypes.ExecError{
 			errors.Wrapf(err, "package: Failed to create path %s", path),
 		}
 		return

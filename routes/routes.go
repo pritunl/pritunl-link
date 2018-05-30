@@ -21,7 +21,7 @@ type CurrentRoutes struct {
 func (c *CurrentRoutes) Commit() (err error) {
 	data, err := json.Marshal(c)
 	if err != nil {
-		err = errortypes.ParseError{
+		err = &errortypes.ParseError{
 			errors.Wrap(err, "advertise: Failed to prase routes"),
 		}
 		return
@@ -29,7 +29,7 @@ func (c *CurrentRoutes) Commit() (err error) {
 
 	err = ioutil.WriteFile(constants.CurRoutesPath, data, 0644)
 	if err != nil {
-		err = errortypes.WriteError{
+		err = &errortypes.WriteError{
 			errors.Wrap(err, "advertise: Failed to write routes"),
 		}
 		return
@@ -47,7 +47,7 @@ func GetCurrent() (routes *CurrentRoutes, err error) {
 
 	data, err := ioutil.ReadFile(constants.CurRoutesPath)
 	if err != nil {
-		err = errortypes.ReadError{
+		err = &errortypes.ReadError{
 			errors.Wrap(err, "advertise: Failed to read routes"),
 		}
 		return
@@ -55,7 +55,7 @@ func GetCurrent() (routes *CurrentRoutes, err error) {
 
 	err = json.Unmarshal(data, routes)
 	if err != nil {
-		err = errortypes.ParseError{
+		err = &errortypes.ParseError{
 			errors.Wrap(err, "advertise: Failed to prase routes"),
 		}
 		return

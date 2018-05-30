@@ -17,7 +17,7 @@ func GetDirectSubnet() (network *net.IPNet, err error) {
 
 	_, network, err = net.ParseCIDR(networkStr)
 	if err != nil {
-		err = errortypes.ParseError{
+		err = &errortypes.ParseError{
 			errors.Wrap(err, "ipsec: Failed to prase direct subnet"),
 		}
 		return

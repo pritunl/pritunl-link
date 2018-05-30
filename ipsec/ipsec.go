@@ -277,7 +277,7 @@ func writeConf() (err error) {
 
 	err = ioutil.WriteFile(pth, []byte(data), 0644)
 	if err != nil {
-		err = errortypes.WriteError{
+		err = &errortypes.WriteError{
 			errors.Wrap(err, "ipsec: Failed to write conf"),
 		}
 		return
@@ -322,7 +322,7 @@ func writeTemplates(states []*state.State) (err error) {
 
 			err = confTemplate.Execute(confBuf, data)
 			if err != nil {
-				err = errortypes.ParseError{
+				err = &errortypes.ParseError{
 					errors.Wrap(err,
 						"ipsec: Failed to execute conf template"),
 				}
@@ -331,7 +331,7 @@ func writeTemplates(states []*state.State) (err error) {
 
 			err = secretsTemplate.Execute(secretsBuf, data)
 			if err != nil {
-				err = errortypes.ParseError{
+				err = &errortypes.ParseError{
 					errors.Wrap(err,
 						"ipsec: Failed to execute secrets template"),
 				}
@@ -352,7 +352,7 @@ func writeTemplates(states []*state.State) (err error) {
 			fmt.Sprintf("%s.conf", stat.Id))
 		err = ioutil.WriteFile(pth, confBuf.Bytes(), 0644)
 		if err != nil {
-			err = errortypes.WriteError{
+			err = &errortypes.WriteError{
 				errors.Wrap(err, "ipsec: Failed to write state conf"),
 			}
 			return
@@ -362,7 +362,7 @@ func writeTemplates(states []*state.State) (err error) {
 	err = ioutil.WriteFile(
 		constants.IpsecSecretsPath, secretsBuf.Bytes(), 0600)
 	if err != nil {
-		err = errortypes.WriteError{
+		err = &errortypes.WriteError{
 			errors.Wrap(err, "ipsec: Failed to write state secrets"),
 		}
 		return

@@ -114,7 +114,7 @@ func Routes(states []*state.State) (err error) {
 
 	err = os.MkdirAll(constants.VarDir, 0755)
 	if err != nil {
-		err = errortypes.WriteError{
+		err = &errortypes.WriteError{
 			errors.Wrap(err, "advertise: Failed to create var directory"),
 		}
 		return
@@ -126,7 +126,7 @@ func Routes(states []*state.State) (err error) {
 	}
 	err = ioutil.WriteFile(constants.RoutesPath, []byte(data), 0644)
 	if err != nil {
-		err = errortypes.WriteError{
+		err = &errortypes.WriteError{
 			errors.Wrap(err, "advertise: Failed to write routes"),
 		}
 		return
