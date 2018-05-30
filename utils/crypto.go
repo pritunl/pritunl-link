@@ -2,17 +2,50 @@ package utils
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/errortypes"
+	"math"
 	"math/big"
 	mathrand "math/rand"
+	"regexp"
 )
 
 var (
-	chars = []rune(
+	randRe = regexp.MustCompile("[^a-zA-Z0-9]+")
+	chars  = []rune(
 		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 )
+
+func RandStr(n int) (str string, err error) {
+	for i := 0; i < 10; i++ {
+		input, e := RandBytes(int(math.Ceil(float64(n) * 1.25)))
+		if e != nil {
+			err = e
+			return
+		}
+
+		output := base64.RawStdEncoding.EncodeToString(input)
+		output = randRe.ReplaceAllString(output, "")
+
+		if len(output) < n {
+			continue
+		}
+
+		str = output[:n]
+		break
+	}
+
+	if str == "" {
+		err = &errortypes.UnknownError{
+			errors.Wrap(err, "utils: Random generate error"),
+		}
+		return
+	}
+
+	return
+}
 
 func RandBytes(size int) (bytes []byte, err error) {
 	bytes = make([]byte, size)
@@ -24,15 +57,6 @@ func RandBytes(size int) (bytes []byte, err error) {
 		return
 	}
 
-	return
-}
-
-func RandStr(n int) (str string) {
-	strList := make([]rune, n)
-	for i := range strList {
-		strList[i] = chars[mathrand.Intn(len(chars))]
-	}
-	str = string(strList)
 	return
 }
 
