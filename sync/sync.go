@@ -331,6 +331,78 @@ func runSyncPublicAddress() {
 	}
 }
 
+func SyncPublicAddress6(redeploy bool) (err error) {
+	if constants.Interrupt || state.IsDirectClient {
+		return
+	}
+
+	req, err := http.NewRequest(
+		"GET",
+		constants.PublicIp6Server,
+		nil,
+	)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "sync: Failed to get public address6"),
+		}
+		return
+	}
+
+	req.Header.Set("User-Agent", "pritunl-link")
+
+	res, err := client.Do(req)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "sync: Failed to get public address6"),
+		}
+		return
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		err = &errortypes.RequestError{
+			errors.Wrapf(err, "sync: Bad status %n code from server",
+				res.StatusCode),
+		}
+		return
+	}
+
+	data := &publicAddressData{}
+
+	err = json.NewDecoder(res.Body).Decode(data)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "sync: Failed to parse data"),
+		}
+		return
+	}
+
+	if data.Ip != "" && !state.IsDirectClient {
+		publicAddress := data.Ip
+		curPublicAddress := state.PublicAddress
+
+		state.PublicAddress = publicAddress
+
+		if curPublicAddress != publicAddress && redeploy {
+			logrus.WithFields(logrus.Fields{
+				"old_public_address": curPublicAddress,
+				"public_address":     publicAddress,
+			}).Info("sync: Public address6 changed redeploying")
+
+			ipsec.Redeploy()
+		}
+	}
+
+	return
+}
+
+func runSyncPublicAddress6() {
+	for {
+		time.Sleep(30 * time.Second)
+		SyncPublicAddress6(true)
+	}
+}
+
 func SyncConfig() (err error) {
 	if constants.Interrupt {
 		return
@@ -390,15 +462,24 @@ func Init() {
 		time.Sleep(5 * time.Second)
 		SyncLocalAddress(false)
 	}
+
+	go func() {
+		SyncPublicAddress6(false)
+	}()
+
 	err = SyncPublicAddress(false)
 	if err != nil {
 		time.Sleep(10 * time.Second)
 		SyncPublicAddress(false)
 	}
+
+	time.Sleep(5 * time.Second)
+
 	SyncStates()
 	go runSyncDefaultIface()
 	go runSyncLocalAddress()
 	go runSyncPublicAddress()
+	go runSyncPublicAddress6()
 	go runSyncStates()
 	go runSyncConfig()
 }
