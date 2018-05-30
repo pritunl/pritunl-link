@@ -17,6 +17,7 @@ var (
 
 type State struct {
 	Id     string  `json:"id"`
+	Ipv6   bool    `json:"ipv6"`
 	Type   string  `json:"type"`
 	Secret string  `json:"-"`
 	Hash   string  `json:"hash"`
