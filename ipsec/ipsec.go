@@ -544,7 +544,7 @@ func runDeploy() {
 					if err != nil {
 						logrus.WithFields(logrus.Fields{
 							"error": err,
-						}).Info("state: Failed to deploy state")
+						}).Error("state: Failed to deploy state")
 
 						time.Sleep(3 * time.Second)
 
