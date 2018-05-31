@@ -290,14 +290,7 @@ func writeTemplates(states []*state.State) (err error) {
 	secretsBuf := &bytes.Buffer{}
 
 	publicAddr := state.GetPublicAddress()
-	if publicAddr == "" {
-		return
-	}
-
 	publicAddr6 := state.GetAddress6()
-	if publicAddr6 == "" {
-		return
-	}
 
 	iptablesState := false
 
