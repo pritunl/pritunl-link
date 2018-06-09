@@ -19,6 +19,8 @@ const (
 	keyingtries=%forever
 	authby=secret
 	keyexchange=ikev2
+	esp=aes128-sha256,aes128-sha1,aes128-md5
+	ike=aes128-sha256-modp3072,aes128-sha1-modp3072,aes128-md5-modp3072,aes128-sha256-modp2048,aes128-sha1-modp2048,aes128-md5-modp2048
 	mobike=no
 	dpddelay=5s
 	dpdtimeout=20s
