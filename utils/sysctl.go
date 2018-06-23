@@ -31,5 +31,8 @@ func NetInit() (err error) {
 		return
 	}
 
+	ExecSilent("", "sysctl", "-w", "net.ipv6.conf.all.forwarding=1")
+	ExecSilent("", "sysctl", "-w", "net.ipv6.conf.default.forwarding=1")
+
 	return
 }
