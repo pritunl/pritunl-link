@@ -14,8 +14,6 @@ import (
 
 var (
 	randRe = regexp.MustCompile("[^a-zA-Z0-9]+")
-	chars  = []rune(
-		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 )
 
 func RandStr(n int) (str string, err error) {
