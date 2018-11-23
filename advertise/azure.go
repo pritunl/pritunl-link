@@ -236,6 +236,24 @@ func (n *azureNetwork) UpsertTable() (err error) {
 		return
 	}
 
+	tableRes, err := tableClient.Get(context.Background(),
+		n.mdata.ResourceGroup, n.Name, "")
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "azure: Azure route table update error"),
+		}
+		return
+	}
+
+	if tableRes.ID == nil || *tableRes.ID == "" {
+		err = &errortypes.RequestError{
+			errors.New("azure: Azure compute table id nil"),
+		}
+		return
+	}
+
+	n.RouteTableId = *tableRes.ID
+
 	return
 }
 
