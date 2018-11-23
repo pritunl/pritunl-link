@@ -180,16 +180,7 @@ func (n *azureNetwork) TableExists() (exists bool, err error) {
 		return
 	}
 
-	if res.StatusCode == 200 {
-		exists = true
-	} else {
-		err = &errortypes.RequestError{
-			errors.New("azure: Azure compute table unknown status"),
-		}
-		return
-	}
-
-	if res.ID == nil {
+	if res.ID == nil || *res.ID == "" {
 		err = &errortypes.RequestError{
 			errors.New("azure: Azure compute table id nil"),
 		}
@@ -197,6 +188,7 @@ func (n *azureNetwork) TableExists() (exists bool, err error) {
 	}
 
 	n.RouteTableId = *res.ID
+	exists = true
 
 	return
 }
