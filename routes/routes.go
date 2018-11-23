@@ -13,6 +13,7 @@ import (
 
 type CurrentRoutes struct {
 	Aws    map[string]*AwsRoute    `json:"aws"`
+	Azure  map[string]*AzureRoute  `json:"azure"`
 	Google map[string]*GoogleRoute `json:"google"`
 	Oracle map[string]*OracleRoute `json:"oracle"`
 	Unifi  map[string]*UnifiRoute  `json:"unifi"`
@@ -79,6 +80,14 @@ func GetDiff(destNetworks []string) (routes *CurrentRoutes, err error) {
 		for destNetwork := range routes.Aws {
 			if destNetworksSet.Contains(destNetwork) {
 				delete(routes.Aws, destNetwork)
+			}
+		}
+	}
+
+	if config.Config.Provider == "azure" {
+		for destNetwork := range routes.Azure {
+			if destNetworksSet.Contains(destNetwork) {
+				delete(routes.Azure, destNetwork)
 			}
 		}
 	}
