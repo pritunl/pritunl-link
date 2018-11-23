@@ -70,6 +70,15 @@ func Routes(states []*state.State) (err error) {
 		}
 	}
 
+	if curRoutes.Azure != nil {
+		for _, route := range curRoutes.Azure {
+			err = AzureRemoveRoute(route)
+			if err != nil {
+				return
+			}
+		}
+	}
+
 	if curRoutes.Unifi != nil {
 		for _, route := range curRoutes.Unifi {
 			err = UnifiDeleteRoute(route)
@@ -83,6 +92,13 @@ func Routes(states []*state.State) (err error) {
 		switch config.Config.Provider {
 		case "aws":
 			err = AwsAddRoute(network)
+			if err != nil {
+				return
+			}
+
+			break
+		case "azure":
+			err = AzureAddRoute(network)
 			if err != nil {
 				return
 			}
