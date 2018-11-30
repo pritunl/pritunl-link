@@ -90,8 +90,7 @@ func azureGetMetaData() (mdata *azureMetadata, err error) {
 	if err != nil {
 		err = &errortypes.ParseError{
 			errors.Wrap(
-				err,
-				"subscription: Failed to parse azure metadata response",
+				err, "azure: Failed to parse azure metadata response",
 			),
 		}
 		return
