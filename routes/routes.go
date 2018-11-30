@@ -17,6 +17,7 @@ type CurrentRoutes struct {
 	Google map[string]*GoogleRoute `json:"google"`
 	Oracle map[string]*OracleRoute `json:"oracle"`
 	Unifi  map[string]*UnifiRoute  `json:"unifi"`
+	Edge   map[string]*EdgeRoute   `json:"edge"`
 }
 
 func (c *CurrentRoutes) Commit() (err error) {
@@ -112,6 +113,14 @@ func GetDiff(destNetworks []string) (routes *CurrentRoutes, err error) {
 		for destNetwork := range routes.Unifi {
 			if destNetworksSet.Contains(destNetwork) {
 				delete(routes.Unifi, destNetwork)
+			}
+		}
+	}
+
+	if config.Config.Provider == "edge" {
+		for destNetwork := range routes.Edge {
+			if destNetworksSet.Contains(destNetwork) {
+				delete(routes.Edge, destNetwork)
 			}
 		}
 	}
