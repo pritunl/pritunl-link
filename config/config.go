@@ -46,6 +46,13 @@ type UnifiData struct {
 	Interface   string `json:"interface"`
 }
 
+type EdgeData struct {
+	DisablePort bool   `json:"disable_port"`
+	Hostname    string `json:"hostname"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+}
+
 type ConfigData struct {
 	loaded                     bool       `json:"-"`
 	Provider                   string     `json:"provider"`
@@ -67,6 +74,7 @@ type ConfigData struct {
 	Google                     GoogleData `json:"google"`
 	Oracle                     OracleData `json:"oracle"`
 	Unifi                      UnifiData  `json:"unifi"`
+	Edge                       EdgeData   `json:"edge"`
 }
 
 func (c *ConfigData) Save() (err error) {
