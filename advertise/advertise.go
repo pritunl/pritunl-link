@@ -88,6 +88,15 @@ func Routes(states []*state.State) (err error) {
 		}
 	}
 
+	if curRoutes.Edge != nil {
+		for _, route := range curRoutes.Edge {
+			err = EdgeDeleteRoute(route)
+			if err != nil {
+				return
+			}
+		}
+	}
+
 	for _, network := range networks {
 		switch config.Config.Provider {
 		case "aws":
@@ -120,6 +129,13 @@ func Routes(states []*state.State) (err error) {
 			break
 		case "unifi":
 			err = UnifiAddRoute(network)
+			if err != nil {
+				return
+			}
+
+			break
+		case "edge":
+			err = EdgeAddRoute(network)
 			if err != nil {
 				return
 			}
@@ -174,6 +190,15 @@ func Ports(states []*state.State) (err error) {
 	case "unifi":
 		if !config.Config.Unifi.DisablePort {
 			err = UnifiAddPorts()
+			if err != nil {
+				return
+			}
+		}
+
+		break
+	case "edge":
+		if !config.Config.Unifi.DisablePort {
+			err = EdgeAddPorts()
 			if err != nil {
 				return
 			}
