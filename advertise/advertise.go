@@ -72,7 +72,7 @@ func Routes(states []*state.State) (err error) {
 
 	if curRoutes.Azure != nil {
 		for _, route := range curRoutes.Azure {
-			err = AzureRemoveRoute(route)
+			err = AzureDeleteRoute(route)
 			if err != nil {
 				return
 			}
