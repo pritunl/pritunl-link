@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/routes"
 	"net/http"
@@ -713,7 +714,16 @@ func AzureAddRoute(network string) (err error) {
 	return
 }
 
-func AzureRemoveRoute(rte *routes.AzureRoute) (err error) {
+func AzureDeleteRoute(rte *routes.AzureRoute) (err error) {
+	if !config.Config.DeleteRoutes {
+		err = rte.Remove()
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
 	mdata, err := azureGetMetaData()
 	if err != nil {
 		return
