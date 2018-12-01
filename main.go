@@ -45,6 +45,11 @@ Commands:
   unifi-site                Set the Unifi site if different then default
   unifi-port-on             Enable automatic port forwarding on Unifi
   unifi-port-off            Disable automatic port forwarding on Unifi
+  edge-username             Set EdgeRouter username
+  edge-password             Set EdgeRouter password
+  edge-hostname             Set hostname of EdgeRouter
+  edge-port-on              Enable automatic port forwarding on EdgeRouter
+  edge-port-off             Disable automatic port forwarding on EdgeRouter
 `
 
 func Init() {
@@ -223,6 +228,41 @@ func main() {
 	case "unifi-port-off":
 		Init()
 		err := cmd.UnifiPortOff()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "edge-username":
+		Init()
+		err := cmd.EdgeUsername(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "edge-password":
+		Init()
+		err := cmd.EdgePassword(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "edge-controller":
+		Init()
+		err := cmd.EdgeHostname(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "edge-port-on":
+		Init()
+		err := cmd.EdgePortOn()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "edge-port-off":
+		Init()
+		err := cmd.EdgePortOff()
 		if err != nil {
 			panic(err)
 		}
