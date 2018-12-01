@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
@@ -252,7 +253,7 @@ func edgeGetRoutes(client *http.Client) (routes []*edgeRoute, err error) {
 	return
 }
 
-func EdgeAddRoute(destination string) (err error) {
+func edgeAddRoute(destination string) (err error) {
 	nexthop := state.GetLocalAddress()
 
 	client, err := edgeGetClient()
@@ -348,7 +349,7 @@ func EdgeAddRoute(destination string) (err error) {
 	return
 }
 
-func EdgeDeleteRoute(route *routes.EdgeRoute) (err error) {
+func edgeDeleteRoute(route *routes.EdgeRoute) (err error) {
 	if !config.Config.DeleteRoutes {
 		err = route.Remove()
 		if err != nil {
@@ -504,7 +505,7 @@ func edgeGetRules(client *http.Client) (rules *edgeFeatureResp, err error) {
 	return
 }
 
-func EdgeAddPorts() (err error) {
+func edgeAddPorts() (err error) {
 	nexthop := state.GetLocalAddress()
 
 	client, err := edgeGetClient()
@@ -656,5 +657,47 @@ func EdgeAddPorts() (err error) {
 		return
 	}
 
+	return
+}
+
+func EdgeAddRoute(destination string) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": errors.New(fmt.Sprintf("%s", r)),
+			}).Error("edge: Edge add route recover")
+			return
+		}
+	}()
+
+	err = edgeAddRoute(destination)
+	return
+}
+
+func EdgeDeleteRoute(route *routes.EdgeRoute) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": errors.New(fmt.Sprintf("%s", r)),
+			}).Error("edge: Edge delete route recover")
+			return
+		}
+	}()
+
+	err = edgeDeleteRoute(route)
+	return
+}
+
+func EdgeAddPorts() (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": errors.New(fmt.Sprintf("%s", r)),
+			}).Error("edge: Edge add ports recover")
+			return
+		}
+	}()
+
+	err = edgeAddPorts()
 	return
 }
