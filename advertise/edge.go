@@ -260,12 +260,12 @@ func EdgeAddRoute(destination string) (err error) {
 		return
 	}
 
-	routes, err := edgeGetRoutes(client)
+	rtes, err := edgeGetRoutes(client)
 	if err != nil {
 		return
 	}
 
-	for _, route := range routes {
+	for _, route := range rtes {
 		if route.Destination == destination && route.NextHop == nexthop {
 			return
 		}
