@@ -246,7 +246,7 @@ func main() {
 			panic(err)
 		}
 		break
-	case "edge-controller":
+	case "edge-hostname":
 		Init()
 		err := cmd.EdgeHostname(flag.Arg(1))
 		if err != nil {
