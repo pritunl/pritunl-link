@@ -663,8 +663,9 @@ func edgeAddPorts() (err error) {
 func EdgeAddRoute(destination string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
+			err = errors.New(fmt.Sprintf("%s", r))
 			logrus.WithFields(logrus.Fields{
-				"error": errors.New(fmt.Sprintf("%s", r)),
+				"error": err,
 			}).Error("edge: Edge add route recover")
 			return
 		}
@@ -677,8 +678,9 @@ func EdgeAddRoute(destination string) (err error) {
 func EdgeDeleteRoute(route *routes.EdgeRoute) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
+			err = errors.New(fmt.Sprintf("%s", r))
 			logrus.WithFields(logrus.Fields{
-				"error": errors.New(fmt.Sprintf("%s", r)),
+				"error": err,
 			}).Error("edge: Edge delete route recover")
 			return
 		}
@@ -691,8 +693,9 @@ func EdgeDeleteRoute(route *routes.EdgeRoute) (err error) {
 func EdgeAddPorts() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
+			err = errors.New(fmt.Sprintf("%s", r))
 			logrus.WithFields(logrus.Fields{
-				"error": errors.New(fmt.Sprintf("%s", r)),
+				"error": err,
 			}).Error("edge: Edge add ports recover")
 			return
 		}
