@@ -48,11 +48,11 @@ type edgeFeatureRule struct {
 }
 
 type edgeFeatureData struct {
-	AutoFirewall string            `json:"auto-firewall"`
-	HairpinNat   string            `json:"hairpin-nat"`
-	LansConfig   *json.RawMessage  `json:"lans-config"`
-	RulesConfig  []edgeFeatureRule `json:"rules-config"`
-	Wan          string            `json:"wan"`
+	AutoFirewall string          `json:"auto-firewall"`
+	HairpinNat   string          `json:"hairpin-nat"`
+	LansConfig   json.RawMessage `json:"lans-config"`
+	RulesConfig  json.RawMessage `json:"rules-config"`
+	Wan          string          `json:"wan"`
 }
 
 type edgeFeature struct {
@@ -517,12 +517,14 @@ func EdgeAddPorts() (err error) {
 		return
 	}
 
-	newRules := []edgeFeatureRule{}
-
 	port500 := false
 	port4500 := false
+	oldRules := []edgeFeatureRule{}
+	newRules := []edgeFeatureRule{}
 
-	for _, rule := range rules.Feature.Data.RulesConfig {
+	_ = json.Unmarshal(rules.Feature.Data.RulesConfig, &oldRules)
+
+	for _, rule := range oldRules {
 		if rule.OriginalPort == "500" {
 			if rule.Protocol == "udp" &&
 				rule.ForwardToPort == "500" &&
@@ -544,8 +546,6 @@ func EdgeAddPorts() (err error) {
 				continue
 			}
 		}
-
-		newRules = append(newRules, rule)
 	}
 
 	if port500 && port4500 {
@@ -575,7 +575,14 @@ func EdgeAddPorts() (err error) {
 		newRules = append(newRules, rule)
 	}
 
-	rules.Feature.Data.RulesConfig = newRules
+	rulesByt, err := json.Marshal(newRules)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "edge: Failed to marshal rules"),
+		}
+		return
+	}
+	rules.Feature.Data.RulesConfig = rulesByt
 
 	apply := &edgeFeatureApply{
 		Data: edgeFeatureApplyData{
