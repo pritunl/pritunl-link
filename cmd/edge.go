@@ -15,7 +15,7 @@ func EdgeUsername(username string) (err error) {
 
 	logrus.WithFields(logrus.Fields{
 		"username": config.Config.Edge.Username,
-	}).Info("cmd.unifi: Set EdgeRouter username")
+	}).Info("cmd.edge: Set EdgeRouter username")
 
 	return
 }
@@ -30,7 +30,7 @@ func EdgePassword(password string) (err error) {
 
 	logrus.WithFields(logrus.Fields{
 		"password": config.Config.Edge.Password,
-	}).Info("cmd.unifi: Set EdgeRouter password")
+	}).Info("cmd.edge: Set EdgeRouter password")
 
 	return
 }
@@ -45,7 +45,7 @@ func EdgeHostname(hostname string) (err error) {
 
 	logrus.WithFields(logrus.Fields{
 		"hostname": config.Config.Edge.Hostname,
-	}).Info("cmd.unifi: Set EdgeRouter hostname")
+	}).Info("cmd.edge: Set EdgeRouter hostname")
 
 	return
 }
@@ -58,7 +58,7 @@ func EdgePortOn() (err error) {
 		return
 	}
 
-	logrus.Info("cmd.unifi: EdgeRouter port forwarding enabled")
+	logrus.Info("cmd.edge: EdgeRouter port forwarding enabled")
 
 	return
 }
@@ -71,7 +71,7 @@ func EdgePortOff() (err error) {
 		return
 	}
 
-	logrus.Info("cmd.unifi: EdgeRouter port forwarding disabled")
+	logrus.Info("cmd.edge: EdgeRouter port forwarding disabled")
 
 	return
 }
