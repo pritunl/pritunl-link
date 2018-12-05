@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"github.com/dropbox/godropbox/errors"
@@ -13,8 +14,101 @@ import (
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/oraclesdk"
 	"github.com/pritunl/pritunl-link/routes"
+	"github.com/pritunl/pritunl-link/utils"
 	"time"
 )
+
+type oracleMetadata struct {
+	UserOcid        string
+	PrivateKey      string
+	RegionName      string
+	TenancyOcid     string
+	CompartmentOcid string
+	VnicOcid        string
+}
+
+type oracleOciMetaVnic struct {
+	Id        string `json:"vnicId"`
+	MacAddr   string `json:"macAddr"`
+	PrivateIp string `json:"privateIp"`
+}
+
+type oracleOciMetaInstance struct {
+	Id            string `json:"id"`
+	DisplayName   string `json:"displayName"`
+	CompartmentId string `json:"compartmentId"`
+	RegionName    string `json:"canonicalRegionName"`
+}
+
+type oracleOciMeta struct {
+	Instance oracleOciMetaInstance `json:"instance"`
+	Vnics    []oracleOciMetaVnic   `json:"vnics"`
+}
+
+func oracleGetMetadata() (mdata *oracleMetadata, err error) {
+	userOcid := config.Config.Oracle.UserOcid
+	privateKey := config.Config.Oracle.PrivateKey
+
+	region := config.Config.Oracle.Region
+	tenancyOcid := config.Config.Oracle.TenancyOcid
+	compartmentOcid := config.Config.Oracle.CompartmentOcid
+	vnicOcidConf := config.Config.Oracle.VnicOcid
+
+	if region != "" && tenancyOcid != "" && compartmentOcid != "" &&
+		vnicOcidConf != "" {
+
+		mdata = &oracleMetadata{
+			UserOcid:        userOcid,
+			PrivateKey:      privateKey,
+			RegionName:      region,
+			TenancyOcid:     tenancyOcid,
+			CompartmentOcid: compartmentOcid,
+			VnicOcid:        vnicOcidConf,
+		}
+		return
+	}
+
+	output, err := utils.ExecOutput("", "oci-metadata", "--json")
+	if err != nil {
+		return
+	}
+
+	data := &oracleOciMeta{}
+
+	err = json.Unmarshal([]byte(output), data)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "oracle: Failed to parse metadata"),
+		}
+		return
+	}
+
+	vnicOcid := ""
+	if data.Vnics != nil {
+		for _, vnic := range data.Vnics {
+			vnicOcid = vnic.Id
+			break
+		}
+	}
+
+	if vnicOcid == "" {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "oracle: Failed to get vnic in metadata"),
+		}
+		return
+	}
+
+	mdata = &oracleMetadata{
+		UserOcid:        userOcid,
+		PrivateKey:      privateKey,
+		RegionName:      data.Instance.RegionName,
+		TenancyOcid:     data.Instance.CompartmentId,
+		CompartmentOcid: data.Instance.CompartmentId,
+		VnicOcid:        vnicOcid,
+	}
+
+	return
+}
 
 func oracleParseBase64Key(data string) (pemKey []byte, fingerprint string,
 	err error) {
@@ -103,13 +197,10 @@ func oracleNewClient(region, privateKey, userOcid, tenancyOcid string) (
 func OracleAddRoute(network string) (err error) {
 	time.Sleep(150 * time.Millisecond)
 
-	region := config.Config.Oracle.Region
-	privateKey := config.Config.Oracle.PrivateKey
-	userOcid := config.Config.Oracle.UserOcid
-	tenancyOcid := config.Config.Oracle.TenancyOcid
-	compartmentOcid := config.Config.Oracle.CompartmentOcid
-	vncOcid := config.Config.Oracle.VncOcid
-	privateIpOcid := config.Config.Oracle.PrivateIpOcid
+	mdata, err := oracleGetMetadata()
+	if err != nil {
+		return
+	}
 
 	if constants.Interrupt {
 		err = &errortypes.UnknownError{
@@ -119,19 +210,89 @@ func OracleAddRoute(network string) (err error) {
 	}
 
 	client, err := oracleNewClient(
-		region,
-		privateKey,
-		userOcid,
-		tenancyOcid,
+		mdata.RegionName,
+		mdata.PrivateKey,
+		mdata.UserOcid,
+		mdata.TenancyOcid,
 	)
 	if err != nil {
 		return
 	}
 
-	tables, err := client.ListRouteTables(compartmentOcid, vncOcid, nil)
+	vnic, err := client.GetVnic(mdata.VnicOcid)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "oracle: Failed to get vnic"),
+		}
+		return
+	}
+
+	if !vnic.SkipSourceDestCheck {
+		skipSrcDest := true
+		vnicOpts := &oraclesdk.UpdateVnicOptions{
+			SkipSourceDestCheck: &skipSrcDest,
+		}
+		_, err = client.UpdateVnic(mdata.VnicOcid, vnicOpts)
+		if err != nil {
+			err = &errortypes.RequestError{
+				errors.Wrap(err,
+					"oracle: Failed to update vnic source dest check"),
+			}
+			return
+		}
+
+		time.Sleep(250 * time.Millisecond)
+	}
+
+	listIpOpt := &oraclesdk.ListPrivateIPsOptions{
+		VnicID: mdata.VnicOcid,
+	}
+	privateIps, err := client.ListPrivateIPs(listIpOpt)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "oracle: Failed to get private ips"),
+		}
+		return
+	}
+
+	privateIpOcid := ""
+	subnetOcid := ""
+	if privateIps.PrivateIPs != nil {
+		for _, privateIp := range privateIps.PrivateIPs {
+			privateIpOcid = privateIp.ID
+			subnetOcid = privateIp.SubnetID
+			break
+		}
+	}
+
+	if privateIpOcid == "" || subnetOcid == "" {
+		err = &errortypes.ParseError{
+			errors.New("oracle: Failed to get private ip ocid"),
+		}
+		return
+	}
+
+	subnet, err := client.GetSubnet(subnetOcid)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "oracle: Failed to get subnet"),
+		}
+		return
+	}
+	vcnOcid := subnet.VcnID
+
+	tables, err := client.ListRouteTables(
+		mdata.CompartmentOcid, vcnOcid, nil)
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "oracle: Failed to get routing tables"),
+		}
+		return
+	}
+
+	if len(tables.RouteTables) == 0 {
+		err = &errortypes.ParseError{
+			errors.New("oracle: Failed to find route tables"),
 		}
 		return
 	}
@@ -180,13 +341,9 @@ func OracleAddRoute(network string) (err error) {
 	}
 
 	route := &routes.OracleRoute{
-		DestNetwork:     network,
-		Region:          region,
-		UserOcid:        userOcid,
-		TenancyOcid:     tenancyOcid,
-		CompartmentOcid: compartmentOcid,
-		VncOcid:         vncOcid,
-		PrivateIpOcid:   privateIpOcid,
+		DestNetwork:   network,
+		VncOcid:       mdata.VnicOcid,
+		PrivateIpOcid: privateIpOcid,
 	}
 
 	err = route.Add()
@@ -201,12 +358,14 @@ func OracleDeleteRoute(oracleRoute *routes.OracleRoute) (err error) {
 	if config.Config.DeleteRoutes {
 		time.Sleep(150 * time.Millisecond)
 
-		region := config.Config.Oracle.Region
 		privateKey := config.Config.Oracle.PrivateKey
 		userOcid := config.Config.Oracle.UserOcid
-		tenancyOcid := config.Config.Oracle.TenancyOcid
-		compartmentOcid := config.Config.Oracle.CompartmentOcid
-		vncOcid := config.Config.Oracle.VncOcid
+
+		mdata, e := oracleGetMetadata()
+		if e != nil {
+			err = e
+			return
+		}
 
 		if constants.Interrupt {
 			err = &errortypes.UnknownError{
@@ -216,17 +375,18 @@ func OracleDeleteRoute(oracleRoute *routes.OracleRoute) (err error) {
 		}
 
 		client, e := oracleNewClient(
-			region,
+			mdata.RegionName,
 			privateKey,
 			userOcid,
-			tenancyOcid,
+			mdata.TenancyOcid,
 		)
 		if e != nil {
 			err = e
 			return
 		}
 
-		tables, e := client.ListRouteTables(compartmentOcid, vncOcid, nil)
+		tables, e := client.ListRouteTables(
+			mdata.CompartmentOcid, mdata.VnicOcid, nil)
 		if e != nil {
 			err = &errortypes.RequestError{
 				errors.Wrap(e, "oracle: Failed to get routing tables"),
@@ -239,7 +399,9 @@ func OracleDeleteRoute(oracleRoute *routes.OracleRoute) (err error) {
 
 			routeRules := []oraclesdk.RouteRule{}
 			for _, route := range table.RouteRules {
-				if route.CidrBlock == oracleRoute.DestNetwork {
+				if route.CidrBlock == oracleRoute.DestNetwork &&
+					route.NetworkEntityID == oracleRoute.PrivateIpOcid {
+
 					update = true
 					continue
 				}
@@ -258,7 +420,8 @@ func OracleDeleteRoute(oracleRoute *routes.OracleRoute) (err error) {
 			_, err = client.UpdateRouteTable(table.ID, opts)
 			if err != nil {
 				err = &errortypes.RequestError{
-					errors.Wrap(err, "oracle: Failed to update routing table"),
+					errors.Wrap(err,
+						"oracle: Failed to update routing table"),
 				}
 				return
 			}
