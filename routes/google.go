@@ -1,10 +1,9 @@
 package routes
 
 type GoogleRoute struct {
-	DestNetwork string `json:"dest_network"`
-	Project     string `json:"project"`
-	Network     string `json:"network"`
-	Instance    string `json:"instance"`
+	DestNetwork  string `json:"dest_network"`
+	Network      string `json:"network"`
+	NetworkShort string `json:"network_short"`
 }
 
 func (r *GoogleRoute) Add() (err error) {
