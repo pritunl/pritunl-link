@@ -295,8 +295,9 @@ func GoogleDeleteRoute(route *routes.GoogleRoute) (err error) {
 			return
 		}
 
-		data, err := googleGetMetaData()
-		if err != nil {
+		data, e := googleGetMetaData()
+		if e != nil {
+			err = e
 			return
 		}
 
