@@ -33,8 +33,7 @@ type OracleData struct {
 	UserOcid        string `json:"user_ocid"`
 	TenancyOcid     string `json:"tenancy_ocid"`
 	CompartmentOcid string `json:"compartment_ocid"`
-	VncOcid         string `json:"vnc_ocid"`
-	PrivateIpOcid   string `json:"private_ip_ocid"`
+	VnicOcid        string `json:"vnic_ocid"`
 }
 
 type UnifiData struct {
