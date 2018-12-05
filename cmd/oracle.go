@@ -80,8 +80,8 @@ func OracleCompartmentOcid(val string) (err error) {
 	return
 }
 
-func OracleVncOcid(val string) (err error) {
-	config.Config.Oracle.VncOcid = val
+func OracleVnicOcid(val string) (err error) {
+	config.Config.Oracle.VnicOcid = val
 
 	err = config.Save()
 	if err != nil {
@@ -89,23 +89,8 @@ func OracleVncOcid(val string) (err error) {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"vnc_ocid": config.Config.Oracle.VncOcid,
-	}).Info("cmd.unifi: Set Oracle vnc OCID")
-
-	return
-}
-
-func OraclePrivateIpOcid(val string) (err error) {
-	config.Config.Oracle.PrivateIpOcid = val
-
-	err = config.Save()
-	if err != nil {
-		return
-	}
-
-	logrus.WithFields(logrus.Fields{
-		"private_ip_ocid": config.Config.Oracle.PrivateIpOcid,
-	}).Info("cmd.unifi: Set Oracle private IP OCID")
+		"vnc_ocid": config.Config.Oracle.VnicOcid,
+	}).Info("cmd.unifi: Set Oracle vnic OCID")
 
 	return
 }
