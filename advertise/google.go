@@ -273,10 +273,9 @@ func GoogleAddRoute(destNetwork string) (err error) {
 	}
 
 	route := &routes.GoogleRoute{
-		DestNetwork: destNetwork,
-		Project:     data.Project,
-		Network:     data.Network,
-		Instance:    data.Instance,
+		DestNetwork:  destNetwork,
+		Network:      data.Network,
+		NetworkShort: data.NetworkShort,
 	}
 
 	err = route.Add()
@@ -293,6 +292,11 @@ func GoogleDeleteRoute(route *routes.GoogleRoute) (err error) {
 			err = &errortypes.UnknownError{
 				errors.Wrap(err, "advertise: Interrupt"),
 			}
+			return
+		}
+
+		data, err := googleGetMetaData()
+		if err != nil {
 			return
 		}
 
@@ -313,15 +317,20 @@ func GoogleDeleteRoute(route *routes.GoogleRoute) (err error) {
 			return
 		}
 
-		rotes, e := googleGetRoutes(svc, route.Project)
+		rotes, e := googleGetRoutes(svc, data.Project)
 		if e != nil {
 			err = e
 			return
 		}
 
 		if rout, ok := rotes[route.DestNetwork]; ok {
-			call := svc.Routes.Delete(route.Project, rout.Name)
-			call.Do()
+			if rout.DestRange == route.DestNetwork &&
+				rout.NetworkShort == route.NetworkShort &&
+				rout.NextHopInstanceShort == data.InstanceShort {
+
+				call := svc.Routes.Delete(data.Project, rout.Name)
+				call.Do()
+			}
 		}
 	}
 
