@@ -32,12 +32,12 @@ Commands:
   advertise-update-on       Enable recurring checks and updates of routing table and port forwarding
   advertise-update-off      Disable recurring checks and updates of routing table and port forwarding
   provider                  Manually set network provider
-  oracle-region             Set Oracle region
-  oracle-private-key        Set Oracle base64 private key
   oracle-user-ocid          Set Oracle user ocid
+  oracle-private-key        Set Oracle base64 private key
+  oracle-region             Set Oracle region
   oracle-tenancy-ocid       Set Oracle tenancy ocid
   oracle-compartment-ocid   Set Oracle compartment ocid
-  oracle-vnc-ocid           Set Oracle vnc ocid
+  oracle-vnic-ocid          Set Oracle vnic ocid
   oracle-private-ip-ocid    Set Oracle private IP ocid
   unifi-username            Set Unifi username
   unifi-password            Set Unifi password
@@ -302,16 +302,9 @@ func main() {
 			panic(err)
 		}
 		break
-	case "oracle-vnc-ocid":
+	case "oracle-vnic-ocid":
 		Init()
-		err := cmd.OracleVncOcid(flag.Arg(1))
-		if err != nil {
-			panic(err)
-		}
-		break
-	case "oracle-private-ip-ocid":
-		Init()
-		err := cmd.OraclePrivateIpOcid(flag.Arg(1))
+		err := cmd.OracleVnicOcid(flag.Arg(1))
 		if err != nil {
 			panic(err)
 		}
