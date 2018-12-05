@@ -1,13 +1,9 @@
 package routes
 
 type OracleRoute struct {
-	DestNetwork     string `json:"dest_network"`
-	Region          string `json:"region"`
-	UserOcid        string `json:"user_ocid"`
-	TenancyOcid     string `json:"tenancy_ocid"`
-	CompartmentOcid string `json:"compartment_ocid"`
-	VncOcid         string `json:"vnc_ocid"`
-	PrivateIpOcid   string `json:"private_ip_ocid"`
+	DestNetwork   string `json:"dest_network"`
+	VncOcid       string `json:"vnc_ocid"`
+	PrivateIpOcid string `json:"private_ip_ocid"`
 }
 
 func (r *OracleRoute) Add() (err error) {
