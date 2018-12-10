@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/Sirupsen/logrus"
+	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/advertise"
 	"github.com/pritunl/pritunl-link/config"
@@ -24,6 +25,8 @@ import (
 var (
 	updateAdvertise bool
 	deployStates    []*state.State
+	deployRestart   = true
+	deployResetIds  []string
 	curStates       []*state.State
 	deployLock      sync.Mutex
 	updateSleepLock sync.Mutex
@@ -286,7 +289,7 @@ func writeConf() (err error) {
 	return
 }
 
-func writeTemplates(states []*state.State) (err error) {
+func writeTemplates(states []*state.State, resetIds []string) (err error) {
 	secretsBuf := &bytes.Buffer{}
 
 	publicAddr := state.GetPublicAddress()
@@ -294,10 +297,21 @@ func writeTemplates(states []*state.State) (err error) {
 
 	iptablesState := false
 
+	resetSet := set.NewSet()
+	for _, resetId := range resetIds {
+		resetSet.Add(resetId)
+	}
+
 	for _, stat := range states {
 		confBuf := &bytes.Buffer{}
 
 		for i, link := range stat.Links {
+			linkId := fmt.Sprintf("%s-%d", stat.Id, i)
+
+			if resetSet.Contains(linkId) {
+				continue
+			}
+
 			leftSubnets := strings.Join(link.LeftSubnets, ",")
 			rightSubnets := strings.Join(link.RightSubnets, ",")
 
@@ -383,7 +397,9 @@ func writeTemplates(states []*state.State) (err error) {
 	return
 }
 
-func deploy(states []*state.State) (err error) {
+func deploy(states []*state.State, restart bool, resetIds []string) (
+	err error) {
+
 	if constants.Interrupt {
 		err = &errortypes.UnknownError{
 			errors.Wrap(err, "state: Interrupt"),
@@ -436,7 +452,7 @@ func deploy(states []*state.State) (err error) {
 		return
 	}
 
-	err = writeTemplates(states)
+	err = writeTemplates(states, resetIds)
 	if err != nil {
 		return
 	}
@@ -446,9 +462,28 @@ func deploy(states []*state.State) (err error) {
 		return
 	}
 
-	err = utils.Exec("", "ipsec", "restart")
-	if err != nil {
-		return
+	if restart {
+		err = utils.Exec("", "ipsec", "restart")
+		if err != nil {
+			return
+		}
+	} else {
+		err = utils.Exec("", "ipsec", "update")
+		if err != nil {
+			return
+		}
+
+		if resetIds != nil && len(resetIds) > 0 {
+			time.Sleep(500 * time.Millisecond)
+
+			for _, linkId := range resetIds {
+				_ = utils.Exec("", "ipsec", "down", linkId)
+				time.Sleep(100 * time.Millisecond)
+				_ = utils.Exec("", "ipsec", "down", linkId)
+				time.Sleep(100 * time.Millisecond)
+				_ = utils.Exec("", "ipsec", "down", linkId)
+			}
+		}
 	}
 
 	err = advertise.Routes(states)
@@ -510,10 +545,16 @@ func Deploy(states []*state.State) {
 	deployLock.Unlock()
 }
 
-func Redeploy() {
+func Redeploy(restart bool, resetIds []string) {
 	deployLock.Lock()
 	if deployStates == nil && curStates != nil {
 		deployStates = curStates
+	}
+	if restart {
+		deployRestart = true
+	}
+	if resetIds != nil && len(resetIds) > 0 {
+		deployResetIds = resetIds
 	}
 	deployLock.Unlock()
 }
@@ -523,8 +564,12 @@ func runDeploy() {
 		if deployStates != nil || updateAdvertise {
 			deployLock.Lock()
 			states := deployStates
+			restart := deployRestart
+			resetIds := deployResetIds
 			updateAd := false
 			deployStates = nil
+			deployRestart = false
+			deployResetIds = nil
 			if states != nil {
 				curStates = states
 			} else if updateAdvertise {
@@ -536,16 +581,23 @@ func runDeploy() {
 
 			if states != nil {
 				if updateAd {
-					update(states)
+					err := update(states)
+					if err != nil {
+						logrus.WithFields(logrus.Fields{
+							"error": err,
+						}).Error(
+							"state: Failed to update route advertisement")
+					}
 				} else {
 					logrus.WithFields(logrus.Fields{
 						"default_interface": state.GetDefaultInterface(),
 						"local_address":     state.GetLocalAddress(),
 						"public_address":    state.GetPublicAddress(),
 						"address6":          state.GetAddress6(),
+						"states_len":        len(states),
 					}).Info("state: Deploying state")
 
-					err := deploy(states)
+					err := deploy(states, restart, resetIds)
 					if err != nil {
 						logrus.WithFields(logrus.Fields{
 							"error": err,
@@ -557,11 +609,42 @@ func runDeploy() {
 						if deployStates == nil {
 							deployStates = states
 						}
+						if restart {
+							deployRestart = true
+						}
 						deployLock.Unlock()
-					} else {
-						updateSleepLock.Lock()
-						updateSleep = constants.UpdateAdvertiseReplay
-						updateSleepLock.Unlock()
+
+						time.Sleep(200 * time.Millisecond)
+						continue
+					}
+
+					updateSleepLock.Lock()
+					updateSleep = constants.UpdateAdvertiseReplay
+					updateSleepLock.Unlock()
+
+					if resetIds != nil && len(resetIds) > 0 {
+						time.Sleep(3 * time.Second)
+
+						err := deploy(states, restart, nil)
+						if err != nil {
+							logrus.WithFields(logrus.Fields{
+								"error": err,
+							}).Error("state: Failed to redeploy state")
+
+							time.Sleep(3 * time.Second)
+
+							deployLock.Lock()
+							if deployStates == nil {
+								deployStates = states
+							}
+							if restart {
+								deployRestart = true
+							}
+							deployLock.Unlock()
+
+							time.Sleep(200 * time.Millisecond)
+							continue
+						}
 					}
 				}
 			}
@@ -589,7 +672,12 @@ func runUpdateAdvertise() {
 
 		states := curStates
 		if states != nil {
-			update(states)
+			err := update(states)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"error": err,
+				}).Error("state: Failed to update route advertisement")
+			}
 		}
 	}
 }
