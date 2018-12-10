@@ -15,7 +15,7 @@ const (
 	IpsecDirPath              = "/etc/ipsec.pritunl"
 	PublicIpServer            = "https://app.pritunl.com/ip"
 	PublicIp6Server           = "https://app6.pritunl.com/ip"
-	DefaultDiconnectedTimeout = 60 * time.Second
+	DefaultDiconnectedTimeout = 10 * time.Second
 	DiconnectedTimeoutBackoff = 30 * time.Second
 	UpdateAdvertiseRate       = 90
 	UpdateAdvertiseReplay     = 15
