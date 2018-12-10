@@ -11,7 +11,7 @@ import (
 
 var (
 	offlineTime   time.Time
-	lastReconnect = time.Now().Add(-10 * time.Minute)
+	lastReconnect = time.Now()
 )
 
 func Update(names set.Set) (hasConnected bool, resetLinks []string,
