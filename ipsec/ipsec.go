@@ -623,7 +623,7 @@ func runDeploy() {
 					updateSleepLock.Unlock()
 
 					if resetIds != nil && len(resetIds) > 0 {
-						time.Sleep(3 * time.Second)
+						time.Sleep(300 * time.Millisecond)
 
 						err := deploy(states, restart, nil)
 						if err != nil {
