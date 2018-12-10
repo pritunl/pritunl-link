@@ -16,7 +16,7 @@ const (
 	PublicIpServer            = "https://app.pritunl.com/ip"
 	PublicIp6Server           = "https://app6.pritunl.com/ip"
 	DefaultDiconnectedTimeout = 10 * time.Second
-	DiconnectedTimeoutBackoff = 30 * time.Second
+	DiconnectedTimeoutBackoff = 25 * time.Second
 	UpdateAdvertiseRate       = 90
 	UpdateAdvertiseReplay     = 15
 	StateCacheTtl             = 25 * time.Second
