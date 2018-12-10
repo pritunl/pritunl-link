@@ -55,7 +55,7 @@ func SyncStates() {
 		state.Hash = newHash
 	}
 
-	resetLinks, err := state.Update(names)
+	hasConnected, resetLinks, err := state.Update(names)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"default_interface": state.GetDefaultInterface(),
@@ -66,22 +66,15 @@ func SyncStates() {
 	}
 
 	if resetLinks != nil && len(resetLinks) != 0 {
-		logrus.Warn("sync: Disconnected timeout restarting")
+		if hasConnected {
+			logrus.Warn("sync: Disconnected timeout resetting")
 
-		ipsec.Redeploy()
+			ipsec.Redeploy(false, resetLinks)
+		} else {
+			logrus.Warn("sync: Disconnected timeout restarting")
 
-		//for _, linkId := range resetLinks {
-		//	utils.Exec("", "ipsec", "down", linkId)
-		//
-		//	time.Sleep(300 * time.Millisecond)
-		//
-		//	err = utils.Exec("", "ipsec", "up", linkId)
-		//	if err != nil {
-		//		logrus.WithFields(logrus.Fields{
-		//			"link_id": linkId,
-		//		}).Info("sync: Failed to up link")
-		//	}
-		//}
+			ipsec.Redeploy(true, nil)
+		}
 	}
 
 	return
@@ -133,7 +126,7 @@ func SyncDefaultIface(redeploy bool) (err error) {
 				"default_interface":     state.GetDefaultGateway(),
 			}).Info("sync: Default interface changed redeploying")
 
-			ipsec.Redeploy()
+			ipsec.Redeploy(true, nil)
 		}
 	} else if config.Config.DefaultInterface == "" {
 		logrus.WithFields(logrus.Fields{
@@ -151,7 +144,7 @@ func SyncDefaultIface(redeploy bool) (err error) {
 				"default_gateway":     state.GetDefaultGateway(),
 			}).Info("sync: Default gateway changed redeploying")
 
-			ipsec.Redeploy()
+			ipsec.Redeploy(true, nil)
 		}
 	} else if config.Config.DefaultGateway == "" {
 		logrus.WithFields(logrus.Fields{
@@ -213,7 +206,7 @@ func SyncLocalAddress(redeploy bool) (err error) {
 	}
 
 	if changed && redeploy {
-		ipsec.Redeploy()
+		ipsec.Redeploy(true, nil)
 	}
 
 	return
@@ -289,7 +282,7 @@ func SyncPublicAddress(redeploy bool) (err error) {
 				"public_address":     publicAddress,
 			}).Info("sync: Public address changed redeploying")
 
-			ipsec.Redeploy()
+			ipsec.Redeploy(true, nil)
 		}
 	}
 
@@ -366,7 +359,7 @@ func SyncPublicAddress6(redeploy bool) (err error) {
 				"public_address":     publicAddress,
 			}).Info("sync: Public address6 changed redeploying")
 
-			ipsec.Redeploy()
+			ipsec.Redeploy(true, nil)
 		}
 	}
 
@@ -407,7 +400,7 @@ func SyncConfig() (err error) {
 
 		curMod = mod
 
-		ipsec.Redeploy()
+		ipsec.Redeploy(false, nil)
 	}
 
 	return
