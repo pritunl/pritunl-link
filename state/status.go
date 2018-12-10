@@ -10,10 +10,13 @@ import (
 )
 
 var (
-	offlineTime time.Time
+	offlineTime   time.Time
+	lastReconnect = time.Now().Add(-10 * time.Minute)
 )
 
-func Update(names set.Set) (resetLinks []string, err error) {
+func Update(names set.Set) (hasConnected bool, resetLinks []string,
+	err error) {
+
 	resetLinks = []string{}
 
 	stats, _, err := status.Get()
@@ -30,6 +33,7 @@ func Update(names set.Set) (resetLinks []string, err error) {
 
 			if connStatus == "connected" {
 				if names.Contains(id) {
+					hasConnected = true
 					names.Remove(id)
 				} else {
 					unknown.Add(id)
@@ -50,8 +54,13 @@ func Update(names set.Set) (resetLinks []string, err error) {
 
 			if !config.Config.DisableDisconnectedRestart {
 				if time.Since(offlineTime) > disconnectedTimeout {
-					for nameInf := range names.Iter() {
-						resetLinks = append(resetLinks, nameInf.(string))
+					if time.Since(lastReconnect) >
+						constants.DiconnectedTimeoutBackoff {
+
+						for nameInf := range names.Iter() {
+							resetLinks = append(resetLinks, nameInf.(string))
+						}
+						lastReconnect = time.Now()
 					}
 					offlineTime = time.Time{}
 				}
