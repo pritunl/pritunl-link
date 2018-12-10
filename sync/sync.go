@@ -15,6 +15,7 @@ import (
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
 	"io"
+	"math/rand"
 	"net"
 	"net/http"
 	"strings"
@@ -64,6 +65,9 @@ func SyncStates() {
 			"address6":          state.GetAddress6(),
 		}).Info("sync: Failed to get status")
 	}
+
+	duration := rand.Intn(3)
+	time.Sleep(time.Duration(duration) * time.Second)
 
 	if resetLinks != nil && len(resetLinks) != 0 {
 		if hasConnected {
