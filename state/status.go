@@ -14,6 +14,38 @@ var (
 	lastReconnect = time.Now()
 )
 
+func Unknown(states []*State) (unknownIds []string, err error) {
+	names := set.NewSet()
+	for _, stat := range states {
+		for i := range stat.Links {
+			names.Add(fmt.Sprintf("%s-%d", stat.Id, i))
+		}
+	}
+
+	stats, _, err := status.Get()
+	if err != nil {
+		return
+	}
+
+	unknown := set.NewSet()
+	unknownIds = []string{}
+
+	for stateId, conns := range stats {
+		for connId, _ := range conns {
+			id := fmt.Sprintf("%s-%s", stateId, connId)
+
+			if !names.Contains(id) && len(stateId) == 24 &&
+				!unknown.Contains(id) {
+
+				unknown.Add(id)
+				unknownIds = append(unknownIds, id)
+			}
+		}
+	}
+
+	return
+}
+
 func Update(states []*State) (hasConnected bool,
 	resetLinks []string, err error) {
 
