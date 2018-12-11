@@ -66,10 +66,10 @@ func SyncStates() {
 		}).Info("sync: Failed to get status")
 	}
 
-	duration := rand.Intn(3)
-	time.Sleep(time.Duration(duration) * time.Second)
-
 	if resetLinks != nil && len(resetLinks) != 0 {
+		duration := rand.Intn(3)
+		time.Sleep(time.Duration(duration) * time.Second)
+
 		if hasConnected {
 			logrus.Warn("sync: Disconnected timeout resetting")
 
