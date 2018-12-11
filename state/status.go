@@ -14,10 +14,17 @@ var (
 	lastReconnect = time.Now()
 )
 
-func Update(names set.Set) (hasConnected bool, resetLinks []string,
-	err error) {
+func Update(states []*State) (hasConnected bool,
+	resetLinks []string, err error) {
 
 	resetLinks = []string{}
+
+	names := set.NewSet()
+	for _, stat := range states {
+		for i := range stat.Links {
+			names.Add(fmt.Sprintf("%s-%d", stat.Id, i))
+		}
+	}
 
 	stats, _, err := status.Get()
 	if err != nil {
