@@ -58,6 +58,7 @@ func putIpTables(stat *state.State) (err error) {
 	if err != nil {
 		return
 	}
+
 	directClientIp := directIp.String()
 
 	if clientLocal == "" || localAddress == "" ||
