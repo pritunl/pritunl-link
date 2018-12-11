@@ -4,9 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
@@ -41,11 +39,7 @@ func SyncStates() {
 	states := state.GetStates()
 	hsh := md5.New()
 
-	names := set.NewSet()
 	for _, stat := range states {
-		for i := range stat.Links {
-			names.Add(fmt.Sprintf("%s-%d", stat.Id, i))
-		}
 		io.WriteString(hsh, stat.Hash)
 	}
 
@@ -56,7 +50,7 @@ func SyncStates() {
 		state.Hash = newHash
 	}
 
-	hasConnected, resetLinks, err := state.Update(names)
+	hasConnected, resetLinks, err := state.Update(states)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"default_interface": state.GetDefaultInterface(),
