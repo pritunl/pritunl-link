@@ -493,6 +493,9 @@ func deploy(states []*state.State, restart bool, resetIds []string) (
 
 	if unknownIds != nil && len(unknownIds) > 0 {
 		for _, linkId := range unknownIds {
+			logrus.WithFields(logrus.Fields{
+				"link_id": linkId,
+			}).Info("state: Stopping removed link")
 			_ = utils.Exec("", "ipsec", "down", linkId)
 		}
 		time.Sleep(100 * time.Millisecond)
