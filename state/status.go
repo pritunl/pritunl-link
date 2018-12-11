@@ -33,7 +33,6 @@ func Update(states []*State) (hasConnected bool,
 
 	Status = stats
 
-	unknown := set.NewSet()
 	for stateId, conns := range stats {
 		for connId, connStatus := range conns {
 			id := fmt.Sprintf("%s-%s", stateId, connId)
@@ -42,8 +41,6 @@ func Update(states []*State) (hasConnected bool,
 				if names.Contains(id) {
 					hasConnected = true
 					names.Remove(id)
-				} else {
-					unknown.Add(id)
 				}
 			}
 		}
