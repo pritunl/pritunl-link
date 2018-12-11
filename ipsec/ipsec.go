@@ -486,6 +486,25 @@ func deploy(states []*state.State, restart bool, resetIds []string) (
 		}
 	}
 
+	unknownIds, err := state.Unknown(states)
+	if err != nil {
+		return
+	}
+
+	if unknownIds != nil && len(unknownIds) > 0 {
+		for _, linkId := range unknownIds {
+			_ = utils.Exec("", "ipsec", "down", linkId)
+		}
+		time.Sleep(100 * time.Millisecond)
+		for _, linkId := range unknownIds {
+			_ = utils.Exec("", "ipsec", "down", linkId)
+		}
+		time.Sleep(100 * time.Millisecond)
+		for _, linkId := range unknownIds {
+			_ = utils.Exec("", "ipsec", "down", linkId)
+		}
+	}
+
 	err = advertise.Routes(states)
 	if err != nil {
 		return
