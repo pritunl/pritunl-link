@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -298,22 +299,39 @@ func GetState(uri string) (state *State, err error) {
 
 func GetStates() (states []*State) {
 	states = []*State{}
+	statesMap := map[int]*State{}
 	uris := config.Config.Uris
 	urisSet := set.NewSet()
+	waiter := sync.WaitGroup{}
 
-	for _, uri := range uris {
+	for i, uri := range uris {
 		urisSet.Add(uri)
+		waiter.Add(1)
 
-		state, err := GetState(uri)
-		if err != nil {
-			logrus.WithFields(logrus.Fields{
-				"uri":   uri,
-				"error": err,
-			}).Info("state: Failed to get state")
-			continue
+		go func(i int, uri string) {
+			state, err := GetState(uri)
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"uri":   uri,
+					"error": err,
+				}).Info("state: Failed to get state")
+				statesMap[i] = nil
+			} else {
+				statesMap[i] = state
+			}
+
+			waiter.Done()
+		}(i, uri)
+	}
+
+	waiter.Done()
+
+	for i := range uris {
+		state := statesMap[i]
+
+		if state != nil {
+			states = append(states, state)
 		}
-
-		states = append(states, state)
 	}
 
 	for uri := range stateCaches {
