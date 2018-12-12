@@ -324,7 +324,7 @@ func GetStates() (states []*State) {
 		}(i, uri)
 	}
 
-	waiter.Done()
+	waiter.Wait()
 
 	for i := range uris {
 		state := statesMap[i]
