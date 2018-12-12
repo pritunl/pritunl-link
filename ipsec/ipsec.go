@@ -475,13 +475,16 @@ func deploy(states []*state.State, restart bool, resetIds []string) (
 		}
 
 		if resetIds != nil && len(resetIds) > 0 {
-			time.Sleep(500 * time.Millisecond)
-
+			time.Sleep(400 * time.Millisecond)
 			for _, linkId := range resetIds {
 				_ = utils.Exec("", "ipsec", "down", linkId)
-				time.Sleep(100 * time.Millisecond)
+			}
+			time.Sleep(100 * time.Millisecond)
+			for _, linkId := range resetIds {
 				_ = utils.Exec("", "ipsec", "down", linkId)
-				time.Sleep(100 * time.Millisecond)
+			}
+			time.Sleep(100 * time.Millisecond)
+			for _, linkId := range resetIds {
 				_ = utils.Exec("", "ipsec", "down", linkId)
 			}
 		}
