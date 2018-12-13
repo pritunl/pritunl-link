@@ -49,7 +49,7 @@ func SyncStates() {
 		state.Hash = newHash
 	}
 
-	hasConnected, resetLinks, err := state.Update(states)
+	hasConnected, _, resetLinks, err := state.Update(states)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"default_interface": state.GetDefaultInterface(),
