@@ -35,6 +35,7 @@ var (
 
 type templateData struct {
 	Id           string
+	Action       string
 	Left         string
 	LeftSubnets  string
 	Right        string
@@ -331,8 +332,14 @@ func writeTemplates(states []*state.State, resetIds []string) (err error) {
 				left = publicAddr
 			}
 
+			action := "restart"
+			if stat.Action != "" {
+				action = stat.Action
+			}
+
 			data := &templateData{
 				Id:           fmt.Sprintf("%s-%d", stat.Id, i),
+				Action:       action,
 				Left:         left,
 				LeftSubnets:  leftSubnets,
 				Right:        link.Right,
