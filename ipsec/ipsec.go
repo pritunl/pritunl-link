@@ -405,8 +405,8 @@ func writeTemplates(states []*state.State, resetIds []string) (err error) {
 	return
 }
 
-func deploy(states []*state.State, restart bool, resetIds []string) (
-	err error) {
+func deploy(states []*state.State, restart bool, resetIds []string,
+	checkHash bool) (reset bool, err error) {
 
 	if constants.Interrupt {
 		err = &errortypes.UnknownError{
@@ -460,6 +460,38 @@ func deploy(states []*state.State, restart bool, resetIds []string) (
 		return
 	}
 
+	if checkHash {
+		resetIdsSet := set.NewSet()
+		for _, resetId := range resetIds {
+			resetIdsSet.Add(resetId)
+		}
+
+		linksHash := map[string]string{}
+		for _, stat := range states {
+			for i, lnk := range stat.Links {
+				linkId := fmt.Sprintf("%s-%d", stat.Id, i)
+				linkHash := state.LinksHash[linkId]
+
+				if linkHash != "" && lnk.Hash != "" && linkHash != lnk.Hash {
+					if !resetIdsSet.Contains(linkId) {
+						logrus.WithFields(logrus.Fields{
+							"link_id": linkId,
+						}).Info("state: Restarting updated link")
+
+						resetIdsSet.Add(linkId)
+						if resetIds == nil {
+							resetIds = []string{}
+						}
+						resetIds = append(resetIds, linkId)
+					}
+				}
+
+				linksHash[linkId] = lnk.Hash
+			}
+		}
+		state.LinksHash = linksHash
+	}
+
 	err = writeTemplates(states, resetIds)
 	if err != nil {
 		return
@@ -482,17 +514,22 @@ func deploy(states []*state.State, restart bool, resetIds []string) (
 		}
 
 		if resetIds != nil && len(resetIds) > 0 {
+			reset = true
+
 			time.Sleep(400 * time.Millisecond)
 			for _, linkId := range resetIds {
 				_ = utils.Exec("", "ipsec", "down", linkId)
+				_ = utils.Exec("", "ipsec", "unroute", linkId)
 			}
 			time.Sleep(100 * time.Millisecond)
 			for _, linkId := range resetIds {
 				_ = utils.Exec("", "ipsec", "down", linkId)
+				_ = utils.Exec("", "ipsec", "unroute", linkId)
 			}
 			time.Sleep(100 * time.Millisecond)
 			for _, linkId := range resetIds {
 				_ = utils.Exec("", "ipsec", "down", linkId)
+				_ = utils.Exec("", "ipsec", "unroute", linkId)
 			}
 		}
 	}
@@ -508,14 +545,17 @@ func deploy(states []*state.State, restart bool, resetIds []string) (
 				"link_id": linkId,
 			}).Info("state: Stopping removed link")
 			_ = utils.Exec("", "ipsec", "down", linkId)
+			_ = utils.Exec("", "ipsec", "unroute", linkId)
 		}
 		time.Sleep(100 * time.Millisecond)
 		for _, linkId := range unknownIds {
 			_ = utils.Exec("", "ipsec", "down", linkId)
+			_ = utils.Exec("", "ipsec", "unroute", linkId)
 		}
 		time.Sleep(100 * time.Millisecond)
 		for _, linkId := range unknownIds {
 			_ = utils.Exec("", "ipsec", "down", linkId)
+			_ = utils.Exec("", "ipsec", "unroute", linkId)
 		}
 	}
 
@@ -630,7 +670,7 @@ func runDeploy() {
 						"states_len":        len(states),
 					}).Info("state: Deploying state")
 
-					err := deploy(states, restart, resetIds)
+					reset, err := deploy(states, restart, resetIds, true)
 					if err != nil {
 						logrus.WithFields(logrus.Fields{
 							"error": err,
@@ -655,10 +695,10 @@ func runDeploy() {
 					updateSleep = constants.UpdateAdvertiseReplay
 					updateSleepLock.Unlock()
 
-					if resetIds != nil && len(resetIds) > 0 {
+					if reset {
 						time.Sleep(300 * time.Millisecond)
 
-						err := deploy(states, restart, nil)
+						_, err = deploy(states, restart, nil, false)
 						if err != nil {
 							logrus.WithFields(logrus.Fields{
 								"error": err,
