@@ -16,7 +16,7 @@ var (
 )
 
 func getDirectStatus(stat *state.State) (directStatus bool, err error) {
-	stats, _, err := status.Get()
+	stats, _, _, err := status.Get()
 	if err != nil {
 		return
 	}

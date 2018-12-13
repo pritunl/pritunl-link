@@ -22,7 +22,7 @@ func Unknown(states []*State) (unknownIds []string, err error) {
 		}
 	}
 
-	stats, _, err := status.Get()
+	stats, _, _, err := status.Get()
 	if err != nil {
 		return
 	}
@@ -46,7 +46,7 @@ func Unknown(states []*State) (unknownIds []string, err error) {
 	return
 }
 
-func Update(states []*State) (hasConnected bool,
+func Update(states []*State) (hasConnected bool, ipsecFailed bool,
 	resetLinks []string, err error) {
 
 	resetLinks = []string{}
@@ -58,7 +58,7 @@ func Update(states []*State) (hasConnected bool,
 		}
 	}
 
-	stats, _, err := status.Get()
+	stats, _, ipsecFailed, err := status.Get()
 	if err != nil {
 		return
 	}
