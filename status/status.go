@@ -7,7 +7,7 @@ import (
 
 type Status map[string]map[string]string
 
-func Get() (status Status, connected int, err error) {
+func Get() (status Status, connected int, ipsecFailed bool, err error) {
 	connected = 0
 	status = Status{}
 
@@ -15,6 +15,10 @@ func Get() (status Status, connected int, err error) {
 	if err != nil {
 		err = nil
 		return
+	}
+
+	if strings.Contains(output, "(unnamed)") {
+		ipsecFailed = true
 	}
 
 	isIkeState := false
