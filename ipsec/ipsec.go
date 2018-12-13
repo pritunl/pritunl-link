@@ -519,17 +519,17 @@ func deploy(states []*state.State, restart bool, resetIds []string,
 			time.Sleep(400 * time.Millisecond)
 			for _, linkId := range resetIds {
 				_ = utils.Exec("", "ipsec", "down", linkId)
-				_ = utils.Exec("", "ipsec", "unroute", linkId)
+				//_ = utils.Exec("", "ipsec", "unroute", linkId)
 			}
 			time.Sleep(100 * time.Millisecond)
 			for _, linkId := range resetIds {
 				_ = utils.Exec("", "ipsec", "down", linkId)
-				_ = utils.Exec("", "ipsec", "unroute", linkId)
+				//_ = utils.Exec("", "ipsec", "unroute", linkId)
 			}
 			time.Sleep(100 * time.Millisecond)
 			for _, linkId := range resetIds {
 				_ = utils.Exec("", "ipsec", "down", linkId)
-				_ = utils.Exec("", "ipsec", "unroute", linkId)
+				//_ = utils.Exec("", "ipsec", "unroute", linkId)
 			}
 		}
 	}
@@ -545,17 +545,17 @@ func deploy(states []*state.State, restart bool, resetIds []string,
 				"link_id": linkId,
 			}).Info("state: Stopping removed link")
 			_ = utils.Exec("", "ipsec", "down", linkId)
-			_ = utils.Exec("", "ipsec", "unroute", linkId)
+			//_ = utils.Exec("", "ipsec", "unroute", linkId)
 		}
 		time.Sleep(100 * time.Millisecond)
 		for _, linkId := range unknownIds {
 			_ = utils.Exec("", "ipsec", "down", linkId)
-			_ = utils.Exec("", "ipsec", "unroute", linkId)
+			//_ = utils.Exec("", "ipsec", "unroute", linkId)
 		}
 		time.Sleep(100 * time.Millisecond)
 		for _, linkId := range unknownIds {
 			_ = utils.Exec("", "ipsec", "down", linkId)
-			_ = utils.Exec("", "ipsec", "unroute", linkId)
+			//_ = utils.Exec("", "ipsec", "unroute", linkId)
 		}
 	}
 
