@@ -46,6 +46,7 @@ var (
 	}
 	stateCaches = map[string]*stateCache{}
 	Hash        = ""
+	LinksHash   = map[string]string{}
 )
 
 type stateData struct {
