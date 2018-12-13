@@ -460,12 +460,12 @@ func deploy(states []*state.State, restart bool, resetIds []string,
 		return
 	}
 
-	if checkHash {
-		resetIdsSet := set.NewSet()
-		for _, resetId := range resetIds {
-			resetIdsSet.Add(resetId)
-		}
+	resetIdsSet := set.NewSet()
+	for _, resetId := range resetIds {
+		resetIdsSet.Add(resetId)
+	}
 
+	if checkHash {
 		linksHash := map[string]string{}
 		for _, stat := range states {
 			for i, lnk := range stat.Links {
