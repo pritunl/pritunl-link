@@ -18,6 +18,7 @@ var (
 type State struct {
 	Id     string  `json:"id"`
 	Ipv6   bool    `json:"ipv6"`
+	Action string  `json:"action"`
 	Type   string  `json:"type"`
 	Secret string  `json:"-"`
 	Hash   string  `json:"hash"`
@@ -25,6 +26,7 @@ type State struct {
 }
 
 type Link struct {
+	Hash         string   `json:"hash"`
 	PreSharedKey string   `json:"pre_shared_key"`
 	Right        string   `json:"right"`
 	LeftSubnets  []string `json:"left_subnets"`
