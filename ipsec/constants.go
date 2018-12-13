@@ -23,8 +23,8 @@ const (
 	ike=aes128-sha256-modp3072,aes256-sha256-modp3072,aes128-sha1-modp3072,aes128-sha256-modp4096,aes256-sha256-modp4096,aes128-sha1-modp4096,aes128-sha256-modp2048,aes256-sha256-modp2048,aes128-sha1-modp2048
 	mobike=no
 	closeaction=restart
-	dpddelay=5s
-	dpdtimeout=20s
+	dpddelay=3s
+	dpdtimeout=10s
 	dpdaction=restart
 	left=%defaultroute
 	leftid={{.Left}}
