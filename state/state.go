@@ -10,7 +10,7 @@ var (
 	LocalAddress     = ""
 	PublicAddress    = ""
 	Address6         = ""
-	Status           = map[string]map[string]string{}
+	Status           = map[string]string{}
 	IsDirectClient   = false
 	DirectIpsecState *State
 )
@@ -31,6 +31,15 @@ type Link struct {
 	Right        string   `json:"right"`
 	LeftSubnets  []string `json:"left_subnets"`
 	RightSubnets []string `json:"right_subnets"`
+}
+
+func GetStatus(connId string) string {
+	status := Status
+	connStatus := status[connId]
+	if connStatus != "" {
+		return connStatus
+	}
+	return "disconnected"
 }
 
 func GetDefaultInterface() string {
