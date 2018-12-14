@@ -464,5 +464,6 @@ func Init() {
 	go runSyncPublicAddress()
 	go runSyncPublicAddress6()
 	go runSyncStates()
+	go runSyncStatus()
 	go runSyncConfig()
 }
