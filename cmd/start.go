@@ -5,6 +5,7 @@ import (
 	"github.com/pritunl/pritunl-link/clean"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/sync"
+	"github.com/pritunl/pritunl-link/watch"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,6 +18,7 @@ func Start() (err error) {
 	}).Info("cmd.start: Starting link")
 
 	sync.Init()
+	watch.Init()
 
 	sig := make(chan os.Signal, 2)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
