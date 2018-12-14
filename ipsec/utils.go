@@ -7,6 +7,7 @@ import (
 	"github.com/pritunl/pritunl-link/utils"
 	"net"
 	"strings"
+	"time"
 )
 
 func GetDirectSubnet() (network *net.IPNet, err error) {
@@ -68,4 +69,11 @@ func GetDirectMode() (mode string) {
 		mode = defaultDirectMode
 	}
 	return
+}
+
+func Shutdown(connId string) {
+	for i := 0; i < 5; i++ {
+		_ = utils.Exec("", "ipsec", "down", connId)
+		time.Sleep(50 * time.Millisecond)
+	}
 }
