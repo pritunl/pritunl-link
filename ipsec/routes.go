@@ -1,6 +1,7 @@
 package ipsec
 
 import (
+	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/state"
@@ -16,7 +17,7 @@ var (
 )
 
 func getDirectStatus(stat *state.State) (directStatus bool, err error) {
-	stats, _, _, err := status.Get()
+	stats, err := status.Get()
 	if err != nil {
 		return
 	}
@@ -25,12 +26,13 @@ func getDirectStatus(stat *state.State) (directStatus bool, err error) {
 		return
 	}
 
-	stateStatus, ok := stats[stat.Id]
-	if !ok {
+	if stat.Links == nil || len(stat.Links) == 0 {
 		return
 	}
 
-	linkStatus, ok := stateStatus["0"]
+	linkId := fmt.Sprintf("%s-0-%s", stat.Id, stat.Links[0].Hash)
+
+	linkStatus, ok := stats[linkId]
 	if !ok {
 		return
 	}
