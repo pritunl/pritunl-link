@@ -1,7 +1,6 @@
 package state
 
 import (
-	"fmt"
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
@@ -15,14 +14,14 @@ var (
 )
 
 func Unknown(states []*State) (unknownIds []string, err error) {
-	names := set.NewSet()
+	connIds := set.NewSet()
 	for _, stat := range states {
-		for i := range stat.Links {
-			names.Add(fmt.Sprintf("%s-%d", stat.Id, i))
+		for i, lnk := range stat.Links {
+			connIds.Add(GetLinkId(stat.Id, i, lnk.Hash))
 		}
 	}
 
-	stats, _, _, err := status.Get()
+	curConnIds, err := status.GetIds()
 	if err != nil {
 		return
 	}
@@ -30,50 +29,40 @@ func Unknown(states []*State) (unknownIds []string, err error) {
 	unknown := set.NewSet()
 	unknownIds = []string{}
 
-	for stateId, conns := range stats {
-		for connId, _ := range conns {
-			id := fmt.Sprintf("%s-%s", stateId, connId)
-
-			if !names.Contains(id) && len(stateId) == 24 &&
-				!unknown.Contains(id) {
-
-				unknown.Add(id)
-				unknownIds = append(unknownIds, id)
-			}
+	for _, connId := range curConnIds {
+		if !connIds.Contains(connId) && !unknown.Contains(connId) {
+			unknown.Add(connId)
+			unknownIds = append(unknownIds, connId)
 		}
 	}
 
 	return
 }
 
-func Update(states []*State) (hasConnected bool, ipsecFailed bool,
+func Update(states []*State) (hasConnected bool,
 	resetLinks []string, err error) {
 
 	resetLinks = []string{}
 
 	names := set.NewSet()
 	for _, stat := range states {
-		for i := range stat.Links {
-			names.Add(fmt.Sprintf("%s-%d", stat.Id, i))
+		for i, lnk := range stat.Links {
+			names.Add(GetLinkId(stat.Id, i, lnk.Hash))
 		}
 	}
 
-	stats, _, ipsecFailed, err := status.Get()
+	stats, err := status.Get()
 	if err != nil {
 		return
 	}
 
 	Status = stats
 
-	for stateId, conns := range stats {
-		for connId, connStatus := range conns {
-			id := fmt.Sprintf("%s-%s", stateId, connId)
-
-			if connStatus == "connected" {
-				if names.Contains(id) {
-					hasConnected = true
-					names.Remove(id)
-				}
+	for connId, connStatus := range stats {
+		if connStatus == "connected" {
+			if names.Contains(connId) {
+				hasConnected = true
+				names.Remove(connId)
 			}
 		}
 	}
