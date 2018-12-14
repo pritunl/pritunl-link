@@ -31,10 +31,6 @@ type publicAddressData struct {
 }
 
 func SyncStates() {
-	if constants.Interrupt {
-		return
-	}
-
 	states := state.GetStates()
 	hsh := md5.New()
 
@@ -49,7 +45,13 @@ func SyncStates() {
 		state.Hash = newHash
 	}
 
-	hasConnected, _, resetLinks, err := state.Update(states)
+	return
+}
+
+func SyncStatus() {
+	states := ipsec.GetStates()
+
+	hasConnected, resetLinks, err := state.Update(states)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"default_interface": state.GetDefaultInterface(),
@@ -77,7 +79,20 @@ func SyncStates() {
 func runSyncStates() {
 	for {
 		time.Sleep(1 * time.Second)
+		if constants.Interrupt {
+			return
+		}
 		SyncStates()
+	}
+}
+
+func runSyncStatus() {
+	for {
+		time.Sleep(450 * time.Millisecond)
+		if constants.Interrupt {
+			return
+		}
+		SyncStatus()
 	}
 }
 
