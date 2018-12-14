@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/Sirupsen/logrus"
-	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/advertise"
 	"github.com/pritunl/pritunl-link/config"
@@ -26,7 +25,6 @@ var (
 	updateAdvertise bool
 	deployStates    []*state.State
 	deployRestart   = true
-	deployResetIds  []string
 	curStates       []*state.State
 	deployLock      sync.Mutex
 	updateSleepLock sync.Mutex
@@ -291,7 +289,7 @@ func writeConf() (err error) {
 	return
 }
 
-func writeTemplates(states []*state.State, resetIds []string) (err error) {
+func writeTemplates(states []*state.State) (err error) {
 	secretsBuf := &bytes.Buffer{}
 
 	publicAddr := state.GetPublicAddress()
@@ -299,21 +297,12 @@ func writeTemplates(states []*state.State, resetIds []string) (err error) {
 
 	iptablesState := false
 
-	resetSet := set.NewSet()
-	for _, resetId := range resetIds {
-		resetSet.Add(resetId)
-	}
+	confs := map[string]*bytes.Buffer{}
 
 	for _, stat := range states {
 		confBuf := &bytes.Buffer{}
 
 		for i, link := range stat.Links {
-			linkId := fmt.Sprintf("%s-%d", stat.Id, i)
-
-			if resetSet.Contains(linkId) {
-				continue
-			}
-
 			leftSubnets := strings.Join(link.LeftSubnets, ",")
 			rightSubnets := strings.Join(link.RightSubnets, ",")
 
@@ -338,7 +327,7 @@ func writeTemplates(states []*state.State, resetIds []string) (err error) {
 			}
 
 			data := &templateData{
-				Id:           fmt.Sprintf("%s-%d", stat.Id, i),
+				Id:           state.GetLinkId(stat.Id, i, link.Hash),
 				Action:       action,
 				Left:         left,
 				LeftSubnets:  leftSubnets,
@@ -377,13 +366,7 @@ func writeTemplates(states []*state.State, resetIds []string) (err error) {
 
 		pth := path.Join(constants.IpsecDirPath,
 			fmt.Sprintf("%s.conf", stat.Id))
-		err = ioutil.WriteFile(pth, confBuf.Bytes(), 0644)
-		if err != nil {
-			err = &errortypes.WriteError{
-				errors.Wrap(err, "ipsec: Failed to write state conf"),
-			}
-			return
-		}
+		confs[pth] = confBuf
 	}
 
 	err = ioutil.WriteFile(
@@ -393,6 +376,16 @@ func writeTemplates(states []*state.State, resetIds []string) (err error) {
 			errors.Wrap(err, "ipsec: Failed to write state secrets"),
 		}
 		return
+	}
+
+	for pth, confBuf := range confs {
+		err = ioutil.WriteFile(pth, confBuf.Bytes(), 0644)
+		if err != nil {
+			err = &errortypes.WriteError{
+				errors.Wrap(err, "ipsec: Failed to write state conf"),
+			}
+			return
+		}
 	}
 
 	if !iptablesState {
@@ -405,9 +398,7 @@ func writeTemplates(states []*state.State, resetIds []string) (err error) {
 	return
 }
 
-func deploy(states []*state.State, restart bool, resetIds []string,
-	checkHash bool) (reset bool, err error) {
-
+func deploy(states []*state.State, restart bool) (err error) {
 	if constants.Interrupt {
 		err = &errortypes.UnknownError{
 			errors.Wrap(err, "state: Interrupt"),
@@ -460,39 +451,7 @@ func deploy(states []*state.State, restart bool, resetIds []string,
 		return
 	}
 
-	resetIdsSet := set.NewSet()
-	for _, resetId := range resetIds {
-		resetIdsSet.Add(resetId)
-	}
-
-	if checkHash {
-		linksHash := map[string]string{}
-		for _, stat := range states {
-			for i, lnk := range stat.Links {
-				linkId := fmt.Sprintf("%s-%d", stat.Id, i)
-				linkHash := state.LinksHash[linkId]
-
-				if linkHash != "" && lnk.Hash != "" && linkHash != lnk.Hash {
-					if !resetIdsSet.Contains(linkId) {
-						logrus.WithFields(logrus.Fields{
-							"link_id": linkId,
-						}).Info("state: Restarting updated link")
-
-						resetIdsSet.Add(linkId)
-						if resetIds == nil {
-							resetIds = []string{}
-						}
-						resetIds = append(resetIds, linkId)
-					}
-				}
-
-				linksHash[linkId] = lnk.Hash
-			}
-		}
-		state.LinksHash = linksHash
-	}
-
-	err = writeTemplates(states, resetIds)
+	err = writeTemplates(states)
 	if err != nil {
 		return
 	}
@@ -502,60 +461,46 @@ func deploy(states []*state.State, restart bool, resetIds []string,
 		return
 	}
 
+	time.Sleep(200 * time.Millisecond)
+
 	if restart {
 		err = utils.Exec("", "ipsec", "restart")
 		if err != nil {
 			return
 		}
 	} else {
-		err = utils.Exec("", "ipsec", "update")
+		unknownIds, e := state.Unknown(states)
+		if e != nil {
+			err = e
+			return
+		}
+
+		if unknownIds != nil && len(unknownIds) > 0 {
+			for _, linkId := range unknownIds {
+				logrus.WithFields(logrus.Fields{
+					"link_id": linkId,
+				}).Info("state: Stopping removed link")
+				go Shutdown(linkId)
+			}
+
+			time.Sleep(3 * time.Second)
+		}
+
+		//err = utils.Exec("", "ipsec", "rereadsecrets")
+		//if err != nil {
+		//	return
+		//}
+
+		err = utils.Exec("", "ipsec", "rereadall")
 		if err != nil {
 			return
 		}
 
-		if resetIds != nil && len(resetIds) > 0 {
-			reset = true
-
-			time.Sleep(400 * time.Millisecond)
-			for _, linkId := range resetIds {
-				_ = utils.Exec("", "ipsec", "down", linkId)
-				//_ = utils.Exec("", "ipsec", "unroute", linkId)
-			}
-			time.Sleep(100 * time.Millisecond)
-			for _, linkId := range resetIds {
-				_ = utils.Exec("", "ipsec", "down", linkId)
-				//_ = utils.Exec("", "ipsec", "unroute", linkId)
-			}
-			time.Sleep(100 * time.Millisecond)
-			for _, linkId := range resetIds {
-				_ = utils.Exec("", "ipsec", "down", linkId)
-				//_ = utils.Exec("", "ipsec", "unroute", linkId)
-			}
-		}
-	}
-
-	unknownIds, err := state.Unknown(states)
-	if err != nil {
-		return
-	}
-
-	if unknownIds != nil && len(unknownIds) > 0 {
-		for _, linkId := range unknownIds {
-			logrus.WithFields(logrus.Fields{
-				"link_id": linkId,
-			}).Info("state: Stopping removed link")
-			_ = utils.Exec("", "ipsec", "down", linkId)
-			//_ = utils.Exec("", "ipsec", "unroute", linkId)
-		}
 		time.Sleep(100 * time.Millisecond)
-		for _, linkId := range unknownIds {
-			_ = utils.Exec("", "ipsec", "down", linkId)
-			//_ = utils.Exec("", "ipsec", "unroute", linkId)
-		}
-		time.Sleep(100 * time.Millisecond)
-		for _, linkId := range unknownIds {
-			_ = utils.Exec("", "ipsec", "down", linkId)
-			//_ = utils.Exec("", "ipsec", "unroute", linkId)
+
+		err = utils.Exec("", "ipsec", "update")
+		if err != nil {
+			return
 		}
 	}
 
@@ -618,7 +563,7 @@ func Deploy(states []*state.State) {
 	deployLock.Unlock()
 }
 
-func Redeploy(restart bool, resetIds []string) {
+func Redeploy(restart bool) {
 	deployLock.Lock()
 	if deployStates == nil && curStates != nil {
 		deployStates = curStates
@@ -626,10 +571,11 @@ func Redeploy(restart bool, resetIds []string) {
 	if restart {
 		deployRestart = true
 	}
-	if resetIds != nil && len(resetIds) > 0 {
-		deployResetIds = resetIds
-	}
 	deployLock.Unlock()
+}
+
+func GetStates() []*state.State {
+	return curStates
 }
 
 func runDeploy() {
@@ -638,11 +584,9 @@ func runDeploy() {
 			deployLock.Lock()
 			states := deployStates
 			restart := deployRestart
-			resetIds := deployResetIds
 			updateAd := false
 			deployStates = nil
 			deployRestart = false
-			deployResetIds = nil
 			if states != nil {
 				curStates = states
 			} else if updateAdvertise {
@@ -670,7 +614,7 @@ func runDeploy() {
 						"states_len":        len(states),
 					}).Info("state: Deploying state")
 
-					reset, err := deploy(states, restart, resetIds, true)
+					err := deploy(states, restart)
 					if err != nil {
 						logrus.WithFields(logrus.Fields{
 							"error": err,
@@ -694,31 +638,6 @@ func runDeploy() {
 					updateSleepLock.Lock()
 					updateSleep = constants.UpdateAdvertiseReplay
 					updateSleepLock.Unlock()
-
-					if reset {
-						time.Sleep(300 * time.Millisecond)
-
-						_, err = deploy(states, restart, nil, false)
-						if err != nil {
-							logrus.WithFields(logrus.Fields{
-								"error": err,
-							}).Error("state: Failed to redeploy state")
-
-							time.Sleep(3 * time.Second)
-
-							deployLock.Lock()
-							if deployStates == nil {
-								deployStates = states
-							}
-							if restart {
-								deployRestart = true
-							}
-							deployLock.Unlock()
-
-							time.Sleep(200 * time.Millisecond)
-							continue
-						}
-					}
 				}
 			}
 		}
