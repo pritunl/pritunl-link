@@ -1,24 +1,20 @@
 package status
 
 import (
+	"github.com/dropbox/godropbox/container/set"
 	"github.com/pritunl/pritunl-link/utils"
 	"strings"
 )
 
-type Status map[string]map[string]string
+type Status map[string]string
 
-func Get() (status Status, connected int, ipsecFailed bool, err error) {
-	connected = 0
+func Get() (status Status, err error) {
 	status = Status{}
 
 	output, err := utils.ExecOutput("", "ipsec", "status")
 	if err != nil {
 		err = nil
 		return
-	}
-
-	if strings.Contains(output, "(unnamed)") {
-		ipsecFailed = true
 	}
 
 	isIkeState := false
@@ -40,14 +36,13 @@ func Get() (status Status, connected int, ipsecFailed bool, err error) {
 				continue
 			}
 
-			connId := strings.SplitN(strings.SplitN(
-				lines[0], "{", 2)[0], "-", 2)
-			connState := strings.SplitN(
-				strings.TrimSpace(lines[1]), ",", 2)[0]
-
-			if len(connId) != 2 {
+			if !strings.Contains(lines[0], "{") {
 				continue
 			}
+
+			connId := strings.SplitN(lines[0], "{", 2)[0]
+			connState := strings.SplitN(
+				strings.TrimSpace(lines[1]), ",", 2)[0]
 
 			switch ikeState {
 			case "ESTABLISHED":
@@ -63,25 +58,41 @@ func Get() (status Status, connected int, ipsecFailed bool, err error) {
 				connState = "disconnected"
 			}
 
-			if _, ok := status[connId[0]]; !ok {
-				status[connId[0]] = map[string]string{}
-			}
+			curState := status[connId]
+			if curState == "" || curState == "disconnected" ||
+				(curState == "connecting" && connState == "connected") {
 
-			if _, ok := status[connId[0]][connId[1]]; !ok {
-				status[connId[0]][connId[1]] = connState
-			} else if (status[connId[0]][connId[1]] == "disconnected") ||
-				(status[connId[0]][connId[1]] == "connecting" &&
-					connState == "connected") {
-
-				status[connId[0]][connId[1]] = connState
+				status[connId] = connState
 			}
 		}
 	}
 
-	for _, stat := range status {
-		for _, conn := range stat {
-			if conn == "connected" {
-				connected += 1
+	return
+}
+
+func GetIds() (connIds []string, err error) {
+	connIds = []string{}
+	connIdsSet := set.NewSet()
+
+	output, err := utils.ExecOutput("", "ipsec", "status")
+	if err != nil {
+		err = nil // TODO
+		return
+	}
+
+	for _, line := range strings.Split(output, "\n") {
+		lines := strings.SplitN(line, ":", 2)
+		if len(lines) != 2 {
+			continue
+		}
+
+		connId := strings.Split(lines[0], "[")[0]
+		connId = strings.Split(connId, "{")[0]
+		connIdSpl := strings.Split(connId, "-")
+		if len(connIdSpl) == 3 && len(connIdSpl[0]) == 24 {
+			if !connIdsSet.Contains(connId) {
+				connIdsSet.Add(connId)
+				connIds = append(connIds, connId)
 			}
 		}
 	}
