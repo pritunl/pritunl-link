@@ -65,11 +65,15 @@ func SyncStatus() {
 		if hasConnected {
 			logrus.Warn("sync: Disconnected timeout resetting")
 
-			ipsec.Redeploy(false, resetLinks)
+			for _, linkId := range resetLinks {
+				state.IncLinkId(linkId)
+			}
+
+			ipsec.Redeploy(false)
 		} else {
 			logrus.Warn("sync: Disconnected timeout restarting")
 
-			ipsec.Redeploy(true, nil)
+			ipsec.Redeploy(true)
 		}
 	}
 
@@ -135,7 +139,7 @@ func SyncDefaultIface(redeploy bool) (err error) {
 				"default_interface":     state.GetDefaultGateway(),
 			}).Info("sync: Default interface changed redeploying")
 
-			ipsec.Redeploy(true, nil)
+			ipsec.Redeploy(true)
 		}
 	} else if config.Config.DefaultInterface == "" {
 		logrus.WithFields(logrus.Fields{
@@ -153,7 +157,7 @@ func SyncDefaultIface(redeploy bool) (err error) {
 				"default_gateway":     state.GetDefaultGateway(),
 			}).Info("sync: Default gateway changed redeploying")
 
-			ipsec.Redeploy(true, nil)
+			ipsec.Redeploy(true)
 		}
 	} else if config.Config.DefaultGateway == "" {
 		logrus.WithFields(logrus.Fields{
@@ -215,7 +219,7 @@ func SyncLocalAddress(redeploy bool) (err error) {
 	}
 
 	if changed && redeploy {
-		ipsec.Redeploy(true, nil)
+		ipsec.Redeploy(true)
 	}
 
 	return
@@ -291,7 +295,7 @@ func SyncPublicAddress(redeploy bool) (err error) {
 				"public_address":     publicAddress,
 			}).Info("sync: Public address changed redeploying")
 
-			ipsec.Redeploy(true, nil)
+			ipsec.Redeploy(true)
 		}
 	}
 
@@ -368,7 +372,7 @@ func SyncPublicAddress6(redeploy bool) (err error) {
 				"public_address":     publicAddress,
 			}).Info("sync: Public address6 changed redeploying")
 
-			ipsec.Redeploy(true, nil)
+			ipsec.Redeploy(true)
 		}
 	}
 
@@ -409,7 +413,7 @@ func SyncConfig() (err error) {
 
 		curMod = mod
 
-		ipsec.Redeploy(false, nil)
+		ipsec.Redeploy(false)
 	}
 
 	return
