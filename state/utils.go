@@ -46,7 +46,6 @@ var (
 	}
 	stateCaches = map[string]*stateCache{}
 	Hash        = ""
-	LinksHash   = map[string]string{}
 )
 
 type stateData struct {
@@ -153,12 +152,34 @@ func GetState(uri string) (state *State, err error) {
 		return
 	}
 
+	status := Status
+	stateId := uriData.User.Username()
+	stateStatus := map[string]string{}
+
+	for connId, connStatus := range status {
+		connIds := strings.Split(connId, "-")
+		if len(connIds) != 3 {
+			continue
+		}
+
+		if connIds[0] != stateId {
+			continue
+		}
+
+		curStatus := stateStatus[connIds[1]]
+		if curStatus == "" || curStatus == "disconnected" ||
+			(curStatus == "connecting" && connStatus == "connected") {
+
+			stateStatus[connIds[1]] = connStatus
+		}
+	}
+
 	data := &stateData{
 		Version:       constants.Version,
 		PublicAddress: GetPublicAddress(),
 		LocalAddress:  GetLocalAddress(),
 		Address6:      GetAddress6(),
-		Status:        Status[uriData.User.Username()],
+		Status:        stateStatus,
 	}
 	dataBuf := &bytes.Buffer{}
 
