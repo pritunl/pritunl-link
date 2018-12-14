@@ -22,8 +22,8 @@ const (
 	esp=aes128-sha256-modp3072,aes256-sha256-modp3072,aes128-sha1-modp3072,aes128-sha256-modp4096,aes256-sha256-modp4096,aes128-sha1-modp4096,aes128-sha256-modp2048,aes256-sha256-modp2048,aes128-sha1-modp2048,aes128-sha256,aes256-sha256,aes128-sha1
 	ike=aes128-sha256-modp3072,aes256-sha256-modp3072,aes128-sha1-modp3072,aes128-sha256-modp4096,aes256-sha256-modp4096,aes128-sha1-modp4096,aes128-sha256-modp2048,aes256-sha256-modp2048,aes128-sha1-modp2048
 	mobike=no
-	dpddelay=3s
-	dpdtimeout=10s
+	dpddelay=5s
+	dpdtimeout=15s
 	dpdaction={{.Action}}
 	left=%defaultroute
 	leftid={{.Left}}
