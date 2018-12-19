@@ -170,12 +170,15 @@ func GetModTime() (mod time.Time, err error) {
 func init() {
 	module := requires.New("config")
 
-	module.Handler = func() {
-		utils.ExistsMkdir(constants.VarDir, 0755)
-
-		err := Load()
+	module.Handler = func() (err error) {
+		err = utils.ExistsMkdir(constants.VarDir, 0755)
 		if err != nil {
-			panic(err)
+			return
+		}
+
+		err = Load()
+		if err != nil {
+			return
 		}
 
 		exists, err := utils.Exists(constants.ConfPath)
@@ -184,10 +187,12 @@ func init() {
 		}
 
 		if !exists {
-			err := Save()
+			err = Save()
 			if err != nil {
-				panic(err)
+				return
 			}
 		}
+
+		return
 	}
 }
