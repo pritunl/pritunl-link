@@ -18,6 +18,17 @@ func Unknown(states []*State) (unknownIds []string, err error) {
 	for _, stat := range states {
 		for i, lnk := range stat.Links {
 			connIds.Add(GetLinkId(stat.Id, i, lnk.Hash))
+
+			if lnk.Static && (len(lnk.LeftSubnets) > 1 ||
+				len(lnk.RightSubnets) > 1) {
+
+				for x := range lnk.LeftSubnets {
+					for y := range lnk.RightSubnets {
+						connIds.Add(GetLinkIds(
+							stat.Id, i, x, y, lnk.Hash))
+					}
+				}
+			}
 		}
 	}
 
