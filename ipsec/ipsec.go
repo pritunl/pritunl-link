@@ -345,6 +345,34 @@ func writeTemplates(states []*state.State) (err error) {
 				return
 			}
 
+			if link.Static && (len(link.LeftSubnets) > 1 ||
+				len(link.RightSubnets) > 1) {
+
+				for x, leftSubnet := range link.LeftSubnets {
+					for y, rightSubnet := range link.RightSubnets {
+						data := &templateData{
+							Id: state.GetLinkIds(
+								stat.Id, i, x, y, link.Hash),
+							Action:       action,
+							Left:         left,
+							LeftSubnets:  leftSubnet,
+							Right:        link.Right,
+							RightSubnets: rightSubnet,
+							PreSharedKey: link.PreSharedKey,
+						}
+
+						err = confTemplate.Execute(confBuf, data)
+						if err != nil {
+							err = &errortypes.ParseError{
+								errors.Wrap(err,
+									"ipsec: Failed to execute conf template"),
+							}
+							return
+						}
+					}
+				}
+			}
+
 			err = secretsTemplate.Execute(secretsBuf, data)
 			if err != nil {
 				err = &errortypes.ParseError{
