@@ -706,9 +706,11 @@ func init() {
 	module := requires.New("ipsec")
 	module.After("logger")
 
-	module.Handler = func() {
+	module.Handler = func() (err error) {
 		go runDeploy()
 		go runUpdateAdvertise()
 		go runRoutes()
+
+		return
 	}
 }
