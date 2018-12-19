@@ -26,6 +26,7 @@ type State struct {
 }
 
 type Link struct {
+	Static       bool     `json:"static"`
 	Hash         string   `json:"hash"`
 	PreSharedKey string   `json:"pre_shared_key"`
 	Right        string   `json:"right"`
