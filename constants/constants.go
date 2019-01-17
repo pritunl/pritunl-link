@@ -13,7 +13,7 @@ const (
 	IpsecConfPath             = "/etc/ipsec.conf"
 	IpsecSecretsPath          = "/etc/ipsec.secrets"
 	IpsecDirPath              = "/etc/ipsec.pritunl"
-	PublicIpServer            = "https://app.pritunl.com/ip"
+	PublicIpServer            = "https://app4.pritunl.com/ip"
 	PublicIp6Server           = "https://app6.pritunl.com/ip"
 	DefaultDiconnectedTimeout = 30 * time.Second
 	DiconnectedTimeoutBackoff = 60 * time.Second
