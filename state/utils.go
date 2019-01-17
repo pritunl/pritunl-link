@@ -322,6 +322,7 @@ func GetState(uri string) (state *State, err error) {
 func GetStates() (states []*State) {
 	states = []*State{}
 	statesMap := map[int]*State{}
+	statesMapLock := sync.Mutex{}
 	uris := config.Config.Uris
 	urisSet := set.NewSet()
 	waiter := sync.WaitGroup{}
@@ -337,9 +338,13 @@ func GetStates() (states []*State) {
 					"uri":   uri,
 					"error": err,
 				}).Info("state: Failed to get state")
+				statesMapLock.Lock()
 				statesMap[i] = nil
+				statesMapLock.Unlock()
 			} else {
+				statesMapLock.Lock()
 				statesMap[i] = state
+				statesMapLock.Unlock()
 			}
 
 			waiter.Done()
