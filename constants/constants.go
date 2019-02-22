@@ -19,7 +19,6 @@ const (
 	DiconnectedTimeoutBackoff = 60 * time.Second
 	UpdateAdvertiseRate       = 90
 	UpdateAdvertiseReplay     = 15
-	StateCacheTtl             = 60 * time.Second
 )
 
 var (

@@ -126,7 +126,7 @@ func decResp(secret, iv, sig, encData string) (cipData []byte, err error) {
 
 func getStateCache(uri string) (state *State) {
 	cache, ok := stateCaches[uri]
-	if ok && time.Since(cache.Timestamp) < constants.StateCacheTtl {
+	if ok {
 		state = cache.State
 		return
 	}
