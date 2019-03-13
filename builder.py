@@ -107,14 +107,10 @@ elif cmd == 'upload' or cmd == 'upload-test':
         cwd=pacur_path,
     )
 
-    for mir_url in mirror_urls:
-        subprocess.check_call([
-            'rsync',
-            '--human-readable',
-            '--archive',
-            '--progress',
-            '--delete',
-            '--acls',
-            'mirror/',
-            mir_url,
-        ], cwd=pacur_path)
+    subprocess.check_call([
+        's3cmd',
+        'sync',
+        '--follow-symlinks',
+        'mirror/',
+        's3://stable/',
+    ], cwd=pacur_path)
