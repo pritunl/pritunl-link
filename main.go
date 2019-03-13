@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"github.com/pritunl/pritunl-link/cmd"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/logger"
@@ -50,6 +51,10 @@ Commands:
   edge-hostname             Set hostname of EdgeRouter
   edge-port-on              Enable automatic port forwarding on EdgeRouter
   edge-port-off             Disable automatic port forwarding on EdgeRouter
+  pritunl-hostname          Set hostname of Pritunl Cloud server
+  pritunl-vpc               Set Pritunl Cloud VPC ID
+  pritunl-token             Set Pritunl Cloud token
+  pritunl-secret            Set Pritunl Cloud secret
 `
 
 func Init() {
@@ -263,6 +268,34 @@ func main() {
 	case "edge-port-off":
 		Init()
 		err := cmd.EdgePortOff()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "pritunl-hostname":
+		Init()
+		err := cmd.PritunlHostname(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "pritunl-vpc":
+		Init()
+		err := cmd.PritunlVpc(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "pritunl-token":
+		Init()
+		err := cmd.PritunlToken(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "pritunl-secret":
+		Init()
+		err := cmd.PritunlSecret(flag.Arg(1))
 		if err != nil {
 			panic(err)
 		}
