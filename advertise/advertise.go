@@ -1,16 +1,17 @@
 package advertise
 
 import (
+	"io/ioutil"
+	"os"
+	"sort"
+	"strings"
+
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/routes"
 	"github.com/pritunl/pritunl-link/state"
-	"io/ioutil"
-	"os"
-	"sort"
-	"strings"
 )
 
 func Routes(states []*state.State) (err error) {
@@ -97,6 +98,15 @@ func Routes(states []*state.State) (err error) {
 		}
 	}
 
+	if curRoutes.Pritunl != nil {
+		for _, route := range curRoutes.Pritunl {
+			err = PritunlDeleteRoute(route)
+			if err != nil {
+				return
+			}
+		}
+	}
+
 	for _, network := range networks {
 		switch config.Config.Provider {
 		case "aws":
@@ -136,6 +146,13 @@ func Routes(states []*state.State) (err error) {
 			break
 		case "edge":
 			err = EdgeAddRoute(network)
+			if err != nil {
+				return
+			}
+
+			break
+		case "pritunl":
+			err = PritunlAddRoute(network)
 			if err != nil {
 				return
 			}
