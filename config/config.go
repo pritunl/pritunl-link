@@ -52,28 +52,36 @@ type EdgeData struct {
 	Password    string `json:"password"`
 }
 
+type PritunlData struct {
+	Hostname string `json:"hostname"`
+	VpcId    string `json:"vpc_id"`
+	Token    string `json:"token"`
+	Secret   string `json:"secret"`
+}
+
 type ConfigData struct {
-	loaded                     bool       `json:"-"`
-	Provider                   string     `json:"provider"`
-	DefaultInterface           string     `json:"default_interface"`
-	DefaultGateway             string     `json:"default_gateway"`
-	PublicAddress              string     `json:"public_address"`
-	LocalAddress               string     `json:"local_address"`
-	DirectSubnet               string     `json:"direct_subnet"`
-	DirectMode                 string     `json:"direct_mode"`
-	DirectSsh                  bool       `json:"direct_ssh"`
-	Address6                   string     `json:"address6"`
-	Uris                       []string   `json:"uris"`
-	SkipVerify                 bool       `json:"skip_verify"`
-	DeleteRoutes               bool       `json:"delete_routes"`
-	DisconnectedTimeout        int        `json:"disconnected_timeout"`
-	DisableAdvertiseUpdate     bool       `json:"disable_advertise_update"`
-	DisableDisconnectedRestart bool       `json:"disable_disconnected_restart"`
-	Aws                        AwsData    `json:"aws"`
-	Google                     GoogleData `json:"google"`
-	Oracle                     OracleData `json:"oracle"`
-	Unifi                      UnifiData  `json:"unifi"`
-	Edge                       EdgeData   `json:"edge"`
+	loaded                     bool        `json:"-"`
+	Provider                   string      `json:"provider"`
+	DefaultInterface           string      `json:"default_interface"`
+	DefaultGateway             string      `json:"default_gateway"`
+	PublicAddress              string      `json:"public_address"`
+	LocalAddress               string      `json:"local_address"`
+	DirectSubnet               string      `json:"direct_subnet"`
+	DirectMode                 string      `json:"direct_mode"`
+	DirectSsh                  bool        `json:"direct_ssh"`
+	Address6                   string      `json:"address6"`
+	Uris                       []string    `json:"uris"`
+	SkipVerify                 bool        `json:"skip_verify"`
+	DeleteRoutes               bool        `json:"delete_routes"`
+	DisconnectedTimeout        int         `json:"disconnected_timeout"`
+	DisableAdvertiseUpdate     bool        `json:"disable_advertise_update"`
+	DisableDisconnectedRestart bool        `json:"disable_disconnected_restart"`
+	Aws                        AwsData     `json:"aws"`
+	Google                     GoogleData  `json:"google"`
+	Oracle                     OracleData  `json:"oracle"`
+	Unifi                      UnifiData   `json:"unifi"`
+	Edge                       EdgeData    `json:"edge"`
+	Pritunl                    PritunlData `json:"pritunl"`
 }
 
 func (c *ConfigData) Save() (err error) {
