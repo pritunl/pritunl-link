@@ -2,22 +2,24 @@ package routes
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"os"
+
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
-	"io/ioutil"
-	"os"
 )
 
 type CurrentRoutes struct {
-	Aws    map[string]*AwsRoute    `json:"aws"`
-	Azure  map[string]*AzureRoute  `json:"azure"`
-	Google map[string]*GoogleRoute `json:"google"`
-	Oracle map[string]*OracleRoute `json:"oracle"`
-	Unifi  map[string]*UnifiRoute  `json:"unifi"`
-	Edge   map[string]*EdgeRoute   `json:"edge"`
+	Aws     map[string]*AwsRoute     `json:"aws"`
+	Azure   map[string]*AzureRoute   `json:"azure"`
+	Google  map[string]*GoogleRoute  `json:"google"`
+	Oracle  map[string]*OracleRoute  `json:"oracle"`
+	Unifi   map[string]*UnifiRoute   `json:"unifi"`
+	Edge    map[string]*EdgeRoute    `json:"edge"`
+	Pritunl map[string]*PritunlRoute `json:"pritunl"`
 }
 
 func (c *CurrentRoutes) Commit() (err error) {
@@ -121,6 +123,14 @@ func GetDiff(destNetworks []string) (routes *CurrentRoutes, err error) {
 		for destNetwork := range routes.Edge {
 			if destNetworksSet.Contains(destNetwork) {
 				delete(routes.Edge, destNetwork)
+			}
+		}
+	}
+
+	if config.Config.Provider == "pritunl" {
+		for destNetwork := range routes.Pritunl {
+			if destNetworksSet.Contains(destNetwork) {
+				delete(routes.Pritunl, destNetwork)
 			}
 		}
 	}
