@@ -44,8 +44,9 @@ var (
 		},
 		Timeout: 10 * time.Second,
 	}
-	stateCaches = map[string]*stateCache{}
-	Hash        = ""
+	stateCaches     = map[string]*stateCache{}
+	stateCachesLock = sync.Mutex{}
+	Hash            = ""
 )
 
 type stateData struct {
@@ -125,7 +126,9 @@ func decResp(secret, iv, sig, encData string) (cipData []byte, err error) {
 }
 
 func getStateCache(uri string) (state *State) {
+	stateCachesLock.Lock()
 	cache, ok := stateCaches[uri]
+	stateCachesLock.Unlock()
 	if ok {
 		state = cache.State
 		return
@@ -314,7 +317,9 @@ func GetState(uri string) (state *State, err error) {
 		Timestamp: time.Now(),
 		State:     state,
 	}
+	stateCachesLock.Lock()
 	stateCaches[uri] = cache
+	stateCachesLock.Unlock()
 
 	return
 }
@@ -361,11 +366,13 @@ func GetStates() (states []*State) {
 		}
 	}
 
+	stateCachesLock.Lock()
 	for uri := range stateCaches {
 		if !urisSet.Contains(uri) {
 			delete(stateCaches, uri)
 		}
 	}
+	stateCachesLock.Unlock()
 
 	return
 }
