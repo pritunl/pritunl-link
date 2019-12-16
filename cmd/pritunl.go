@@ -20,6 +20,21 @@ func PritunlHostname(hostname string) (err error) {
 	return
 }
 
+func PritunlOrganization(orgId string) (err error) {
+	config.Config.Pritunl.OrganizationId = orgId
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"organization_id": config.Config.Pritunl.OrganizationId,
+	}).Info("cmd.pritunl: Set Pritunl Organization")
+
+	return
+}
+
 func PritunlVpc(vpcId string) (err error) {
 	config.Config.Pritunl.VpcId = vpcId
 
