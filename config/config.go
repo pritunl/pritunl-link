@@ -2,14 +2,16 @@ package config
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/requires"
 	"github.com/pritunl/pritunl-link/utils"
-	"io/ioutil"
-	"os"
-	"time"
 )
 
 var Config = &ConfigData{}
@@ -53,10 +55,11 @@ type EdgeData struct {
 }
 
 type PritunlData struct {
-	Hostname string `json:"hostname"`
-	VpcId    string `json:"vpc_id"`
-	Token    string `json:"token"`
-	Secret   string `json:"secret"`
+	Hostname       string `json:"hostname"`
+	OrganizationId string `json:"organization_id"`
+	VpcId          string `json:"vpc_id"`
+	Token          string `json:"token"`
+	Secret         string `json:"secret"`
 }
 
 type ConfigData struct {
