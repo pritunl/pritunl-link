@@ -136,6 +136,7 @@ func getStateCache(uri string) (state *State) {
 	stateCachesLock.Unlock()
 	if ok {
 		state = cache.State
+		state.Cached = true
 		return
 	}
 
