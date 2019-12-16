@@ -52,6 +52,7 @@ Commands:
   edge-port-on              Enable automatic port forwarding on EdgeRouter
   edge-port-off             Disable automatic port forwarding on EdgeRouter
   pritunl-hostname          Set hostname of Pritunl Cloud server
+  pritunl-organization      Set Pritunl Cloud organization ID
   pritunl-vpc               Set Pritunl Cloud VPC ID
   pritunl-token             Set Pritunl Cloud token
   pritunl-secret            Set Pritunl Cloud secret
@@ -275,6 +276,13 @@ func main() {
 	case "pritunl-hostname":
 		Init()
 		err := cmd.PritunlHostname(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "pritunl-organization":
+		Init()
+		err := cmd.PritunlOrganization(flag.Arg(1))
 		if err != nil {
 			panic(err)
 		}
