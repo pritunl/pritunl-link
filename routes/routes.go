@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
@@ -62,6 +63,14 @@ func GetCurrent() (routes *CurrentRoutes, err error) {
 		err = &errortypes.ParseError{
 			errors.Wrap(err, "advertise: Failed to prase routes"),
 		}
+
+		logrus.WithFields(logrus.Fields{
+			"error": err,
+		}).Info("state: Failed to parse routes, ignoring input")
+
+		routes = &CurrentRoutes{}
+		err = nil
+
 		return
 	}
 
