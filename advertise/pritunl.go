@@ -31,7 +31,7 @@ type pritunlRoute struct {
 	Link        bool   `bson:"link" json:"link"`
 }
 
-func pritunlGetRoutes(hostname, vpcId, token, secret string) (
+func pritunlGetRoutes(hostname, orgId, vpcId, token, secret string) (
 	vpcRoutes []*pritunlRoute, err error) {
 
 	req, err := http.NewRequest(
@@ -47,6 +47,9 @@ func pritunlGetRoutes(hostname, vpcId, token, secret string) (
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	if orgId != "" {
+		req.Header.Set("Organization", orgId)
+	}
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 
 	nonce, err := utils.RandStr(32)
@@ -101,7 +104,7 @@ func pritunlGetRoutes(hostname, vpcId, token, secret string) (
 	return
 }
 
-func pritunlUpdateRoutes(hostname, vpcId, token, secret string,
+func pritunlUpdateRoutes(hostname, orgId, vpcId, token, secret string,
 	vpcRoutes []*pritunlRoute) (err error) {
 
 	dataBuf := &bytes.Buffer{}
@@ -126,6 +129,9 @@ func pritunlUpdateRoutes(hostname, vpcId, token, secret string,
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	if orgId != "" {
+		req.Header.Set("Organization", orgId)
+	}
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 
 	nonce, err := utils.RandStr(32)
@@ -190,6 +196,7 @@ func PritunlAddRoute(network string) (err error) {
 	}
 
 	hostname := config.Config.Pritunl.Hostname
+	orgId := config.Config.Pritunl.OrganizationId
 	vpcId := config.Config.Pritunl.VpcId
 	token := config.Config.Pritunl.Token
 	secret := config.Config.Pritunl.Secret
@@ -201,7 +208,8 @@ func PritunlAddRoute(network string) (err error) {
 		return
 	}
 
-	vpcRoutes, err := pritunlGetRoutes(hostname, vpcId, token, secret)
+	vpcRoutes, err := pritunlGetRoutes(
+		hostname, orgId, vpcId, token, secret)
 	if err != nil {
 		return
 	}
@@ -228,10 +236,23 @@ func PritunlAddRoute(network string) (err error) {
 	}
 
 	if updated {
-		err = pritunlUpdateRoutes(hostname, vpcId, token, secret, vpcRoutes)
+		err = pritunlUpdateRoutes(
+			hostname, orgId, vpcId, token, secret, vpcRoutes)
 		if err != nil {
 			return
 		}
+	}
+
+	route := &routes.PritunlRoute{
+		DestNetwork:    network,
+		OrganizationId: orgId,
+		VpcId:          vpcId,
+		Target:         target,
+	}
+
+	err = route.Add()
+	if err != nil {
+		return
 	}
 
 	return
@@ -251,7 +272,7 @@ func PritunlDeleteRoute(route *routes.PritunlRoute) (err error) {
 		secret := config.Config.Pritunl.Secret
 
 		vpcRoutes, e := pritunlGetRoutes(hostname,
-			route.VpcId, token, secret)
+			route.OrganizationId, route.VpcId, token, secret)
 		if e != nil {
 			err = e
 			return
@@ -269,7 +290,7 @@ func PritunlDeleteRoute(route *routes.PritunlRoute) (err error) {
 		}
 
 		if updated {
-			err = pritunlUpdateRoutes(hostname,
+			err = pritunlUpdateRoutes(hostname, route.OrganizationId,
 				route.VpcId, token, secret, vpcRoutes)
 			if err != nil {
 				return
