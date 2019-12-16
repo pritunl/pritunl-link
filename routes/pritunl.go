@@ -1,9 +1,10 @@
 package routes
 
 type PritunlRoute struct {
-	DestNetwork string `json:"dest_network"`
-	VpcId       string `json:"vpc_id"`
-	Target      string `json:"target"`
+	DestNetwork    string `json:"dest_network"`
+	OrganizationId string `json:"organization_id"`
+	VpcId          string `json:"vpc_id"`
+	Target         string `json:"target"`
 }
 
 func (r *PritunlRoute) Add() (err error) {
