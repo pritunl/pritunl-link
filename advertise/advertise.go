@@ -22,7 +22,8 @@ func Routes(states []*state.State) (err error) {
 		return
 	}
 
-	networks := []string{}
+	availableNetworks := []string{}
+	allNetworks := []string{}
 
 	for _, stat := range states {
 		if stat.Type == state.DirectClient ||
@@ -30,16 +31,22 @@ func Routes(states []*state.State) (err error) {
 
 			continue
 		}
+
 		for _, link := range stat.Links {
 			for _, network := range link.RightSubnets {
-				networks = append(networks, network)
+				if !stat.Cached {
+					availableNetworks = append(availableNetworks, network)
+				}
+
+				allNetworks = append(allNetworks, network)
 			}
 		}
 	}
 
-	sort.Strings(networks)
+	sort.Strings(availableNetworks)
+	sort.Strings(allNetworks)
 
-	curRoutes, err := routes.GetDiff(networks)
+	curRoutes, err := routes.GetDiff(allNetworks)
 	if err != nil {
 		return
 	}
@@ -107,7 +114,7 @@ func Routes(states []*state.State) (err error) {
 		}
 	}
 
-	for _, network := range networks {
+	for _, network := range availableNetworks {
 		switch config.Config.Provider {
 		case "aws":
 			err = AwsAddRoute(network)
@@ -169,7 +176,7 @@ func Routes(states []*state.State) (err error) {
 		return
 	}
 
-	data := strings.Join(networks, "\n")
+	data := strings.Join(allNetworks, "\n")
 	if data != "" {
 		data = data + "\n"
 	}
