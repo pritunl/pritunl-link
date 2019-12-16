@@ -20,6 +20,7 @@ type State struct {
 	Ipv6   bool    `json:"ipv6"`
 	Action string  `json:"action"`
 	Type   string  `json:"type"`
+	Cached bool    `json:"-"`
 	Secret string  `json:"-"`
 	Hash   string  `json:"hash"`
 	Links  []*Link `json:"links"`
