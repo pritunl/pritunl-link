@@ -7,17 +7,11 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/sha512"
+	"crypto/subtle"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	"github.com/dropbox/godropbox/container/set"
-	"github.com/dropbox/godropbox/errors"
-	"github.com/pritunl/pritunl-link/config"
-	"github.com/pritunl/pritunl-link/constants"
-	"github.com/pritunl/pritunl-link/errortypes"
-	"github.com/pritunl/pritunl-link/utils"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -25,6 +19,14 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/dropbox/godropbox/container/set"
+	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/config"
+	"github.com/pritunl/pritunl-link/constants"
+	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/pritunl/pritunl-link/utils"
 )
 
 var (
@@ -68,7 +70,10 @@ func decResp(secret, iv, sig, encData string) (cipData []byte, err error) {
 	hashFunc.Write([]byte(encData))
 	rawSignature := hashFunc.Sum(nil)
 	testSig := base64.StdEncoding.EncodeToString(rawSignature)
-	if sig != testSig {
+	if subtle.ConstantTimeCompare(
+		[]byte(sig),
+		[]byte(testSig),
+	) != 1 {
 		err = &errortypes.ParseError{
 			errors.Wrap(err, "state: Cipher data signature invalid"),
 		}
