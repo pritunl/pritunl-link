@@ -108,9 +108,10 @@ elif cmd == 'upload' or cmd == 'upload-test':
     )
 
     subprocess.check_call([
-        's3cmd',
-        'sync',
-        '--follow-symlinks',
-        'mirror/',
-        's3://stable/',
+        'mc',
+        'mirror',
+        '--remove',
+        '--overwrite',
+        'mirror',
+        'repo/stable',
     ], cwd=pacur_path)
