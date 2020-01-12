@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/dropbox/godropbox/errors"
