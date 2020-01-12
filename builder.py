@@ -3,21 +3,14 @@ import re
 import sys
 import subprocess
 import math
-import json
 import os
 
 CONSTANTS_PATH = 'constants/constants.go'
 STABLE_PACUR_PATH = '../pritunl-pacur'
 TEST_PACUR_PATH = '../pritunl-pacur-test'
-BUILD_KEYS_PATH = 'build_keys.json'
 BUILD_TARGETS = ('pritunl-link',)
 
 cur_date = datetime.datetime.utcnow()
-
-with open(BUILD_KEYS_PATH, 'r') as build_keys_file:
-    build_keys = json.loads(build_keys_file.read().strip())
-    mirror_url = build_keys['mirror_url']
-    test_mirror_url = build_keys['test_mirror_url']
 
 def get_ver(version):
     day_num = (cur_date - datetime.datetime(2015, 11, 24)).days
@@ -96,10 +89,8 @@ elif cmd == 'build' or cmd == 'build-test':
 
 elif cmd == 'upload' or cmd == 'upload-test':
     if cmd == 'upload':
-        mirror_urls = mirror_url
         pacur_path = STABLE_PACUR_PATH
     else:
-        mirror_urls = test_mirror_url
         pacur_path = TEST_PACUR_PATH
 
     subprocess.check_call(
