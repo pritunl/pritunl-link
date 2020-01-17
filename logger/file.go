@@ -1,16 +1,17 @@
 package logger
 
 import (
+	"os"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
-	"os"
 )
 
-func init() {
-	senders = append(senders, &fileSender{})
-}
+//func init() {
+//	senders = append(senders, &fileSender{})
+//}
 
 type fileSender struct{}
 
