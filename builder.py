@@ -103,6 +103,7 @@ elif cmd == 'upload' or cmd == 'upload-test':
         'mirror',
         '--remove',
         '--overwrite',
+        '--md5',
         'mirror',
         'repo/stable',
     ], cwd=pacur_path)
