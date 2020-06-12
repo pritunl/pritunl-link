@@ -45,7 +45,7 @@ func watchUnknown() {
 				if unknownIdsSet.Contains(linkId) {
 					logrus.WithFields(logrus.Fields{
 						"link_id": linkId,
-					}).Info("state: Stopping unknown link")
+					}).Info("state: Removing closed link")
 					go ipsec.Shutdown(linkId)
 				}
 			}
