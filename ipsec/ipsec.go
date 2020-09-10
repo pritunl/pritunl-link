@@ -3,7 +3,14 @@ package ipsec
 import (
 	"bytes"
 	"fmt"
-	"github.com/Sirupsen/logrus"
+	"io/ioutil"
+	"os"
+	"path"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/advertise"
 	"github.com/pritunl/pritunl-link/config"
@@ -13,12 +20,6 @@ import (
 	"github.com/pritunl/pritunl-link/requires"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
-	"io/ioutil"
-	"os"
-	"path"
-	"strings"
-	"sync"
-	"time"
 )
 
 var (

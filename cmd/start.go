@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/clean"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/sync"
