@@ -41,7 +41,7 @@ func oracleParseBase64Key(data string) (key *rsa.PrivateKey,
 	key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		err = &errortypes.ParseError{
-			errors.Wrap(err, "authority: Failed to parse rsa key"),
+			errors.Wrap(err, "oracle: Failed to parse rsa key"),
 		}
 		return
 	}
@@ -49,7 +49,7 @@ func oracleParseBase64Key(data string) (key *rsa.PrivateKey,
 	pubKey, err := x509.MarshalPKIXPublicKey(key.Public())
 	if err != nil {
 		err = &errortypes.ParseError{
-			errors.Wrap(err, "authority: Failed to marshal public key"),
+			errors.Wrap(err, "oracle: Failed to marshal public key"),
 		}
 		return
 	}
