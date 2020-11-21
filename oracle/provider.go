@@ -75,7 +75,7 @@ func (p *Provider) GetNetworkClient() (
 func NewProvider(mdata *Metadata) (
 	prov *Provider, err error) {
 
-	privateKey, fingerprint, err := loadPrivateKey()
+	privateKey, fingerprint, err := oracleParseBase64Key(mdata.PrivateKey)
 	if err != nil {
 		return
 	}
