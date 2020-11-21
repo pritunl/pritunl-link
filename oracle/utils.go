@@ -5,18 +5,25 @@ import (
 	"crypto/md5"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 
 	"github.com/dropbox/godropbox/errors"
-	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
 )
 
-func loadPrivateKey() (
-	key *rsa.PrivateKey, fingerprint string, err error) {
+func oracleParseBase64Key(data string) (key *rsa.PrivateKey,
+	fingerprint string, err error) {
 
-	block, _ := pem.Decode([]byte(config.Config.Oracle.PrivateKey))
+	pemKey, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "oracle: Failed to parse base64 private key"),
+		}
+		return
+	}
+	block, _ := pem.Decode(pemKey)
 	if block == nil {
 		err = &errortypes.ParseError{
 			errors.New("oracle: Failed to decode private key"),
@@ -34,7 +41,7 @@ func loadPrivateKey() (
 	key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		err = &errortypes.ParseError{
-			errors.Wrap(err, "oracle: Failed to parse rsa key"),
+			errors.Wrap(err, "authority: Failed to parse rsa key"),
 		}
 		return
 	}
@@ -42,7 +49,7 @@ func loadPrivateKey() (
 	pubKey, err := x509.MarshalPKIXPublicKey(key.Public())
 	if err != nil {
 		err = &errortypes.ParseError{
-			errors.Wrap(err, "oracle: Failed to marshal public key"),
+			errors.Wrap(err, "authority: Failed to marshal public key"),
 		}
 		return
 	}
