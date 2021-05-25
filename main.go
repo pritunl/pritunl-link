@@ -64,6 +64,10 @@ func Init() {
 }
 
 func main() {
+	flag.Usage = func() {
+		fmt.Println(help)
+	}
+
 	flag.Parse()
 
 	switch flag.Arg(0) {
