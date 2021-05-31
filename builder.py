@@ -105,5 +105,15 @@ elif cmd == 'upload' or cmd == 'upload-test':
         '--overwrite',
         '--md5',
         'mirror',
-        'repo/stable',
+        'repo-east/unstable',
+    ], cwd=pacur_path)
+
+    subprocess.check_call([
+        'mc',
+        'mirror',
+        '--remove',
+        '--overwrite',
+        '--md5',
+        'mirror',
+        'repo-west/unstable',
     ], cwd=pacur_path)
