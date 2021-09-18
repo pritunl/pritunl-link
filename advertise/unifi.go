@@ -6,26 +6,26 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"net/http"
+	"net/http/cookiejar"
+	"time"
+
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/routes"
 	"github.com/pritunl/pritunl-link/state"
-	"io/ioutil"
-	"net/http"
-	"net/http/cookiejar"
-	"time"
+	"github.com/sirupsen/logrus"
 )
 
-const unifiDefaultInterface = "WAN1"
+const unifiDefaultInterface = "WAN"
 
 type unifiLoginData struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Strict   bool   `json:"strict"`
-	Remember bool   `json:"remember"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	RememberMe bool   `json:"rememberMe"`
 }
 
 type unifiMetaData struct {
@@ -62,6 +62,10 @@ type unifiRoutingRespData struct {
 
 type unifiRespData struct {
 	Meta unifiMetaData `json:"meta"`
+}
+
+type unifiLoginRespData struct {
+	UniqueId string `json:"unique_id"`
 }
 
 type unifiRoute struct {
@@ -115,7 +119,40 @@ func site() string {
 	return site
 }
 
-func unifiGetClient() (client *http.Client, err error) {
+func unifiGetCsrf(client *http.Client) (token string, err error) {
+	req, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("%s", config.Config.Unifi.Controller),
+		nil,
+	)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Csrf request error"),
+		}
+		return
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Unifi login request error"),
+		}
+		return
+	}
+	defer resp.Body.Close()
+
+	token = resp.Header.Get("X-CSRF-Token")
+	if token == "" {
+		err = &errortypes.RequestError{
+			errors.New("advertise: Unifi csrf token empty"),
+		}
+		return
+	}
+
+	return
+}
+
+func unifiGetClient() (client *http.Client, csrfToken string, err error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		err = &errortypes.UnknownError{
@@ -133,14 +170,18 @@ func unifiGetClient() (client *http.Client, err error) {
 	client = &http.Client{
 		Transport: transport,
 		Jar:       jar,
-		Timeout:   60 * time.Second,
+		Timeout:   10 * time.Second,
+	}
+
+	csrfToken, err = unifiGetCsrf(client)
+	if err != nil {
+		return
 	}
 
 	data := &unifiLoginData{
-		Username: config.Config.Unifi.Username,
-		Password: config.Config.Unifi.Password,
-		Strict:   false,
-		Remember: false,
+		Username:   config.Config.Unifi.Username,
+		Password:   config.Config.Unifi.Password,
+		RememberMe: false,
 	}
 
 	jsonData, err := json.Marshal(data)
@@ -151,14 +192,9 @@ func unifiGetClient() (client *http.Client, err error) {
 		return
 	}
 
-	routeInterface := config.Config.Unifi.Interface
-	if routeInterface == "" {
-		routeInterface = unifiDefaultInterface
-	}
-
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/api/login", config.Config.Unifi.Controller),
+		fmt.Sprintf("%s/api/auth/login", config.Config.Unifi.Controller),
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {
@@ -169,6 +205,7 @@ func unifiGetClient() (client *http.Client, err error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-CSRF-Token", csrfToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -188,7 +225,21 @@ func unifiGetClient() (client *http.Client, err error) {
 		return
 	}
 
-	respData := &unifiRespData{}
+	if resp.StatusCode != 200 {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "advertise: Failed to login to Unifi"),
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"status":   resp.StatusCode,
+			"response": string(body),
+			"error":    err,
+		}).Error("advertise: Failed to login to Unifi bad status")
+
+		return
+	}
+
+	respData := &unifiLoginRespData{}
 
 	err = json.Unmarshal(body, respData)
 	if err != nil {
@@ -198,7 +249,7 @@ func unifiGetClient() (client *http.Client, err error) {
 		return
 	}
 
-	if respData.Meta.Rc != "ok" {
+	if respData.UniqueId == "" {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "advertise: Failed to login to Unifi"),
 		}
@@ -207,7 +258,7 @@ func unifiGetClient() (client *http.Client, err error) {
 			"status":   resp.StatusCode,
 			"response": string(body),
 			"error":    err,
-		}).Info("advertise: Failed to login to Unifi")
+		}).Error("advertise: Failed to login to Unifi invalid response")
 
 		return
 	}
@@ -215,10 +266,12 @@ func unifiGetClient() (client *http.Client, err error) {
 	return
 }
 
-func unifiGetRoutes(client *http.Client) (routes []*unifiRoute, err error) {
+func unifiGetRoutes(client *http.Client, csrfToken string) (
+	routes []*unifiRoute, err error) {
+
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/api/s/%s/rest/routing",
+		fmt.Sprintf("%s/proxy/network/api/s/%s/rest/routing",
 			config.Config.Unifi.Controller, site()),
 		nil,
 	)
@@ -228,6 +281,8 @@ func unifiGetRoutes(client *http.Client) (routes []*unifiRoute, err error) {
 		}
 		return
 	}
+
+	req.Header.Set("X-CSRF-Token", csrfToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -292,10 +347,10 @@ func unifiGetRoutes(client *http.Client) (routes []*unifiRoute, err error) {
 	return
 }
 
-func unifiDeleteRoute(client *http.Client, id string) (err error) {
+func unifiDeleteRoute(client *http.Client, csrfToken, id string) (err error) {
 	req, err := http.NewRequest(
 		"DELETE",
-		fmt.Sprintf("%s/api/s/%s/rest/routing/%s",
+		fmt.Sprintf("%s/proxy/network/api/s/%s/rest/routing/%s",
 			config.Config.Unifi.Controller, site(), id),
 		nil,
 	)
@@ -305,6 +360,8 @@ func unifiDeleteRoute(client *http.Client, id string) (err error) {
 		}
 		return
 	}
+
+	req.Header.Set("X-CSRF-Token", csrfToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -351,13 +408,20 @@ func unifiDeleteRoute(client *http.Client, id string) (err error) {
 	return
 }
 
-func unifiAddRoute(client *http.Client, network, nexthop string) (err error) {
+func unifiAddRoute(client *http.Client, csrfToken, network, nexthop string) (
+	err error) {
+
+	iface := config.Config.Unifi.Interface
+	if iface == "" {
+		iface = unifiDefaultInterface
+	}
+
 	data := &unifiRoutingPostData{
 		Enabled: true,
 		Name: fmt.Sprintf(
 			"pritunl-%x", md5.Sum([]byte(network))),
 		Type:                 "static-route",
-		StaticRouteInterface: "WAN1",
+		StaticRouteInterface: iface,
 		StaticRouteNetwork:   network,
 		StaticRouteNexthop:   nexthop,
 		StaticRouteType:      "nexthop-route",
@@ -373,7 +437,7 @@ func unifiAddRoute(client *http.Client, network, nexthop string) (err error) {
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/api/s/%s/rest/routing",
+		fmt.Sprintf("%s/proxy/network/api/s/%s/rest/routing",
 			config.Config.Unifi.Controller, site()),
 		bytes.NewBuffer(jsonData),
 	)
@@ -383,6 +447,8 @@ func unifiAddRoute(client *http.Client, network, nexthop string) (err error) {
 		}
 		return
 	}
+
+	req.Header.Set("X-CSRF-Token", csrfToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -429,10 +495,10 @@ func unifiAddRoute(client *http.Client, network, nexthop string) (err error) {
 	return
 }
 
-func unifiHasRoute(client *http.Client, network, nexthop string) (
+func unifiHasRoute(client *http.Client, csrfToken, network, nexthop string) (
 	exists bool, err error) {
 
-	rts, err := unifiGetRoutes(client)
+	rts, err := unifiGetRoutes(client, csrfToken)
 	if err != nil {
 		return
 	}
@@ -444,7 +510,7 @@ func unifiHasRoute(client *http.Client, network, nexthop string) (
 				return
 			}
 
-			err = unifiDeleteRoute(client, route.Id)
+			err = unifiDeleteRoute(client, csrfToken, route.Id)
 			if err != nil {
 				return
 			}
@@ -470,18 +536,18 @@ func UnifiAddRoute(network string) (err error) {
 		return
 	}
 
-	client, err := unifiGetClient()
+	client, csrfToken, err := unifiGetClient()
 	if err != nil {
 		return
 	}
 
-	exists, err := unifiHasRoute(client, network, nexthop)
+	exists, err := unifiHasRoute(client, csrfToken, network, nexthop)
 	if err != nil {
 		return
 	}
 
 	if !exists {
-		err = unifiAddRoute(client, network, nexthop)
+		err = unifiAddRoute(client, csrfToken, network, nexthop)
 		if err != nil {
 			return
 		}
@@ -509,13 +575,13 @@ func UnifiDeleteRoute(route *routes.UnifiRoute) (err error) {
 			return
 		}
 
-		client, e := unifiGetClient()
+		client, csrfToken, e := unifiGetClient()
 		if e != nil {
 			err = e
 			return
 		}
 
-		rts, e := unifiGetRoutes(client)
+		rts, e := unifiGetRoutes(client, csrfToken)
 		if e != nil {
 			err = e
 			return
@@ -523,7 +589,7 @@ func UnifiDeleteRoute(route *routes.UnifiRoute) (err error) {
 
 		for _, rte := range rts {
 			if rte.Network == route.Network && rte.Nexthop == route.Nexthop {
-				err = unifiDeleteRoute(client, rte.Id)
+				err = unifiDeleteRoute(client, csrfToken, rte.Id)
 				if err != nil {
 					return
 				}
@@ -541,12 +607,12 @@ func UnifiDeleteRoute(route *routes.UnifiRoute) (err error) {
 	return
 }
 
-func unifiGetPorts(client *http.Client) (
+func unifiGetPorts(client *http.Client, csrfToken string) (
 	ports []*unifiPortForward, err error) {
 
 	req, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf("%s/api/s/%s/rest/portforward",
+		fmt.Sprintf("%s/proxy/network/api/s/%s/rest/portforward",
 			config.Config.Unifi.Controller, site()),
 		nil,
 	)
@@ -556,6 +622,8 @@ func unifiGetPorts(client *http.Client) (
 		}
 		return
 	}
+
+	req.Header.Set("X-CSRF-Token", csrfToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -617,10 +685,10 @@ func unifiGetPorts(client *http.Client) (
 
 	return
 }
-func unifiDeletePort(client *http.Client, id string) (err error) {
+func unifiDeletePort(client *http.Client, csrfToken, id string) (err error) {
 	req, err := http.NewRequest(
 		"DELETE",
-		fmt.Sprintf("%s/api/s/%s/rest/portforward/%s",
+		fmt.Sprintf("%s/proxy/network/api/s/%s/rest/portforward/%s",
 			config.Config.Unifi.Controller, site(), id),
 		nil,
 	)
@@ -630,6 +698,8 @@ func unifiDeletePort(client *http.Client, id string) (err error) {
 		}
 		return
 	}
+
+	req.Header.Set("X-CSRF-Token", csrfToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -676,11 +746,11 @@ func unifiDeletePort(client *http.Client, id string) (err error) {
 	return
 }
 
-func unifiAddPort(client *http.Client, source, destPort,
+func unifiAddPort(client *http.Client, csrfToken, source, destPort,
 	forward, forwardPort, proto string) (err error) {
 
 	data := &unifiPortPostData{
-		Name:    "Pritunl IPsec",
+		Name:    fmt.Sprintf("pritunl-ipsec-%s", forwardPort),
 		Src:     source,
 		DstPort: destPort,
 		Fwd:     forward,
@@ -698,7 +768,7 @@ func unifiAddPort(client *http.Client, source, destPort,
 
 	req, err := http.NewRequest(
 		"POST",
-		fmt.Sprintf("%s/api/s/%s/rest/portforward",
+		fmt.Sprintf("%s/proxy/network/api/s/%s/rest/portforward",
 			config.Config.Unifi.Controller, site()),
 		bytes.NewBuffer(jsonData),
 	)
@@ -708,6 +778,8 @@ func unifiAddPort(client *http.Client, source, destPort,
 		}
 		return
 	}
+
+	req.Header.Set("X-CSRF-Token", csrfToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -754,8 +826,9 @@ func unifiAddPort(client *http.Client, source, destPort,
 	return
 }
 
-func unifiHasPort(client *http.Client, ports []*unifiPortForward, source,
-	destPort, forward, forwardPort, proto string) (exists bool, err error) {
+func unifiHasPort(client *http.Client, csrfToken string,
+	ports []*unifiPortForward, source, destPort, forward, forwardPort,
+	proto string) (exists bool, err error) {
 
 	for _, port := range ports {
 		if (port.DestPort == destPort && (port.Proto == proto ||
@@ -770,7 +843,7 @@ func unifiHasPort(client *http.Client, ports []*unifiPortForward, source,
 				return
 			}
 
-			err = unifiDeletePort(client, port.Id)
+			err = unifiDeletePort(client, csrfToken, port.Id)
 			if err != nil {
 				return
 			}
@@ -798,38 +871,38 @@ func UnifiAddPorts() (err error) {
 		return
 	}
 
-	client, err := unifiGetClient()
+	client, csrfToken, err := unifiGetClient()
 	if err != nil {
 		return
 	}
 
-	ports, err := unifiGetPorts(client)
+	ports, err := unifiGetPorts(client, csrfToken)
 	if err != nil {
 		return
 	}
 
-	exists, err := unifiHasPort(client, ports, source, "500",
+	exists, err := unifiHasPort(client, csrfToken, ports, source, "500",
 		forward, "500", proto)
 	if err != nil {
 		return
 	}
 
 	if !exists {
-		err = unifiAddPort(client, source, "500",
+		err = unifiAddPort(client, csrfToken, source, "500",
 			forward, "500", proto)
 		if err != nil {
 			return
 		}
 	}
 
-	exists, err = unifiHasPort(client, ports, source, "4500",
+	exists, err = unifiHasPort(client, csrfToken, ports, source, "4500",
 		forward, "4500", proto)
 	if err != nil {
 		return
 	}
 
 	if !exists {
-		err = unifiAddPort(client, source, "4500",
+		err = unifiAddPort(client, csrfToken, source, "4500",
 			forward, "4500", proto)
 		if err != nil {
 			return
