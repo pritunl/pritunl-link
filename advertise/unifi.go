@@ -414,20 +414,14 @@ func unifiDeleteRoute(client *http.Client, csrfToken, id string) (err error) {
 func unifiAddRoute(client *http.Client, csrfToken, network, nexthop string) (
 	err error) {
 
-	iface := config.Config.Unifi.Interface
-	if iface == "" {
-		iface = unifiDefaultInterface
-	}
-
 	data := &unifiRoutingPostData{
 		Enabled: true,
 		Name: fmt.Sprintf(
 			"pritunl-%x", md5.Sum([]byte(network))),
-		Type:                 "static-route",
-		StaticRouteInterface: iface,
-		StaticRouteNetwork:   network,
-		StaticRouteNexthop:   nexthop,
-		StaticRouteType:      "nexthop-route",
+		Type:               "static-route",
+		StaticRouteNetwork: network,
+		StaticRouteNexthop: nexthop,
+		StaticRouteType:    "nexthop-route",
 	}
 
 	jsonData, err := json.Marshal(data)
