@@ -20,13 +20,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/pritunl/pritunl-link/interlink"
 	"github.com/pritunl/pritunl-link/utils"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -48,16 +49,24 @@ var (
 	}
 	stateCaches     = map[string]*stateCache{}
 	stateCachesLock = sync.Mutex{}
+	stateHosts      = map[string]map[string]string{}
+	stateHostsLock  = sync.Mutex{}
 	Hash            = ""
 )
 
+type hostState struct {
+	State   bool `json:"state"`
+	Latency int  `json:"latency"`
+}
+
 type stateData struct {
-	Version       string            `json:"version"`
-	PublicAddress string            `json:"public_address"`
-	LocalAddress  string            `json:"local_address"`
-	Address6      string            `json:"address6"`
-	Status        map[string]string `json:"status"`
-	Errors        []string          `json:"errors"`
+	Version       string                `json:"version"`
+	PublicAddress string                `json:"public_address"`
+	LocalAddress  string                `json:"local_address"`
+	Address6      string                `json:"address6"`
+	Status        map[string]string     `json:"status"`
+	Hosts         map[string]*hostState `json:"hosts"`
+	Errors        []string              `json:"errors"`
 }
 
 type stateCache struct {
@@ -183,12 +192,46 @@ func GetState(uri string) (state *State, err error) {
 		}
 	}
 
+	hosts := stateHosts[uri]
+	hostsStatus := map[string]*hostState{}
+	hostsStatusLock := sync.Mutex{}
+
+	if hosts != nil {
+		waiter := sync.WaitGroup{}
+
+		for hostId, hostAddr := range hosts {
+			waiter.Add(1)
+
+			go func(hostId, hostAddr string) {
+				stat, latency, e := interlink.CheckHost(hostAddr)
+				if e != nil {
+					logrus.WithFields(logrus.Fields{
+						"host_id": hostId,
+						"error":   e,
+					}).Warn("state: Failed to check host")
+				}
+
+				hostsStatusLock.Lock()
+				hostsStatus[hostId] = &hostState{
+					State:   stat,
+					Latency: latency,
+				}
+				hostsStatusLock.Unlock()
+
+				waiter.Done()
+			}(hostId, hostAddr)
+		}
+
+		waiter.Wait()
+	}
+
 	data := &stateData{
 		Version:       constants.Version,
 		PublicAddress: GetPublicAddress(),
 		LocalAddress:  GetLocalAddress(),
 		Address6:      GetAddress6(),
 		Status:        stateStatus,
+		Hosts:         hostsStatus,
 	}
 	dataBuf := &bytes.Buffer{}
 
@@ -326,6 +369,10 @@ func GetState(uri string) (state *State, err error) {
 	stateCachesLock.Lock()
 	stateCaches[uri] = cache
 	stateCachesLock.Unlock()
+
+	stateHostsLock.Lock()
+	stateHosts[uri] = state.Hosts
+	stateHostsLock.Unlock()
 
 	return
 }
