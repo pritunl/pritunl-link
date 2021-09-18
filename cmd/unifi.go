@@ -77,6 +77,21 @@ func UnifiSite(site string) (err error) {
 	return
 }
 
+func UnifiInterface(site string) (err error) {
+	config.Config.Unifi.Interface = site
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"site": config.Config.Unifi.Interface,
+	}).Info("cmd.unifi: Set Unifi interface")
+
+	return
+}
+
 func UnifiPortOn() (err error) {
 	config.Config.Unifi.DisablePort = false
 
