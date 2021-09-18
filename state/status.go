@@ -1,11 +1,12 @@
 package state
 
 import (
+	"time"
+
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/status"
-	"time"
 )
 
 var (
@@ -16,8 +17,8 @@ var (
 func Unknown(states []*State) (unknownIds []string, err error) {
 	connIds := set.NewSet()
 	for _, stat := range states {
-		for i, lnk := range stat.Links {
-			connIds.Add(GetLinkId(stat.Id, i, lnk.Hash))
+		for _, lnk := range stat.Links {
+			connIds.Add(GetLinkId(stat.Id, lnk.Id, lnk.Hash))
 
 			if lnk.Static && (len(lnk.LeftSubnets) > 1 ||
 				len(lnk.RightSubnets) > 1) {
@@ -25,7 +26,7 @@ func Unknown(states []*State) (unknownIds []string, err error) {
 				for x := range lnk.LeftSubnets {
 					for y := range lnk.RightSubnets {
 						connIds.Add(GetLinkIds(
-							stat.Id, i, x, y, lnk.Hash))
+							stat.Id, lnk.Id, x, y, lnk.Hash))
 					}
 				}
 			}
@@ -57,8 +58,8 @@ func Update(states []*State) (hasConnected bool,
 
 	names := set.NewSet()
 	for _, stat := range states {
-		for i, lnk := range stat.Links {
-			names.Add(GetLinkId(stat.Id, i, lnk.Hash))
+		for _, lnk := range stat.Links {
+			names.Add(GetLinkId(stat.Id, lnk.Id, lnk.Hash))
 		}
 	}
 
