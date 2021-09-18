@@ -303,7 +303,7 @@ func writeTemplates(states []*state.State) (err error) {
 	for _, stat := range states {
 		confBuf := &bytes.Buffer{}
 
-		for i, link := range stat.Links {
+		for _, link := range stat.Links {
 			leftSubnets := strings.Join(link.LeftSubnets, ",")
 			rightSubnets := strings.Join(link.RightSubnets, ",")
 
@@ -328,7 +328,7 @@ func writeTemplates(states []*state.State) (err error) {
 			}
 
 			data := &templateData{
-				Id:           state.GetLinkId(stat.Id, i, link.Hash),
+				Id:           state.GetLinkId(stat.Id, link.Id, link.Hash),
 				Action:       action,
 				Left:         left,
 				LeftSubnets:  leftSubnets,
@@ -353,7 +353,7 @@ func writeTemplates(states []*state.State) (err error) {
 					for y, rightSubnet := range link.RightSubnets {
 						data := &templateData{
 							Id: state.GetLinkIds(
-								stat.Id, i, x, y, link.Hash),
+								stat.Id, link.Id, x, y, link.Hash),
 							Action:       action,
 							Left:         left,
 							LeftSubnets:  leftSubnet,
