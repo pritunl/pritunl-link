@@ -50,6 +50,7 @@ type unifiRoutingPostData struct {
 	Enabled              bool   `json:"enabled"`
 	Name                 string `json:"name"`
 	Type                 string `json:"type"`
+	GatewayType          string `json:"gateway_type"`
 	StaticRouteInterface string `json:"static-route_interface"`
 	StaticRouteNetwork   string `json:"static-route_network"`
 	StaticRouteNexthop   string `json:"static-route_nexthop"`
@@ -421,6 +422,7 @@ func unifiAddRoute(client *http.Client, csrfToken, network, nexthop string) (
 		Name: fmt.Sprintf(
 			"pritunl-%x", md5.Sum([]byte(network))),
 		Type:               "static-route",
+		GatewayType:        "default",
 		StaticRouteNetwork: network,
 		StaticRouteNexthop: nexthop,
 		StaticRouteType:    "nexthop-route",
