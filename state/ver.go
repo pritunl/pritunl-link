@@ -10,8 +10,8 @@ var (
 	linkVersionLock = sync.Mutex{}
 )
 
-func GetLinkId(stateId string, i int, linkHash string) string {
-	linkId := fmt.Sprintf("%s-%d-%s", stateId, i, linkHash)
+func GetLinkId(stateId string, locId string, linkHash string) string {
+	linkId := fmt.Sprintf("%s-%s-%s", stateId, locId, linkHash)
 
 	linkVersionLock.Lock()
 	ver := linkVersions[linkId]
@@ -20,16 +20,18 @@ func GetLinkId(stateId string, i int, linkHash string) string {
 	return fmt.Sprintf("%s_%08d", linkId, ver)
 }
 
-func GetLinkIds(stateId string, i, x, y int, linkHash string) string {
+func GetLinkIds(stateId string, locId string, x, y int,
+	linkHash string) string {
+
 	n := fmt.Sprintf(
-		"%d%s%s",
-		i,
-		string(linkId[x]),
-		string(linkId[y]),
+		"%s%d%d",
+		locId,
+		linkId[x],
+		linkId[y],
 	)
 
 	linkId := fmt.Sprintf("%s-%s-%s", stateId, n, linkHash)
-	linkIdPrimary := fmt.Sprintf("%s-%d-%s", stateId, i, linkHash)
+	linkIdPrimary := fmt.Sprintf("%s-%s-%s", stateId, locId, linkHash)
 
 	linkVersionLock.Lock()
 	ver := linkVersions[linkIdPrimary]
