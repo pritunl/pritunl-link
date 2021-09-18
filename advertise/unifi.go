@@ -79,6 +79,7 @@ type unifiRoute struct {
 
 type unifiPortGetData struct {
 	Id      string `json:"_id"`
+	Enabled bool   `json:"enabled"`
 	Name    string `json:"name"`
 	Src     string `json:"src"`
 	DstPort string `json:"dst_port"`
@@ -106,6 +107,7 @@ type unifiPortRespData struct {
 
 type unifiPortForward struct {
 	Id          string
+	Enabled     bool
 	Name        string
 	Source      string
 	DestPort    string
@@ -669,6 +671,7 @@ func unifiGetPorts(client *http.Client, csrfToken string) (
 	for _, portData := range respData.Data {
 		port := &unifiPortForward{
 			Id:          portData.Id,
+			Enabled:     portData.Enabled,
 			Name:        portData.Name,
 			Source:      portData.Src,
 			DestPort:    portData.DstPort,
@@ -841,8 +844,9 @@ func unifiHasPort(client *http.Client, csrfToken string,
 			port.ForwardPort == forwardPort && (port.Proto == proto ||
 			port.Proto == "tcp_udp")) {
 
-			if port.Source == source && port.Forward == forward &&
-				port.ForwardPort == forwardPort && port.Proto == proto {
+			if port.Enabled && port.Source == source &&
+				port.Forward == forward && port.ForwardPort == forwardPort &&
+				port.Proto == proto {
 
 				exists = true
 				return
