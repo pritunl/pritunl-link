@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
+	"strings"
 	"time"
 
 	"github.com/dropbox/godropbox/errors"
@@ -20,7 +21,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const unifiDefaultInterface = "WAN"
+const unifiDefaultInterface = "wan"
 
 type unifiLoginData struct {
 	Username   string `json:"username"`
@@ -88,12 +89,14 @@ type unifiPortGetData struct {
 }
 
 type unifiPortPostData struct {
-	Name    string `json:"name"`
-	Src     string `json:"src"`
-	DstPort string `json:"dst_port"`
-	Fwd     string `json:"fwd"`
-	FwdPort string `json:"fwd_port"`
-	Proto   string `json:"proto"`
+	Enabled       bool   `json:"enabled"`
+	Name          string `json:"name"`
+	Src           string `json:"src"`
+	DstPort       string `json:"dst_port"`
+	Fwd           string `json:"fwd"`
+	FwdPort       string `json:"fwd_port"`
+	PfwdInterface string `json:"pfwd_interface"` // wan,wan2,both
+	Proto         string `json:"proto"`
 }
 
 type unifiPortRespData struct {
@@ -749,13 +752,21 @@ func unifiDeletePort(client *http.Client, csrfToken, id string) (err error) {
 func unifiAddPort(client *http.Client, csrfToken, source, destPort,
 	forward, forwardPort, proto string) (err error) {
 
+	iface := config.Config.Unifi.Interface
+	if iface == "" {
+		iface = unifiDefaultInterface
+	}
+	iface = strings.ToLower(iface)
+
 	data := &unifiPortPostData{
-		Name:    fmt.Sprintf("pritunl-ipsec-%s", forwardPort),
-		Src:     source,
-		DstPort: destPort,
-		Fwd:     forward,
-		FwdPort: forwardPort,
-		Proto:   proto,
+		Enabled:       true,
+		Name:          fmt.Sprintf("pritunl-ipsec-%s", forwardPort),
+		Src:           source,
+		DstPort:       destPort,
+		Fwd:           forward,
+		FwdPort:       forwardPort,
+		PfwdInterface: iface,
+		Proto:         proto,
 	}
 
 	jsonData, err := json.Marshal(data)
