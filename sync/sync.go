@@ -4,19 +4,21 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/sirupsen/logrus"
-	"github.com/dropbox/godropbox/errors"
-	"github.com/pritunl/pritunl-link/config"
-	"github.com/pritunl/pritunl-link/constants"
-	"github.com/pritunl/pritunl-link/errortypes"
-	"github.com/pritunl/pritunl-link/ipsec"
-	"github.com/pritunl/pritunl-link/state"
-	"github.com/pritunl/pritunl-link/utils"
 	"io"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/config"
+	"github.com/pritunl/pritunl-link/constants"
+	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/pritunl/pritunl-link/ipsec"
+	"github.com/pritunl/pritunl-link/iptables"
+	"github.com/pritunl/pritunl-link/state"
+	"github.com/pritunl/pritunl-link/utils"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -457,6 +459,8 @@ func Init() {
 	}
 
 	time.Sleep(5 * time.Second)
+
+	iptables.ClearAcceptIpTables()
 
 	SyncStates()
 	go runSyncDefaultIface()
