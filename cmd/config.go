@@ -183,3 +183,29 @@ func DirectSshOff() (err error) {
 
 	return
 }
+
+func FirewallOn() (err error) {
+	config.Config.Firewall = true
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.Info("cmd.config: Firewall enabled")
+
+	return
+}
+
+func FirewallOff() (err error) {
+	config.Config.Firewall = false
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.Info("cmd.config: Firewall disabled")
+
+	return
+}
