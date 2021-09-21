@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/advertise"
 	"github.com/pritunl/pritunl-link/config"
@@ -20,6 +19,7 @@ import (
 	"github.com/pritunl/pritunl-link/requires"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -83,7 +83,7 @@ func putIpTables(stat *state.State) (err error) {
 		"--dport", "500",
 		"-j", "ACCEPT",
 		"-m", "comment",
-		"--comment", "pritunl-zero",
+		"--comment", "pritunl-link-direct",
 	)
 	if err != nil {
 		return
@@ -97,7 +97,7 @@ func putIpTables(stat *state.State) (err error) {
 		"--dport", "4500",
 		"-j", "ACCEPT",
 		"-m", "comment",
-		"--comment", "pritunl-zero",
+		"--comment", "pritunl-link-direct",
 	)
 	if err != nil {
 		return
@@ -111,7 +111,7 @@ func putIpTables(stat *state.State) (err error) {
 		"--dport", "500",
 		"-j", "ACCEPT",
 		"-m", "comment",
-		"--comment", "pritunl-zero",
+		"--comment", "pritunl-link-direct",
 	)
 	if err != nil {
 		return
@@ -125,7 +125,7 @@ func putIpTables(stat *state.State) (err error) {
 		"--dport", "4500",
 		"-j", "ACCEPT",
 		"-m", "comment",
-		"--comment", "pritunl-zero",
+		"--comment", "pritunl-link-direct",
 	)
 	if err != nil {
 		return
@@ -141,7 +141,7 @@ func putIpTables(stat *state.State) (err error) {
 			"--dport", "22",
 			"-j", "ACCEPT",
 			"-m", "comment",
-			"--comment", "pritunl-zero",
+			"--comment", "pritunl-link-direct",
 		)
 		if err != nil {
 			return
@@ -155,7 +155,7 @@ func putIpTables(stat *state.State) (err error) {
 			"--dport", "22",
 			"-j", "ACCEPT",
 			"-m", "comment",
-			"--comment", "pritunl-zero",
+			"--comment", "pritunl-link-direct",
 		)
 		if err != nil {
 			return
@@ -170,7 +170,7 @@ func putIpTables(stat *state.State) (err error) {
 			"--dport", "22",
 			"-j", "ACCEPT",
 			"-m", "comment",
-			"--comment", "pritunl-zero",
+			"--comment", "pritunl-link-direct",
 		)
 		iptables.DeleteRule(
 			"nat",
@@ -181,7 +181,7 @@ func putIpTables(stat *state.State) (err error) {
 			"--dport", "22",
 			"-j", "ACCEPT",
 			"-m", "comment",
-			"--comment", "pritunl-zero",
+			"--comment", "pritunl-link-direct",
 		)
 	}
 
@@ -197,7 +197,7 @@ func putIpTables(stat *state.State) (err error) {
 		"-j", "DNAT",
 		"--to-destination", directSource,
 		"-m", "comment",
-		"--comment", "pritunl-zero",
+		"--comment", "pritunl-link-direct",
 	)
 	if err != nil {
 		return
@@ -222,7 +222,7 @@ func putIpTables(stat *state.State) (err error) {
 		"-o", defaultIface,
 		"-j", "MASQUERADE",
 		"-m", "comment",
-		"--comment", "pritunl-zero",
+		"--comment", "pritunl-link-direct",
 	)
 	if err != nil {
 		return
@@ -238,7 +238,7 @@ func putIpTables(stat *state.State) (err error) {
 		"-j", "TCPMSS",
 		"--set-mss", "1320",
 		"-m", "comment",
-		"--comment", "pritunl-zero",
+		"--comment", "pritunl-link-direct",
 	)
 	if err != nil {
 		return
