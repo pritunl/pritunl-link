@@ -173,6 +173,20 @@ func DropPort(port, proto string) (err error) {
 	return
 }
 
+func ClearAcceptIpTables() (err error) {
+	err = clearIpTables("--comment pritunl-link-accept", false)
+	if err != nil {
+		return
+	}
+
+	err = clearIpTables("--comment pritunl-link-accept", true)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func DeleteRule(table string, rule ...string) {
 	args := []string{"-t", table, "-D"}
 	args = append(args, rule...)
