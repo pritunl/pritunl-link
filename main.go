@@ -24,6 +24,8 @@ Commands:
   default-gateway           Manually set default gateaway
   local-address             Manually set local IP address
   public-address            Manually set public IP address
+  remove-routes-on          Remove unused routes from routing table
+  remove-routes-off         Leave unused routes in routing table
   direct-ssh-on             Enable direct SSH
   direct-ssh-off            Disable direct SSH
   verify-on                 Enable HTTPS certificate verification when connecting to Pritunl server
@@ -134,6 +136,20 @@ func main() {
 	case "public-address":
 		Init()
 		err := cmd.PublicAddress(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "remove-routes-on":
+		Init()
+		err := cmd.RemoveRoutesOn()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "remove-routes-off":
+		Init()
+		err := cmd.RemoveRoutesOff()
 		if err != nil {
 			panic(err)
 		}
