@@ -90,6 +90,7 @@ func CleanUp() {
 	uris := config.Config.Uris
 
 	iptables.ClearIpTables()
+	iptables.ClearAcceptIpTables()
 	ipsec.DelDirectRoute()
 	ipsec.StopTunnel()
 
