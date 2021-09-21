@@ -28,6 +28,8 @@ Commands:
   remove-routes-off         Leave unused routes in routing table
   direct-ssh-on             Enable direct SSH
   direct-ssh-off            Disable direct SSH
+  firewall-on               Allow access to ipsec ports only from other pritunl-link hosts
+  firewall-off              Do not modify system firewall
   verify-on                 Enable HTTPS certificate verification when connecting to Pritunl server
   verify-off                Disable HTTPS certificate verification when connecting to Pritunl server
   disconnected-timeout-on   Enable restart when disconnected for duration of timeout
@@ -164,6 +166,20 @@ func main() {
 	case "direct-ssh-off":
 		Init()
 		err := cmd.DirectSshOff()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "firewall-on":
+		Init()
+		err := cmd.FirewallOn()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "firewall-off":
+		Init()
+		err := cmd.FirewallOff()
 		if err != nil {
 			panic(err)
 		}
