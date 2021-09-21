@@ -26,6 +26,7 @@ import (
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/interlink"
+	"github.com/pritunl/pritunl-link/iptables"
 	"github.com/pritunl/pritunl-link/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -152,7 +153,7 @@ func getStateCache(uri string) (state *State) {
 	return
 }
 
-func GetState(uri string) (state *State, err error) {
+func GetState(uri string) (state *State, hosts []string, err error) {
 	if constants.Interrupt {
 		err = &errortypes.UnknownError{
 			errors.Wrap(err, "state: Interrupt"),
@@ -192,14 +193,17 @@ func GetState(uri string) (state *State, err error) {
 		}
 	}
 
-	hosts := stateHosts[uri]
+	hosts = []string{}
+	hostsMap := stateHosts[uri]
 	hostsStatus := map[string]*hostState{}
 	hostsStatusLock := sync.Mutex{}
 
 	if hosts != nil {
 		waiter := sync.WaitGroup{}
 
-		for hostId, hostAddr := range hosts {
+		for hostId, hostAddr := range hostsMap {
+			hosts = append(hosts, hostAddr)
+
 			waiter.Add(1)
 
 			go func(hostId, hostAddr string) {
@@ -383,6 +387,7 @@ func GetStates() (states []*State) {
 	statesMapLock := sync.Mutex{}
 	uris := config.Config.Uris
 	urisSet := set.NewSet()
+	allHosts := []string{}
 	waiter := sync.WaitGroup{}
 
 	for i, uri := range uris {
@@ -390,7 +395,7 @@ func GetStates() (states []*State) {
 		waiter.Add(1)
 
 		go func(i int, uri string) {
-			state, err := GetState(uri)
+			state, hosts, err := GetState(uri)
 			if err != nil {
 				logrus.WithFields(logrus.Fields{
 					"uri":   uri,
@@ -405,11 +410,23 @@ func GetStates() (states []*State) {
 				statesMapLock.Unlock()
 			}
 
+			allHosts = append(allHosts, hosts...)
+
 			waiter.Done()
 		}(i, uri)
 	}
 
 	waiter.Wait()
+
+	if config.Config.Firewall {
+		err := iptables.SetHosts(allHosts)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"hosts": allHosts,
+				"error": err,
+			}).Info("state: Failed to set firewall hosts")
+		}
+	}
 
 	for i := range uris {
 		state := statesMap[i]
