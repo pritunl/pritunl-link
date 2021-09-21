@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/config"
+	"github.com/sirupsen/logrus"
 )
 
 func DefaultInterface(iface string) (err error) {
@@ -128,6 +128,32 @@ func AdvertiseUpdateOff() (err error) {
 	}
 
 	logrus.Info("cmd.config: Advertise update disabled")
+
+	return
+}
+
+func RemoveRoutesOn() (err error) {
+	config.Config.DeleteRoutes = true
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.Info("cmd.config: Remove routes enabled")
+
+	return
+}
+
+func RemoveRoutesOff() (err error) {
+	config.Config.DeleteRoutes = false
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.Info("cmd.config: Remove routes disabled")
 
 	return
 }
