@@ -28,6 +28,7 @@ type State struct {
 }
 
 type Link struct {
+	Id           string   `json:"id"`
 	Static       bool     `json:"static"`
 	Hash         string   `json:"hash"`
 	PreSharedKey string   `json:"pre_shared_key"`
