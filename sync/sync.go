@@ -423,6 +423,7 @@ func SyncConfig() (err error) {
 
 func runSyncConfig() {
 	curMod, _ = config.GetModTime()
+	curFirewall := config.Config.Firewall
 
 	for {
 		time.Sleep(500 * time.Millisecond)
@@ -432,6 +433,17 @@ func runSyncConfig() {
 			logrus.WithFields(logrus.Fields{
 				"error": err,
 			}).Info("sync: Failed to sync config")
+		}
+
+		if curFirewall != config.Config.Firewall {
+			curFirewall = config.Config.Firewall
+			if config.Config.Firewall {
+				iptables.ClearAcceptIpTables()
+				iptables.ResetFirewall()
+			} else {
+				iptables.ClearAcceptIpTables()
+				iptables.ClearDropIpTables()
+			}
 		}
 	}
 }
