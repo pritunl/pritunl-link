@@ -460,9 +460,7 @@ func Init() {
 
 	time.Sleep(5 * time.Second)
 
-	if config.Config.Firewall {
-		iptables.ClearAcceptIpTables()
-	} else {
+	if !config.Config.Firewall {
 		iptables.ClearAcceptIpTables()
 		iptables.ClearDropIpTables()
 	}
