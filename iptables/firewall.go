@@ -36,19 +36,6 @@ func SetHosts(hosts []string) (err error) {
 		return
 	}
 
-	err = DropPort("500", "udp")
-	if err != nil {
-		return
-	}
-	err = DropPort("4500", "udp")
-	if err != nil {
-		return
-	}
-	err = DropPort("9790", "tcp")
-	if err != nil {
-		return
-	}
-
 	if initialize {
 		ClearAcceptIpTables()
 		initialize = false
@@ -86,6 +73,19 @@ func SetHosts(hosts []string) (err error) {
 		if err != nil {
 			return
 		}
+	}
+
+	err = DropPort("500", "udp")
+	if err != nil {
+		return
+	}
+	err = DropPort("4500", "udp")
+	if err != nil {
+		return
+	}
+	err = DropPort("9790", "tcp")
+	if err != nil {
+		return
 	}
 
 	curHosts = hosts
