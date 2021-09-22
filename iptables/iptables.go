@@ -187,6 +187,20 @@ func ClearAcceptIpTables() (err error) {
 	return
 }
 
+func ClearDropIpTables() (err error) {
+	err = clearIpTables("--comment pritunl-link-drop", false)
+	if err != nil {
+		return
+	}
+
+	err = clearIpTables("--comment pritunl-link-drop", true)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func DeleteRule(table string, rule ...string) {
 	args := []string{"-t", table, "-D"}
 	args = append(args, rule...)
