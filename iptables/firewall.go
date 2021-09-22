@@ -92,3 +92,11 @@ func SetHosts(hosts []string) (err error) {
 
 	return
 }
+
+func ResetFirewall() {
+	iptablesLock.Lock()
+	defer iptablesLock.Unlock()
+
+	initialize = true
+	curHosts = []string{}
+}
