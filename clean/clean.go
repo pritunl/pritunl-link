@@ -5,6 +5,12 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
@@ -12,11 +18,6 @@ import (
 	"github.com/pritunl/pritunl-link/iptables"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
-	"net/http"
-	"net/url"
-	"strconv"
-	"strings"
-	"time"
 )
 
 func cleanup(uri string) (err error) {
@@ -91,6 +92,7 @@ func CleanUp() {
 
 	iptables.ClearIpTables()
 	iptables.ClearAcceptIpTables()
+	iptables.ClearDropIpTables()
 	ipsec.DelDirectRoute()
 	ipsec.StopTunnel()
 
