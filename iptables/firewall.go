@@ -25,6 +25,16 @@ func SetHosts(hosts []string) (err error) {
 		curHostsSet.Add(host)
 	}
 
+	removeHosts := curHostsSet.Copy()
+	removeHosts.Subtract(newHostsSet)
+
+	addHosts := newHostsSet.Copy()
+	addHosts.Subtract(curHostsSet)
+
+	if removeHosts.Len() == 0 && addHosts.Len() == 0 {
+		return
+	}
+
 	err = DropPort("500", "udp")
 	if err != nil {
 		return
@@ -37,9 +47,6 @@ func SetHosts(hosts []string) (err error) {
 	if err != nil {
 		return
 	}
-
-	removeHosts := curHostsSet.Copy()
-	removeHosts.Subtract(newHostsSet)
 
 	for hostInf := range removeHosts.Iter() {
 		host := hostInf.(string)
@@ -57,9 +64,6 @@ func SetHosts(hosts []string) (err error) {
 			return
 		}
 	}
-
-	addHosts := newHostsSet.Copy()
-	addHosts.Subtract(curHostsSet)
 
 	for hostInf := range addHosts.Iter() {
 		host := hostInf.(string)
