@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/pritunl/pritunl-link/utils"
+	"github.com/sirupsen/logrus"
 )
 
 type server struct {
@@ -24,11 +23,15 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) Run() {
-	err := s.server.ListenAndServe()
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"error": err,
-		}).Error("interlink: Server failure")
+	for {
+		err := s.server.ListenAndServe()
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err,
+			}).Error("interlink: Server failure")
+		}
+
+		time.Sleep(3 * time.Second)
 	}
 }
 
