@@ -173,6 +173,23 @@ func DropPort(port, proto string) (err error) {
 	return
 }
 
+func InitAcceptIpTables() (err error) {
+	err = DropPort("500", "udp")
+	if err != nil {
+		return
+	}
+	err = DropPort("4500", "udp")
+	if err != nil {
+		return
+	}
+	err = DropPort("9790", "tcp")
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func ClearAcceptIpTables() (err error) {
 	err = clearIpTables("--comment pritunl-link-accept", false)
 	if err != nil {
