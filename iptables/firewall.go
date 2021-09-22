@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	initialize   = true
 	curHosts     = []string{}
 	iptablesLock = sync.Mutex{}
 )
@@ -46,6 +47,11 @@ func SetHosts(hosts []string) (err error) {
 	err = DropPort("9790", "tcp")
 	if err != nil {
 		return
+	}
+
+	if initialize {
+		ClearAcceptIpTables()
+		initialize = false
 	}
 
 	for hostInf := range removeHosts.Iter() {
