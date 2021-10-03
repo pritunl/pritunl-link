@@ -21,7 +21,7 @@ Commands:
   clear                     Clear all configured Pritunl server URIs
   list                      List Pritunl server URIs
   default-interface         Manually set default interface
-  default-gateway           Manually set default gateaway
+  default-gateway           Manually set default gateway
   local-address             Manually set local IP address
   public-address            Manually set public IP address
   remove-routes-on          Remove unused routes from routing table
@@ -48,7 +48,7 @@ Commands:
   unifi-password            Set Unifi password
   unifi-controller          Set URL of Unifi controller
   unifi-site                Set the Unifi site if different then default
-  unifi-interface           Set the Unifi route interface if different then default
+  unifi-interface           Set the Unifi forward interface if different then default
   unifi-port-on             Enable automatic port forwarding on Unifi
   unifi-port-off            Disable automatic port forwarding on Unifi
   edge-username             Set EdgeRouter username
