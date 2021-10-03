@@ -209,7 +209,7 @@ func putIpTables(stat *state.State) (err error) {
 		"-j", "DNAT",
 		"--to-destination", directSource,
 		"-m", "comment",
-		"--comment", "pritunl-zero",
+		"--comment", "pritunl-link-direct",
 	)
 	if err != nil {
 		return
