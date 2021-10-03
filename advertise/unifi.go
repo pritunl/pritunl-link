@@ -420,7 +420,7 @@ func unifiAddRoute(client *http.Client, csrfToken, network, nexthop string) (
 	data := &unifiRoutingPostData{
 		Enabled: true,
 		Name: fmt.Sprintf(
-			"pritunl-%x", md5.Sum([]byte(network))),
+			"pritunl-link-%x", md5.Sum([]byte(network))),
 		Type:               "static-route",
 		GatewayType:        "default",
 		StaticRouteNetwork: network,
@@ -759,7 +759,7 @@ func unifiAddPort(client *http.Client, csrfToken, source, destPort,
 
 	data := &unifiPortPostData{
 		Enabled:       true,
-		Name:          fmt.Sprintf("pritunl-ipsec-%s", forwardPort),
+		Name:          fmt.Sprintf("pritunl-link-%s", forwardPort),
 		Src:           source,
 		DstPort:       destPort,
 		Fwd:           forward,
