@@ -30,8 +30,8 @@ CHANGES_PATH = 'CHANGES'
 STABLE_PACUR_PATH = '../pritunl-pacur'
 TEST_PACUR_PATH = '../pritunl-pacur-test'
 BUILD_KEYS_PATH = 'build_keys.json'
-BUILD_TARGETS = ('pritunl-zero',)
-REPO_NAME = 'pritunl-zero'
+BUILD_TARGETS = ('pritunl-link',)
+REPO_NAME = 'pritunl-link'
 
 cur_date = datetime.datetime.utcnow()
 pacur_path = None
