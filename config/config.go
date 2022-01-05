@@ -74,6 +74,7 @@ type ConfigData struct {
 	Address6                   string      `json:"address6"`
 	Uris                       []string    `json:"uris"`
 	SkipVerify                 bool        `json:"skip_verify"`
+	SkipHostCheck              bool        `json:"skip_host_check"`
 	Firewall                   bool        `json:"firewall"`
 	DeleteRoutes               bool        `json:"delete_routes"`
 	DisconnectedTimeout        int         `json:"disconnected_timeout"`
