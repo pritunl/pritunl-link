@@ -32,6 +32,8 @@ Commands:
   firewall-off              Do not modify system firewall
   verify-on                 Enable HTTPS certificate verification when connecting to Pritunl server
   verify-off                Disable HTTPS certificate verification when connecting to Pritunl server
+  host-check-on             Enable link host checking
+  host-check-off            Disable disable link host checking
   disconnected-timeout-on   Enable restart when disconnected for duration of timeout
   disconnected-timeout-off  Disable restart when disconnected for duration of timeout
   advertise-update-on       Enable recurring checks and updates of routing table and port forwarding
@@ -194,6 +196,20 @@ func main() {
 	case "verify-off":
 		Init()
 		err := cmd.VerifyOff()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "host-check-on":
+		Init()
+		err := cmd.HostCheckOn()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "host-check-off":
+		Init()
+		err := cmd.HostCheckOff()
 		if err != nil {
 			panic(err)
 		}
