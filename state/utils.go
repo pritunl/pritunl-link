@@ -48,11 +48,12 @@ var (
 		},
 		Timeout: 10 * time.Second,
 	}
-	stateCaches     = map[string]*stateCache{}
-	stateCachesLock = sync.Mutex{}
-	stateHosts      = map[string]map[string]string{}
-	stateHostsLock  = sync.Mutex{}
-	Hash            = ""
+	stateCaches      = map[string]*stateCache{}
+	stateCachesLock  = sync.Mutex{}
+	stateHosts       = map[string]map[string]string{}
+	stateHostsLock   = sync.Mutex{}
+	lastHostCheckLog = time.Time{}
+	Hash             = ""
 )
 
 type hostState struct {
@@ -209,10 +210,13 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 			go func(hostId, hostAddr string) {
 				stat, latency, e := interlink.CheckHost(hostAddr)
 				if e != nil {
-					logrus.WithFields(logrus.Fields{
-						"host_id": hostId,
-						"error":   e,
-					}).Warn("state: Failed to check host")
+					if time.Since(lastHostCheckLog) > 30*time.Second {
+						lastHostCheckLog = time.Now()
+						logrus.WithFields(logrus.Fields{
+							"host_id": hostId,
+							"error":   e,
+						}).Warn("state: Failed to check host")
+					}
 				}
 
 				hostsStatusLock.Lock()
