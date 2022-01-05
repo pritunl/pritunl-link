@@ -1,8 +1,7 @@
 pritunl-zero changelog
 ======================
 
-Version 1.0.2234.84 2022-01-05
-------------------------------
+<%= version %>
 
 Update build process
 Add host checking option
