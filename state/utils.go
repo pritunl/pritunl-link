@@ -198,7 +198,7 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 	hostsStatus := map[string]*hostState{}
 	hostsStatusLock := sync.Mutex{}
 
-	if hosts != nil {
+	if hosts != nil && !config.Config.SkipHostCheck {
 		waiter := sync.WaitGroup{}
 
 		for hostId, hostAddr := range hostsMap {
