@@ -4,3 +4,4 @@ pritunl-zero changelog
 <%= version %>
 
 Update build process
+Add host checking option
