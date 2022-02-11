@@ -16,15 +16,18 @@ var (
 )
 
 type State struct {
-	Id     string            `json:"id"`
-	Ipv6   bool              `json:"ipv6"`
-	Action string            `json:"action"`
-	Type   string            `json:"type"`
-	Cached bool              `json:"-"`
-	Secret string            `json:"-"`
-	Hash   string            `json:"hash"`
-	Links  []*Link           `json:"links"`
-	Hosts  map[string]string `json:"hosts"`
+	Id           string            `json:"id"`
+	Mode         string            `json:"mode"`
+	Ipv6         bool              `json:"ipv6"`
+	Action       string            `json:"action"`
+	Type         string            `json:"type"`
+	Cached       bool              `json:"-"`
+	Secret       string            `json:"-"`
+	Hash         string            `json:"hash"`
+	Links        []*Link           `json:"links"`
+	Hosts        map[string]string `json:"hosts"`
+	PreferredIke string            `json:"preferred_ike"`
+	PreferredEsp string            `json:"preferred_esp"`
 }
 
 type Link struct {
