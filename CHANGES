@@ -1,6 +1,10 @@
 pritunl-zero changelog
 ======================
 
+<%= version %>
+
+Add preferred ciphers option
+
 Version 1.0.2234.85 2022-01-05
 ------------------------------
 
