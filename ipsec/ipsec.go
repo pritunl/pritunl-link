@@ -40,6 +40,8 @@ type templateData struct {
 	Right        string
 	RightSubnets string
 	PreSharedKey string
+	PreferredIke string
+	PreferredEsp string
 }
 
 func putIpTables(stat *state.State) (err error) {
@@ -327,6 +329,15 @@ func writeTemplates(states []*state.State) (err error) {
 				action = stat.Action
 			}
 
+			preferredIke := ""
+			if stat.PreferredIke != "" {
+				preferredIke = stat.PreferredIke + ","
+			}
+			preferredEsp := ""
+			if stat.PreferredEsp != "" {
+				preferredEsp = stat.PreferredEsp + ","
+			}
+
 			data := &templateData{
 				Id:           state.GetLinkId(stat.Id, link.Id, link.Hash),
 				Action:       action,
@@ -335,6 +346,8 @@ func writeTemplates(states []*state.State) (err error) {
 				Right:        link.Right,
 				RightSubnets: rightSubnets,
 				PreSharedKey: link.PreSharedKey,
+				PreferredIke: preferredIke,
+				PreferredEsp: preferredEsp,
 			}
 
 			err = confTemplate.Execute(confBuf, data)
@@ -360,6 +373,8 @@ func writeTemplates(states []*state.State) (err error) {
 							Right:        link.Right,
 							RightSubnets: rightSubnet,
 							PreSharedKey: link.PreSharedKey,
+							PreferredIke: preferredIke,
+							PreferredEsp: preferredEsp,
 						}
 
 						err = confTemplate.Execute(confBuf, data)
