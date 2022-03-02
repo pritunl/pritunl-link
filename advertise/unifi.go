@@ -920,5 +920,19 @@ func UnifiAddPorts() (err error) {
 		}
 	}
 
+	exists, err = unifiHasPort(client, csrfToken, ports, source, "9790",
+		forward, "9790", "tcp")
+	if err != nil {
+		return
+	}
+
+	if !exists {
+		err = unifiAddPort(client, csrfToken, source, "9790",
+			forward, "9790", "tcp")
+		if err != nil {
+			return
+		}
+	}
+
 	return
 }
