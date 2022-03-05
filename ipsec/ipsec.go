@@ -40,8 +40,8 @@ type templateData struct {
 	Right        string
 	RightSubnets string
 	PreSharedKey string
-	PreferredIke string
-	PreferredEsp string
+	IkeCiphers   string
+	EspCiphers   string
 }
 
 func putIpTables(stat *state.State) (err error) {
@@ -329,13 +329,26 @@ func writeTemplates(states []*state.State) (err error) {
 				action = stat.Action
 			}
 
-			preferredIke := ""
+			ikeCiphersData := ""
 			if stat.PreferredIke != "" {
-				preferredIke = stat.PreferredIke + ","
+				if stat.ForcePreferred {
+					ikeCiphersData = stat.PreferredIke
+				} else {
+					ikeCiphersData = stat.PreferredIke + "," + ikeCiphers
+				}
+			} else {
+				ikeCiphersData = ikeCiphers
 			}
-			preferredEsp := ""
+
+			espCiphersData := ""
 			if stat.PreferredEsp != "" {
-				preferredEsp = stat.PreferredEsp + ","
+				if stat.ForcePreferred {
+					espCiphersData = stat.PreferredEsp
+				} else {
+					espCiphersData = stat.PreferredEsp + "," + espCiphers
+				}
+			} else {
+				espCiphersData = espCiphers
 			}
 
 			data := &templateData{
@@ -346,8 +359,8 @@ func writeTemplates(states []*state.State) (err error) {
 				Right:        link.Right,
 				RightSubnets: rightSubnets,
 				PreSharedKey: link.PreSharedKey,
-				PreferredIke: preferredIke,
-				PreferredEsp: preferredEsp,
+				IkeCiphers:   ikeCiphersData,
+				EspCiphers:   espCiphersData,
 			}
 
 			err = confTemplate.Execute(confBuf, data)
@@ -373,8 +386,8 @@ func writeTemplates(states []*state.State) (err error) {
 							Right:        link.Right,
 							RightSubnets: rightSubnet,
 							PreSharedKey: link.PreSharedKey,
-							PreferredIke: preferredIke,
-							PreferredEsp: preferredEsp,
+							IkeCiphers:   ikeCiphersData,
+							EspCiphers:   espCiphersData,
 						}
 
 						err = confTemplate.Execute(confBuf, data)
