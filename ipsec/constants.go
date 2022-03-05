@@ -21,7 +21,7 @@ const (
 	keyexchange=ikev2
 	ike={{.IkeCiphers}}
 	esp={{.EspCiphers}}
-	mobike=no
+	mobike=yes
 	dpddelay=5s
 	dpdtimeout=15s
 	dpdaction={{.Action}}
