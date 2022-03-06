@@ -1,9 +1,11 @@
 package status
 
 import (
+	"strings"
+
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/pritunl/pritunl-link/utils"
-	"strings"
+	"github.com/sirupsen/logrus"
 )
 
 type Status map[string]string
@@ -13,6 +15,10 @@ func Get() (status Status, err error) {
 
 	output, err := utils.ExecOutput("", "ipsec", "status")
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"output": output,
+			"error":  err,
+		}).Error("status: Failed to get ipsec status")
 		err = nil
 		return
 	}
@@ -76,7 +82,11 @@ func GetIds() (connIds []string, err error) {
 
 	output, err := utils.ExecOutput("", "ipsec", "status")
 	if err != nil {
-		err = nil // TODO
+		logrus.WithFields(logrus.Fields{
+			"output": output,
+			"error":  err,
+		}).Error("status: Failed to get ipsec status")
+		err = nil
 		return
 	}
 
