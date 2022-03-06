@@ -15,10 +15,6 @@ func Get() (status Status, err error) {
 
 	output, err := utils.ExecOutput("", "ipsec", "status")
 	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"output": output,
-			"error":  err,
-		}).Error("status: Failed to get ipsec status")
 		err = nil
 		return
 	}
@@ -85,7 +81,7 @@ func GetIds() (connIds []string, err error) {
 		logrus.WithFields(logrus.Fields{
 			"output": output,
 			"error":  err,
-		}).Error("status: Failed to get ipsec status")
+		}).Warn("status: Failed to get ipsec status ids")
 		err = nil
 		return
 	}
