@@ -62,6 +62,7 @@ type hostState struct {
 }
 
 type stateData struct {
+	Timestamp     int64                 `json:"timestamp"`
 	Version       string                `json:"version"`
 	PublicAddress string                `json:"public_address"`
 	LocalAddress  string                `json:"local_address"`
@@ -141,13 +142,137 @@ func decResp(secret, iv, sig, encData string) (cipData []byte, err error) {
 	return
 }
 
-func getStateCache(uri string) (state *State) {
+func getStateCache(cacheKey string) (state *State) {
 	stateCachesLock.Lock()
-	cache, ok := stateCaches[uri]
+	cache, ok := stateCaches[cacheKey]
 	stateCachesLock.Unlock()
 	if ok {
 		state = cache.State
 		state.Cached = true
+		return
+	}
+
+	return
+}
+
+func getState(stateId, stateSecret, host, cacheKey string, timestamp int64,
+	dataByt []byte) (state *State, err error) {
+
+	timestampStr := strconv.FormatInt(timestamp, 10)
+
+	req, err := http.NewRequest(
+		"PUT",
+		fmt.Sprintf("https://%s/link/state", host),
+		bytes.NewBuffer(dataByt),
+	)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "state: Request init error"),
+		}
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	nonce, err := utils.RandStr(32)
+	if err != nil {
+		return
+	}
+
+	authStr := strings.Join([]string{
+		stateId,
+		timestampStr,
+		nonce,
+		"PUT",
+		"/link/state",
+	}, "&")
+
+	hashFunc := hmac.New(sha512.New, []byte(stateSecret))
+	hashFunc.Write([]byte(authStr))
+	rawSignature := hashFunc.Sum(nil)
+	sig := base64.StdEncoding.EncodeToString(rawSignature)
+
+	req.Header.Set("Auth-Token", stateId)
+	req.Header.Set("Auth-Timestamp", timestampStr)
+	req.Header.Set("Auth-Nonce", nonce)
+	req.Header.Set("Auth-Signature", sig)
+
+	var client *http.Client
+	if config.Config.SkipVerify {
+		client = ClientInsec
+	} else {
+		client = ClientSec
+	}
+
+	start := time.Now()
+
+	res, err := client.Do(req)
+	if err != nil {
+		state = getStateCache(host)
+
+		logrus.WithFields(logrus.Fields{
+			"duration":  utils.ToFixed(time.Since(start).Seconds(), 2),
+			"has_cache": state != nil,
+			"error":     err,
+		}).Warn("state: Request failed")
+
+		if state == nil {
+			err = &errortypes.RequestError{
+				errors.Wrap(err, "state: Request put error"),
+			}
+		} else {
+			err = nil
+		}
+		return
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode >= 500 && res.StatusCode < 600 {
+		state = getStateCache(cacheKey)
+		if state == nil {
+			err = &errortypes.RequestError{
+				errors.Wrapf(err, "state: Bad status %n code from server",
+					res.StatusCode),
+			}
+		} else {
+			err = nil
+		}
+		return
+	} else if res.StatusCode != 200 {
+		err = &errortypes.RequestError{
+			errors.Wrapf(err, "state: Bad status %n code from server",
+				res.StatusCode),
+		}
+		return
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "state: Failed to read response body"),
+		}
+		return
+	}
+
+	decBody, err := decResp(
+		stateSecret,
+		res.Header.Get("Cipher-IV"),
+		res.Header.Get("Cipher-Signature"),
+		string(body),
+	)
+	if err != nil {
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "state: Failed to decrypt response"),
+		}
+		return
+	}
+
+	state = &State{}
+	err = json.Unmarshal(decBody, state)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "state: Failed to unmarshal data"),
+		}
 		return
 	}
 
@@ -162,8 +287,6 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 		return
 	}
 
-	state = &State{}
-
 	uriData, err := url.ParseRequestURI(uri)
 	if err != nil {
 		err = &errortypes.ParseError{
@@ -174,6 +297,7 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 
 	status := Status
 	stateId := uriData.User.Username()
+	stateSecret, _ := uriData.User.Password()
 	stateStatus := map[string]string{}
 
 	for connId, connStatus := range status {
@@ -233,7 +357,10 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 		waiter.Wait()
 	}
 
+	timestamp := time.Now().Unix()
+
 	data := &stateData{
+		Timestamp:     timestamp,
 		Version:       constants.Version,
 		PublicAddress: GetPublicAddress(),
 		LocalAddress:  GetLocalAddress(),
@@ -241,9 +368,8 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 		Status:        stateStatus,
 		Hosts:         hostsStatus,
 	}
-	dataBuf := &bytes.Buffer{}
 
-	err = json.NewEncoder(dataBuf).Encode(data)
+	dataByt, err := json.Marshal(data)
 	if err != nil {
 		err = &errortypes.ParseError{
 			errors.Wrap(err, "state: Failed to parse request data"),
@@ -251,122 +377,61 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 		return
 	}
 
-	req, err := http.NewRequest(
-		"PUT",
-		fmt.Sprintf("https://%s/link/state", uriData.Host),
-		dataBuf,
-	)
-	if err != nil {
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "state: Request init error"),
-		}
-		return
+	uriHosts := strings.Split(uriData.Host, ",")
+	for i := 10; i < 10; i++ {
+		uriHosts = append(uriHosts, uriData.Host)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	waiter := sync.NewCond(&sync.Mutex{})
+	waiterCount := 0
+	hostsLen := len(uriHosts)
+	var waiterErr error
 
-	hostId := uriData.User.Username()
-	hostSecret, _ := uriData.User.Password()
-	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-
-	nonce, err := utils.RandStr(32)
-	if err != nil {
-		return
-	}
-
-	authStr := strings.Join([]string{
-		hostId,
-		timestamp,
-		nonce,
-		"PUT",
-		"/link/state",
-	}, "&")
-
-	hashFunc := hmac.New(sha512.New, []byte(hostSecret))
-	hashFunc.Write([]byte(authStr))
-	rawSignature := hashFunc.Sum(nil)
-	sig := base64.StdEncoding.EncodeToString(rawSignature)
-
-	req.Header.Set("Auth-Token", hostId)
-	req.Header.Set("Auth-Timestamp", timestamp)
-	req.Header.Set("Auth-Nonce", nonce)
-	req.Header.Set("Auth-Signature", sig)
-
-	var client *http.Client
-	if config.Config.SkipVerify {
-		client = ClientInsec
-	} else {
-		client = ClientSec
-	}
-
-	start := time.Now()
-
-	res, err := client.Do(req)
-	if err != nil {
-		state = getStateCache(uri)
-
-		logrus.WithFields(logrus.Fields{
-			"duration":  utils.ToFixed(time.Since(start).Seconds(), 2),
-			"has_cache": state != nil,
-			"error":     err,
-		}).Warn("state: Request failed")
-
-		if state == nil {
-			err = &errortypes.RequestError{
-				errors.Wrap(err, "state: Request put error"),
-			}
-		} else {
-			err = nil
-		}
-		return
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode >= 500 && res.StatusCode < 600 {
-		state = getStateCache(uri)
-		if state == nil {
-			err = &errortypes.RequestError{
-				errors.Wrapf(err, "state: Bad status %n code from server",
-					res.StatusCode),
-			}
-		} else {
-			err = nil
-		}
-		return
-	} else if res.StatusCode != 200 {
-		err = &errortypes.RequestError{
-			errors.Wrapf(err, "state: Bad status %n code from server",
-				res.StatusCode),
-		}
-		return
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "state: Failed to read response body"),
-		}
-		return
-	}
-
-	decBody, err := decResp(
-		hostSecret,
-		res.Header.Get("Cipher-IV"),
-		res.Header.Get("Cipher-Signature"),
-		string(body),
-	)
-	if err != nil {
-		err = &errortypes.RequestError{
-			errors.Wrap(err, "state: Failed to decrypt response"),
-		}
-		return
-	}
-
-	err = json.Unmarshal(decBody, state)
-	if err != nil {
+	if hostsLen == 0 {
 		err = &errortypes.ParseError{
-			errors.Wrap(err, "state: Failed to unmarshal data"),
+			errors.Wrap(err, "state: Missing host in uri"),
 		}
+		return
+	}
+
+	for _, uriHost := range uriHosts {
+		go func(uriHost string) {
+			uriState, e := getState(
+				stateId,
+				stateSecret,
+				uriHost,
+				uri,
+				timestamp,
+				dataByt,
+			)
+			if e != nil {
+				waiterErr = e
+
+				waiter.L.Lock()
+				waiterCount += 1
+				if waiterCount >= hostsLen && state == nil {
+					waiter.Broadcast()
+				}
+				waiter.L.Unlock()
+
+				return
+			}
+
+			waiter.L.Lock()
+			if state == nil {
+				state = uriState
+				waiter.Broadcast()
+			}
+			waiter.L.Unlock()
+		}(uriHost)
+	}
+
+	waiter.L.Lock()
+	waiter.Wait()
+	waiter.L.Unlock()
+
+	if waiterErr != nil {
+		err = waiterErr
 		return
 	}
 
