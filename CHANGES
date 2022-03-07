@@ -1,5 +1,9 @@
-pritunl-zero changelog
+pritunl-link changelog
 ======================
+
+<%= version %>
+
+Support multiple hosts in uri
 
 Version 1.0.2294.74 2022-03-06
 ------------------------------
