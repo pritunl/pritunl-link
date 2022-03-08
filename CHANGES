@@ -1,6 +1,10 @@
 pritunl-link changelog
 ======================
 
+<%= version %>
+
+Improve link cache
+
 Version 1.0.2295.57 2022-03-07
 ------------------------------
 
