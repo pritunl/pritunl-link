@@ -156,7 +156,7 @@ func getStateCache(cacheKey string) (state *State) {
 }
 
 func getState(stateId, stateSecret, host, cacheKey string, timestamp int64,
-	dataByt []byte) (state *State, err error) {
+	dataByt []byte) (state *State, cached bool, err error) {
 
 	timestampStr := strconv.FormatInt(timestamp, 10)
 
@@ -208,7 +208,7 @@ func getState(stateId, stateSecret, host, cacheKey string, timestamp int64,
 
 	res, err := client.Do(req)
 	if err != nil {
-		state = getStateCache(host)
+		state = getStateCache(cacheKey)
 
 		logrus.WithFields(logrus.Fields{
 			"duration":  utils.ToFixed(time.Since(start).Seconds(), 2),
@@ -221,6 +221,7 @@ func getState(stateId, stateSecret, host, cacheKey string, timestamp int64,
 				errors.Wrap(err, "state: Request put error"),
 			}
 		} else {
+			cached = true
 			err = nil
 		}
 		return
@@ -235,6 +236,7 @@ func getState(stateId, stateSecret, host, cacheKey string, timestamp int64,
 					res.StatusCode),
 			}
 		} else {
+			cached = true
 			err = nil
 		}
 		return
@@ -394,9 +396,11 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 		return
 	}
 
+	var cachedState *State
+
 	for _, uriHost := range uriHosts {
 		go func(uriHost string) {
-			uriState, e := getState(
+			uriState, uriCached, e := getState(
 				stateId,
 				stateSecret,
 				uriHost,
@@ -404,14 +408,22 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 				timestamp,
 				dataByt,
 			)
-			if e != nil {
-				waiterErr = e
-
+			if e != nil || uriCached {
 				waiter.L.Lock()
+
+				if e != nil {
+					waiterErr = e
+				}
+
+				if uriCached && uriState != nil {
+					cachedState = uriState
+				}
+
 				waiterCount += 1
 				if waiterCount >= hostsLen && state == nil {
 					waiter.Broadcast()
 				}
+
 				waiter.L.Unlock()
 
 				return
@@ -432,6 +444,17 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 
 	if waiterErr != nil {
 		err = waiterErr
+		return
+	}
+
+	if state == nil {
+		if cachedState != nil {
+			state = cachedState
+		} else {
+			err = &errortypes.UnknownError{
+				errors.Wrap(err, "state: Nil state"),
+			}
+		}
 		return
 	}
 
