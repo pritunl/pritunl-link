@@ -1,18 +1,23 @@
 package advertise
 
 import (
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"io/ioutil"
+	"strings"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/routes"
-	"strings"
-	"time"
+	"github.com/pritunl/pritunl-link/utils"
 )
 
 type awsMetaData struct {
@@ -29,21 +34,20 @@ type awsRoute struct {
 	NetworkInterfaceId       string
 }
 
-func awsGetSession(region string) (sess *session.Session, err error) {
-	opts := session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}
-
+func awsGetSession(region string) (cfg aws.Config, err error) {
 	if region != "" {
-		opts.Config = aws.Config{
-			Region: &region,
-		}
+		cfg, err = awsconfig.LoadDefaultConfig(
+			context.Background(),
+			awsconfig.WithRegion(region),
+		)
+	} else {
+		cfg, err = awsconfig.LoadDefaultConfig(
+			context.Background(),
+		)
 	}
-
-	sess, err = session.NewSessionWithOptions(opts)
 	if err != nil {
 		err = &errortypes.RequestError{
-			errors.Wrap(err, "cloud: Failed to create AWS session"),
+			errors.Wrap(err, "cloud: Failed to create AWS config"),
 		}
 		return
 	}
@@ -51,7 +55,7 @@ func awsGetSession(region string) (sess *session.Session, err error) {
 	return
 }
 
-func awsGetMetaData() (data *awsMetaData, err error) {
+func awsGetMetaData(ctx context.Context) (data *awsMetaData, err error) {
 	data = &awsMetaData{}
 
 	confRegion := config.Config.Aws.Region
@@ -70,14 +74,14 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 		return
 	}
 
-	sess, err := awsGetSession("")
+	cfg, err := awsGetSession("")
 	if err != nil {
 		return
 	}
 
-	ec2metadataSvc := ec2metadata.New(sess)
+	client := imds.NewFromConfig(cfg)
 
-	region, err := ec2metadataSvc.Region()
+	region, err := client.GetRegion(ctx, &imds.GetRegionInput{})
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "cloud: Failed to get AWS region"),
@@ -85,7 +89,9 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 		return
 	}
 
-	instanceId, err := ec2metadataSvc.GetMetadata("instance-id")
+	instanceIdResp, err := client.GetMetadata(ctx, &imds.GetMetadataInput{
+		Path: "instance-id",
+	})
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "cloud: Failed to get EC2 instance ID"),
@@ -93,7 +99,17 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 		return
 	}
 
-	macAddr, err := ec2metadataSvc.GetMetadata("mac")
+	instanceId, err := ioutil.ReadAll(instanceIdResp.Content)
+	if err != nil {
+		err = &errortypes.ReadError{
+			errors.Wrap(err, "cloud: Failed to read EC2 instance ID"),
+		}
+		return
+	}
+
+	macAddrResp, err := client.GetMetadata(ctx, &imds.GetMetadataInput{
+		Path: "mac",
+	})
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "cloud: Failed to get EC2 MAC address"),
@@ -101,8 +117,20 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 		return
 	}
 
-	vpcId, err := ec2metadataSvc.GetMetadata(
-		fmt.Sprintf("network/interfaces/macs/%s/vpc-id", macAddr))
+	macAddr, err := ioutil.ReadAll(macAddrResp.Content)
+	if err != nil {
+		err = &errortypes.ReadError{
+			errors.Wrap(err, "cloud: Failed to read EC2 MAC address"),
+		}
+		return
+	}
+
+	vpcIdResp, err := client.GetMetadata(ctx, &imds.GetMetadataInput{
+		Path: fmt.Sprintf(
+			"network/interfaces/macs/%s/vpc-id",
+			string(macAddr),
+		),
+	})
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "cloud: Failed to get EC2 VPC ID"),
@@ -110,39 +138,45 @@ func awsGetMetaData() (data *awsMetaData, err error) {
 		return
 	}
 
-	data.Region = region
-	data.VpcId = vpcId
-	data.InstanceId = instanceId
+	vpcId, err := ioutil.ReadAll(vpcIdResp.Content)
+	if err != nil {
+		err = &errortypes.ReadError{
+			errors.Wrap(err, "cloud: Failed to read EC2 VPC ID"),
+		}
+		return
+	}
+
+	data.Region = region.Region
+	data.VpcId = string(vpcId)
+	data.InstanceId = string(instanceId)
 
 	return
 }
 
-func awsGetRouteTables(region, vpcId string) (
+func awsGetRouteTables(ctx context.Context, region, vpcId string) (
 	tables map[string][]*awsRoute, err error) {
 
 	tables = map[string][]*awsRoute{}
 
-	sess, err := awsGetSession(region)
+	cfg, err := awsGetSession(region)
 	if err != nil {
 		return
 	}
 
-	ec2Svc := ec2.New(sess)
+	client := ec2.NewFromConfig(cfg)
 
-	filterName := "vpc-id"
-	filters := []*ec2.Filter{
-		{
-			Name: &filterName,
-			Values: []*string{
-				&vpcId,
+	input := &ec2.DescribeRouteTablesInput{
+		Filters: []types.Filter{
+			types.Filter{
+				Name: utils.StringX("vpc-id"),
+				Values: []string{
+					vpcId,
+				},
 			},
 		},
 	}
 
-	input := &ec2.DescribeRouteTablesInput{}
-	input.SetFilters(filters)
-
-	vpcTables, err := ec2Svc.DescribeRouteTables(input)
+	vpcTables, err := client.DescribeRouteTables(ctx, input)
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "cloud: Failed to get VPC route tables"),
@@ -211,22 +245,24 @@ func AwsAddRoute(network string) (err error) {
 		return
 	}
 
-	data, err := awsGetMetaData()
+	ctx := context.Background()
+
+	data, err := awsGetMetaData(ctx)
 	if err != nil {
 		return
 	}
 
-	tables, err := awsGetRouteTables(data.Region, data.VpcId)
+	tables, err := awsGetRouteTables(ctx, data.Region, data.VpcId)
 	if err != nil {
 		return
 	}
 
-	sess, err := awsGetSession(data.Region)
+	cfg, err := awsGetSession(data.Region)
 	if err != nil {
 		return
 	}
 
-	ec2Svc := ec2.New(sess)
+	client := ec2.NewFromConfig(cfg)
 
 	for tableId, rtes := range tables {
 		exists := false
@@ -266,32 +302,31 @@ func AwsAddRoute(network string) (err error) {
 			input := &ec2.ReplaceRouteInput{}
 
 			if data.InterfaceId != "" {
-				input.SetNetworkInterfaceId(data.InterfaceId)
+				input.NetworkInterfaceId = utils.StringX(data.InterfaceId)
 			} else {
-				input.SetInstanceId(data.InstanceId)
+				input.InstanceId = utils.StringX(data.InstanceId)
 			}
 
 			if ipv6 {
-				input.SetDestinationIpv6CidrBlock(network)
+				input.DestinationIpv6CidrBlock = utils.StringX(network)
 			} else {
-				input.SetDestinationCidrBlock(network)
+				input.DestinationCidrBlock = utils.StringX(network)
 			}
-			input.SetRouteTableId(tableId)
+			input.RouteTableId = utils.StringX(tableId)
 
-			_, err = ec2Svc.ReplaceRoute(input)
-
+			_, err = client.ReplaceRoute(ctx, input)
 			if err != nil {
 				input := &ec2.CreateRouteInput{}
-				input.SetDestinationCidrBlock(network)
-				input.SetRouteTableId(tableId)
+				input.DestinationCidrBlock = utils.StringX(network)
+				input.RouteTableId = utils.StringX(tableId)
 
 				if data.InterfaceId != "" {
-					input.SetNetworkInterfaceId(data.InterfaceId)
+					input.NetworkInterfaceId = utils.StringX(data.InterfaceId)
 				} else {
-					input.SetInstanceId(data.InstanceId)
+					input.InstanceId = utils.StringX(data.InstanceId)
 				}
 
-				_, err = ec2Svc.CreateRoute(input)
+				_, err = client.CreateRoute(ctx, input)
 				if err != nil {
 					err = &errortypes.RequestError{
 						errors.Wrap(err, "cloud: Failed to get create route"),
@@ -302,36 +337,36 @@ func AwsAddRoute(network string) (err error) {
 		} else {
 			input := &ec2.CreateRouteInput{}
 			if ipv6 {
-				input.SetDestinationIpv6CidrBlock(network)
+				input.DestinationIpv6CidrBlock = utils.StringX(network)
 			} else {
-				input.SetDestinationCidrBlock(network)
+				input.DestinationCidrBlock = utils.StringX(network)
 			}
-			input.SetRouteTableId(tableId)
+			input.RouteTableId = utils.StringX(tableId)
 
 			if data.InterfaceId != "" {
-				input.SetNetworkInterfaceId(data.InterfaceId)
+				input.NetworkInterfaceId = utils.StringX(data.InterfaceId)
 			} else {
-				input.SetInstanceId(data.InstanceId)
+				input.InstanceId = utils.StringX(data.InstanceId)
 			}
 
-			_, err = ec2Svc.CreateRoute(input)
+			_, err = client.CreateRoute(ctx, input)
 			if err != nil {
 				input := &ec2.ReplaceRouteInput{}
 
 				if data.InterfaceId != "" {
-					input.SetNetworkInterfaceId(data.InterfaceId)
+					input.NetworkInterfaceId = utils.StringX(data.InterfaceId)
 				} else {
-					input.SetInstanceId(data.InstanceId)
+					input.InstanceId = utils.StringX(data.InstanceId)
 				}
 
 				if ipv6 {
-					input.SetDestinationIpv6CidrBlock(network)
+					input.DestinationIpv6CidrBlock = utils.StringX(network)
 				} else {
-					input.SetDestinationCidrBlock(network)
+					input.DestinationCidrBlock = utils.StringX(network)
 				}
-				input.SetRouteTableId(tableId)
+				input.RouteTableId = utils.StringX(tableId)
 
-				_, err = ec2Svc.ReplaceRoute(input)
+				_, err = client.ReplaceRoute(ctx, input)
 				if err != nil {
 					err = &errortypes.RequestError{
 						errors.Wrap(err, "cloud: Failed to get create route"),
@@ -371,31 +406,34 @@ func AwsDeleteRoute(route *routes.AwsRoute) (err error) {
 			return
 		}
 
-		tables, e := awsGetRouteTables(route.Region, route.VpcId)
+		ctx := context.Background()
+
+		tables, e := awsGetRouteTables(ctx, route.Region, route.VpcId)
 		if e != nil {
 			err = e
 			return
 		}
 
-		sess, e := awsGetSession(route.Region)
+		cfg, e := awsGetSession(route.Region)
 		if e != nil {
 			err = e
 			return
 		}
 
-		ec2Svc := ec2.New(sess)
+		client := ec2.NewFromConfig(cfg)
 
 		for tableId := range tables {
 			input := &ec2.DeleteRouteInput{}
 
 			if ipv6 {
-				input.SetDestinationIpv6CidrBlock(route.DestNetwork)
+				input.DestinationIpv6CidrBlock = utils.StringX(
+					route.DestNetwork)
 			} else {
-				input.SetDestinationCidrBlock(route.DestNetwork)
+				input.DestinationCidrBlock = utils.StringX(route.DestNetwork)
 			}
-			input.SetRouteTableId(tableId)
+			input.RouteTableId = utils.StringX(tableId)
 
-			ec2Svc.DeleteRoute(input)
+			client.DeleteRoute(ctx, input)
 		}
 	}
 
