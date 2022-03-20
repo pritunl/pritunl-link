@@ -147,7 +147,7 @@ func getStateCache(cacheKey string) (state *State) {
 	cache, ok := stateCaches[cacheKey]
 	stateCachesLock.Unlock()
 	if ok {
-		state = cache.State
+		state = cache.State.Copy()
 		state.Cached = true
 		return
 	}

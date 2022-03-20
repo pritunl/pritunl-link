@@ -31,6 +31,24 @@ type State struct {
 	ForcePreferred bool              `json:"force_preferred"`
 }
 
+func (s *State) Copy() *State {
+	return &State{
+		Id:             s.Id,
+		Mode:           s.Mode,
+		Ipv6:           s.Ipv6,
+		Action:         s.Action,
+		Type:           s.Type,
+		Cached:         s.Cached,
+		Secret:         s.Secret,
+		Hash:           s.Hash,
+		Links:          s.Links,
+		Hosts:          s.Hosts,
+		PreferredIke:   s.PreferredIke,
+		PreferredEsp:   s.PreferredEsp,
+		ForcePreferred: s.ForcePreferred,
+	}
+}
+
 type Link struct {
 	Id           string   `json:"id"`
 	Static       bool     `json:"static"`
