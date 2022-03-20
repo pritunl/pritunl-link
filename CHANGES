@@ -1,6 +1,10 @@
 pritunl-link changelog
 ======================
 
+<%= version %>
+
+Update AWS api
+
 Version 1.0.2308.5 2022-03-20
 -----------------------------
 
