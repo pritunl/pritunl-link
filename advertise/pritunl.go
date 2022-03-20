@@ -19,6 +19,7 @@ import (
 	"github.com/pritunl/pritunl-link/routes"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
+	"github.com/sirupsen/logrus"
 )
 
 var pritunlClient = &http.Client{
@@ -192,6 +193,11 @@ func PritunlAddRoute(network string) (err error) {
 		target = state.GetLocalAddress()
 	}
 	if target == "" {
+		logrus.WithFields(logrus.Fields{
+			"target":  state.GetLocalAddress(),
+			"target6": state.GetAddress6(),
+		}).Error("advertise: Missing local address " +
+			"skipping route advertisement")
 		return
 	}
 
