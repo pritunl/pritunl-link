@@ -1,6 +1,10 @@
 pritunl-link changelog
 ======================
 
+<%= version %>
+
+Improve link automatic firewall
+
 Version 1.0.2296.34 2022-03-08
 ------------------------------
 
