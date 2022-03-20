@@ -18,6 +18,9 @@ func SetHosts(hosts []string) (err error) {
 
 	newHostsSet := set.NewSet()
 	for _, host := range hosts {
+		if host == "" {
+			continue
+		}
 		newHostsSet.Add(host)
 	}
 
