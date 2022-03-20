@@ -531,9 +531,18 @@ func UnifiAddRoute(network string) (err error) {
 		return
 	}
 
-	nexthop := state.GetLocalAddress()
-
+	nexthop := ""
+	if strings.Contains(network, ":") {
+		nexthop = state.GetAddress6()
+	} else {
+		nexthop = state.GetLocalAddress()
+	}
 	if nexthop == "" {
+		logrus.WithFields(logrus.Fields{
+			"nexthop":  state.GetLocalAddress(),
+			"nexthop6": state.GetAddress6(),
+		}).Error("advertise: Missing local address " +
+			"skipping route advertisement")
 		return
 	}
 
