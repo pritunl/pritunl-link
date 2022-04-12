@@ -156,7 +156,7 @@ func getStateCache(cacheKey string) (state *State) {
 }
 
 func getState(stateId, stateSecret, host, cacheKey string, timestamp int64,
-	dataByt []byte) (state *State, cached bool, err error) {
+	dataByt []byte) (state *State, err error) {
 
 	timestampStr := strconv.FormatInt(timestamp, 10)
 
@@ -204,43 +204,16 @@ func getState(stateId, stateSecret, host, cacheKey string, timestamp int64,
 		client = ClientSec
 	}
 
-	start := time.Now()
-
 	res, err := client.Do(req)
 	if err != nil {
-		state = getStateCache(cacheKey)
-
-		logrus.WithFields(logrus.Fields{
-			"duration":  utils.ToFixed(time.Since(start).Seconds(), 2),
-			"has_cache": state != nil,
-			"error":     err,
-		}).Warn("state: Request failed")
-
-		if state == nil {
-			err = &errortypes.RequestError{
-				errors.Wrap(err, "state: Request put error"),
-			}
-		} else {
-			cached = true
-			err = nil
+		err = &errortypes.RequestError{
+			errors.Wrap(err, "state: Request put error"),
 		}
 		return
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode >= 500 && res.StatusCode < 600 {
-		state = getStateCache(cacheKey)
-		if state == nil {
-			err = &errortypes.RequestError{
-				errors.Wrapf(err, "state: Bad status %n code from server",
-					res.StatusCode),
-			}
-		} else {
-			cached = true
-			err = nil
-		}
-		return
-	} else if res.StatusCode != 200 {
+	if res.StatusCode != 200 {
 		err = &errortypes.RequestError{
 			errors.Wrapf(err, "state: Bad status %n code from server",
 				res.StatusCode),
@@ -400,7 +373,7 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 
 	for _, uriHost := range uriHosts {
 		go func(uriHost string) {
-			uriState, uriCached, e := getState(
+			uriState, e := getState(
 				stateId,
 				stateSecret,
 				uriHost,
@@ -408,15 +381,18 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 				timestamp,
 				dataByt,
 			)
-			if e != nil || uriCached {
+			if e != nil {
 				waiter.L.Lock()
 
-				if e != nil {
-					waiterErr = e
-				}
-
-				if uriCached && uriState != nil {
+				uriState = getStateCache(uri)
+				if uriState != nil {
 					cachedState = uriState
+
+					logrus.WithFields(logrus.Fields{
+						"error": e,
+					}).Error("state: Failed to get state, using cache")
+				} else {
+					waiterErr = e
 				}
 
 				waiterCount += 1
