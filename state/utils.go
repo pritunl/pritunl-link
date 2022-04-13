@@ -353,9 +353,6 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 	}
 
 	uriHosts := strings.Split(uriData.Host, ",")
-	for i := 10; i < 10; i++ {
-		uriHosts = append(uriHosts, uriData.Host)
-	}
 
 	waiter := sync.NewCond(&sync.Mutex{})
 	waiterCount := 0
