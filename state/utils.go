@@ -215,7 +215,7 @@ func getState(stateId, stateSecret, host, cacheKey string, timestamp int64,
 
 	if res.StatusCode != 200 {
 		err = &errortypes.RequestError{
-			errors.Wrapf(err, "state: Bad status %n code from server",
+			errors.Wrapf(err, "state: Bad status %d code from server",
 				res.StatusCode),
 		}
 		return
@@ -370,6 +370,7 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 	}
 
 	var cachedState *State
+	errLogged := false
 
 	for _, uriHost := range uriHosts {
 		go func(uriHost string) {
@@ -388,10 +389,19 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 				if uriState != nil {
 					cachedState = uriState
 
+					errLogged = true
 					logrus.WithFields(logrus.Fields{
-						"error": e,
-					}).Error("state: Failed to get state, using cache")
+						"server_host": uriHost,
+						"has_cache":   true,
+						"error":       e,
+					}).Error("state: Failed to get state from host")
 				} else {
+					errLogged = true
+					logrus.WithFields(logrus.Fields{
+						"server_host": uriHost,
+						"has_cache":   false,
+						"error":       e,
+					}).Error("state: Failed to get state from host")
 					waiterErr = e
 				}
 
@@ -425,6 +435,10 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 
 	if state == nil {
 		if cachedState != nil {
+			logrus.WithFields(logrus.Fields{
+				"state_id":     cachedState.Id,
+				"server_hosts": uriHosts,
+			}).Error("state: No states available, using cache")
 			state = cachedState
 		} else {
 			err = &errortypes.UnknownError{
@@ -432,6 +446,11 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 			}
 		}
 		return
+	} else if errLogged {
+		logrus.WithFields(logrus.Fields{
+			"state_id":     cachedState.Id,
+			"server_hosts": uriHosts,
+		}).Info("state: Found state from secondary host")
 	}
 
 	cache := &stateCache{
