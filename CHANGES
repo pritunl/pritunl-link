@@ -1,7 +1,8 @@
 pritunl-link changelog
 ======================
 
-<%= version %>
+Version 1.0.2332.65 2022-04-13
+------------------------------
 
 Improve error logging
 

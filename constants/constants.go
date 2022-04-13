@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	Version                   = "1.0.2331.79"
+	Version                   = "1.0.2332.65"
 	VarDir                    = "/var/lib/pritunl_link"
 	LogPath                   = "/var/log/pritunl_link.log"
 	ConfPath                  = "/etc/pritunl_link.json"
