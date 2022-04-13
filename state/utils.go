@@ -410,6 +410,13 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 					waiter.Broadcast()
 				}
 
+				if state != nil && errLogged {
+					logrus.WithFields(logrus.Fields{
+						"state_id":     state.Id,
+						"server_hosts": uriHosts,
+					}).Info("state: Found state from secondary host")
+				}
+
 				waiter.L.Unlock()
 
 				return
@@ -419,6 +426,13 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 			if state == nil {
 				state = uriState
 				waiter.Broadcast()
+
+				if errLogged {
+					logrus.WithFields(logrus.Fields{
+						"state_id":     state.Id,
+						"server_hosts": uriHosts,
+					}).Info("state: Found state from secondary host")
+				}
 			}
 			waiter.L.Unlock()
 		}(uriHost)
@@ -446,11 +460,6 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 			}
 		}
 		return
-	} else if errLogged {
-		logrus.WithFields(logrus.Fields{
-			"state_id":     cachedState.Id,
-			"server_hosts": uriHosts,
-		}).Info("state: Found state from secondary host")
 	}
 
 	cache := &stateCache{
