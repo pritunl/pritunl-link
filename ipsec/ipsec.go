@@ -725,7 +725,7 @@ func runUpdateAdvertise() {
 			if err != nil {
 				logrus.WithFields(logrus.Fields{
 					"error": err,
-				}).Error("state: Failed to update route advertisement")
+				}).Error("ipsec: Failed to update route advertisement")
 			}
 		}
 	}
