@@ -28,6 +28,11 @@ type GoogleData struct {
 	Instance string `json:"instance"`
 }
 
+type HcloudData struct {
+	Token     string `json:"token"`
+	NetworkId int    `json:"network_id"`
+}
+
 type OracleData struct {
 	Region          string `json:"region"`
 	PrivateKey      string `json:"private_key"`
@@ -82,6 +87,7 @@ type ConfigData struct {
 	DisableDisconnectedRestart bool        `json:"disable_disconnected_restart"`
 	Aws                        AwsData     `json:"aws"`
 	Google                     GoogleData  `json:"google"`
+	Hcloud                     HcloudData  `json:"hcloud"`
 	Oracle                     OracleData  `json:"oracle"`
 	Unifi                      UnifiData   `json:"unifi"`
 	Edge                       EdgeData    `json:"edge"`

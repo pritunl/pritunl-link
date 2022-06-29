@@ -63,6 +63,8 @@ Commands:
   pritunl-vpc               Set Pritunl Cloud VPC ID
   pritunl-token             Set Pritunl Cloud token
   pritunl-secret            Set Pritunl Cloud secret
+  hcloud-token              Set Hcloud token
+  hcloud-network-id         Set Hcloud network id
 `
 
 func Init() {
@@ -406,6 +408,20 @@ func main() {
 	case "oracle-vnic-ocid":
 		Init()
 		err := cmd.OracleVnicOcid(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "hcloud-token":
+		Init()
+		err := cmd.HcloudToken(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "hcloud-network-id":
+		Init()
+		err := cmd.HcloudNetworkId(flag.Arg(1))
 		if err != nil {
 			panic(err)
 		}
