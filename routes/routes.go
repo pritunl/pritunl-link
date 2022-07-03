@@ -21,7 +21,7 @@ type CurrentRoutes struct {
 	Unifi   map[string]*UnifiRoute   `json:"unifi"`
 	Edge    map[string]*EdgeRoute    `json:"edge"`
 	Pritunl map[string]*PritunlRoute `json:"pritunl"`
-	Hcloud  map[string]*HcloudRoute  `json:"hcloud"`
+	Hetzner map[string]*HetznerRoute `json:"hetzner"`
 }
 
 func (c *CurrentRoutes) Commit() (err error) {
@@ -121,10 +121,10 @@ func GetDiff(destNetworks []string) (routes *CurrentRoutes, err error) {
 		}
 	}
 
-	if config.Config.Provider == "hcloud" {
-		for destNetwork := range routes.Hcloud {
+	if config.Config.Provider == "hetzner" {
+		for destNetwork := range routes.Hetzner {
 			if destNetworksSet.Contains(destNetwork) {
-				delete(routes.Hcloud, destNetwork)
+				delete(routes.Hetzner, destNetwork)
 			}
 		}
 	}

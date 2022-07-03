@@ -63,8 +63,8 @@ Commands:
   pritunl-vpc               Set Pritunl Cloud VPC ID
   pritunl-token             Set Pritunl Cloud token
   pritunl-secret            Set Pritunl Cloud secret
-  hcloud-token              Set Hcloud token
-  hcloud-network-id         Set Hcloud network id
+  hetzner-token             Set Hetzner token
+  hetzner-network-id        Set Hetzner network id
 `
 
 func Init() {
@@ -412,16 +412,16 @@ func main() {
 			panic(err)
 		}
 		break
-	case "hcloud-token":
+	case "hetzner-token":
 		Init()
-		err := cmd.HcloudToken(flag.Arg(1))
+		err := cmd.HetznerToken(flag.Arg(1))
 		if err != nil {
 			panic(err)
 		}
 		break
-	case "hcloud-network-id":
+	case "hetzner-network-id":
 		Init()
-		err := cmd.HcloudNetworkId(flag.Arg(1))
+		err := cmd.HetznerNetworkId(flag.Arg(1))
 		if err != nil {
 			panic(err)
 		}

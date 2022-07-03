@@ -7,8 +7,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func HcloudToken(token string) (err error) {
-	config.Config.Hcloud.Token = token
+func HetznerToken(token string) (err error) {
+	config.Config.Hetzner.Token = token
 
 	err = config.Save()
 	if err != nil {
@@ -16,19 +16,19 @@ func HcloudToken(token string) (err error) {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"token": config.Config.Hcloud.Token,
-	}).Info("cmd.hcloud: Set Hcloud token")
+		"token": config.Config.Hetzner.Token,
+	}).Info("cmd.hetzner: Set Hetzner token")
 
 	return
 }
 
-func HcloudNetworkId(networkId string) (err error) {
+func HetznerNetworkId(networkId string) (err error) {
 	network, err := strconv.Atoi(networkId)
 	if err != nil {
 		return
 	}
 
-	config.Config.Hcloud.NetworkId = network
+	config.Config.Hetzner.NetworkId = network
 
 	err = config.Save()
 	if err != nil {
@@ -36,8 +36,8 @@ func HcloudNetworkId(networkId string) (err error) {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"networkId": config.Config.Hcloud.NetworkId,
-	}).Info("cmd.hcloud: Set Hcloud network id")
+		"network_id": config.Config.Hetzner.NetworkId,
+	}).Info("cmd.hetzner: Set Hetzner network id")
 
 	return
 }
