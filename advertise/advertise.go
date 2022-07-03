@@ -60,6 +60,15 @@ func Routes(states []*state.State) (err error) {
 		}
 	}
 
+	if curRoutes.Hcloud != nil {
+		for _, route := range curRoutes.Hcloud {
+			err = HcloudDeleteRoute(route)
+			if err != nil {
+				return
+			}
+		}
+	}
+
 	if curRoutes.Oracle != nil {
 		for _, route := range curRoutes.Oracle {
 			err = OracleDeleteRoute(route)
@@ -132,6 +141,13 @@ func Routes(states []*state.State) (err error) {
 			break
 		case "google":
 			err = GoogleAddRoute(network)
+			if err != nil {
+				return
+			}
+
+			break
+		case "hcloud":
+			err = HcloudAddRoute(network)
 			if err != nil {
 				return
 			}

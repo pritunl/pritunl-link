@@ -5,12 +5,12 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/sirupsen/logrus"
 )
 
 type CurrentRoutes struct {
@@ -21,6 +21,7 @@ type CurrentRoutes struct {
 	Unifi   map[string]*UnifiRoute   `json:"unifi"`
 	Edge    map[string]*EdgeRoute    `json:"edge"`
 	Pritunl map[string]*PritunlRoute `json:"pritunl"`
+	Hcloud  map[string]*HcloudRoute  `json:"hcloud"`
 }
 
 func (c *CurrentRoutes) Commit() (err error) {
@@ -116,6 +117,14 @@ func GetDiff(destNetworks []string) (routes *CurrentRoutes, err error) {
 		for destNetwork := range routes.Oracle {
 			if destNetworksSet.Contains(destNetwork) {
 				delete(routes.Google, destNetwork)
+			}
+		}
+	}
+
+	if config.Config.Provider == "hcloud" {
+		for destNetwork := range routes.Hcloud {
+			if destNetworksSet.Contains(destNetwork) {
+				delete(routes.Hcloud, destNetwork)
 			}
 		}
 	}
