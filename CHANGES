@@ -1,6 +1,10 @@
 pritunl-link changelog
 ======================
 
+<%= version %>
+
+Add Hetzner Cloud support
+
 Version 1.0.2332.77 2022-04-13
 ------------------------------
 
