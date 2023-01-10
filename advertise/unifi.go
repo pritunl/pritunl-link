@@ -269,6 +269,8 @@ func unifiGetClient() (client *http.Client, csrfToken string, err error) {
 		return
 	}
 
+	csrfToken = resp.Header.Get("X-CSRF-Token")
+
 	return
 }
 
