@@ -1,7 +1,8 @@
 pritunl-link changelog
 ======================
 
-<%= version %>
+Version 1.0.2606.36 2023-01-12
+------------------------------
 
 Fix Unifi support
 
