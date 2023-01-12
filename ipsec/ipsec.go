@@ -704,6 +704,21 @@ func runDeploy() {
 }
 
 func runUpdateAdvertise() {
+	defer func() {
+		r := recover()
+		err := &errortypes.UnknownError{
+			errors.New("ipsec: Route advertisement panic"),
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"panic": r,
+			"error": err,
+		}).Error("ipsec: Panic in route advertisement, restarting...")
+
+		time.Sleep(3 * time.Second)
+		go runUpdateAdvertise()
+	}()
+
 	for {
 		for {
 			time.Sleep(1 * time.Second)
