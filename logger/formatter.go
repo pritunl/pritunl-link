@@ -2,8 +2,8 @@ package logger
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"github.com/pritunl/pritunl-link/colorize"
+	"github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -133,5 +133,5 @@ func formatLevelPlain(lvl logrus.Level) string {
 type formatter struct{}
 
 func (f *formatter) Format(entry *logrus.Entry) ([]byte, error) {
-	return format(entry), nil
+	return formatPlain(entry), nil
 }
