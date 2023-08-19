@@ -3,6 +3,7 @@ package advertise
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -22,6 +23,17 @@ import (
 )
 
 const unifiDefaultInterface = "wan"
+
+var (
+	transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	cookieJar  *cookiejar.Jar
+	cookieTime time.Time
+	cookieHash []byte
+)
 
 type unifiLoginData struct {
 	Username   string `json:"username"`
@@ -125,6 +137,12 @@ func site() string {
 	return site
 }
 
+func unifiClearCache() {
+	cookieHash = []byte{}
+	cookieTime = time.Now()
+	cookieJar = nil
+}
+
 func unifiGetCsrf(client *http.Client) (token string, err error) {
 	req, err := http.NewRequest(
 		"GET",
@@ -158,28 +176,8 @@ func unifiGetCsrf(client *http.Client) (token string, err error) {
 	return
 }
 
-func unifiGetClient() (client *http.Client, csrfToken string, err error) {
-	jar, err := cookiejar.New(nil)
-	if err != nil {
-		err = &errortypes.UnknownError{
-			errors.Wrap(err, "advertise: CookieJar error"),
-		}
-		return
-	}
-
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-
-	client = &http.Client{
-		Transport: transport,
-		Jar:       jar,
-		Timeout:   10 * time.Second,
-	}
-
-	csrfToken, err = unifiGetCsrf(client)
+func unifiPostAuth(client *http.Client) (token string, err error) {
+	csrfToken, err := unifiGetCsrf(client)
 	if err != nil {
 		return
 	}
@@ -269,7 +267,57 @@ func unifiGetClient() (client *http.Client, csrfToken string, err error) {
 		return
 	}
 
-	csrfToken = resp.Header.Get("X-CSRF-Token")
+	token = resp.Header.Get("X-CSRF-Token")
+
+	return
+}
+
+func unifiGetClient() (client *http.Client, csrfToken string, err error) {
+	client = &http.Client{
+		Transport: transport,
+		Timeout:   10 * time.Second,
+	}
+
+	username := config.Config.Unifi.Username
+	password := config.Config.Unifi.Password
+	controller := config.Config.Unifi.Controller
+
+	hash := sha256.New()
+	hash.Write([]byte(username))
+	hash.Write([]byte(password))
+	hash.Write([]byte(controller))
+	cookieHashNew := hash.Sum(nil)
+
+	if cookieJar != nil &&
+		bytes.Equal(cookieHashNew, cookieHash) &&
+		time.Since(cookieTime) < 5*time.Minute {
+
+		client.Jar = cookieJar
+
+		csrfToken, err = unifiGetCsrf(client)
+		if err != nil {
+			return
+		}
+	} else {
+		jar, e := cookiejar.New(nil)
+		if e != nil {
+			err = &errortypes.UnknownError{
+				errors.Wrap(e, "advertise: CookieJar error"),
+			}
+			return
+		}
+
+		client.Jar = jar
+
+		csrfToken, err = unifiPostAuth(client)
+		if err != nil {
+			return
+		}
+
+		cookieJar = jar
+		cookieHash = cookieHashNew
+		cookieTime = time.Now()
+	}
 
 	return
 }
@@ -550,17 +598,23 @@ func UnifiAddRoute(network string) (err error) {
 
 	client, csrfToken, err := unifiGetClient()
 	if err != nil {
+		unifiClearCache()
+
 		return
 	}
 
 	exists, err := unifiHasRoute(client, csrfToken, network, nexthop)
 	if err != nil {
+		unifiClearCache()
+
 		return
 	}
 
 	if !exists {
 		err = unifiAddRoute(client, csrfToken, network, nexthop)
 		if err != nil {
+			unifiClearCache()
+
 			return
 		}
 	}
@@ -589,12 +643,16 @@ func UnifiDeleteRoute(route *routes.UnifiRoute) (err error) {
 
 		client, csrfToken, e := unifiGetClient()
 		if e != nil {
+			unifiClearCache()
+
 			err = e
 			return
 		}
 
 		rts, e := unifiGetRoutes(client, csrfToken)
 		if e != nil {
+			unifiClearCache()
+
 			err = e
 			return
 		}
@@ -603,6 +661,8 @@ func UnifiDeleteRoute(route *routes.UnifiRoute) (err error) {
 			if rte.Network == route.Network && rte.Nexthop == route.Nexthop {
 				err = unifiDeleteRoute(client, csrfToken, rte.Id)
 				if err != nil {
+					unifiClearCache()
+
 					return
 				}
 
@@ -895,17 +955,23 @@ func UnifiAddPorts() (err error) {
 
 	client, csrfToken, err := unifiGetClient()
 	if err != nil {
+		unifiClearCache()
+
 		return
 	}
 
 	ports, err := unifiGetPorts(client, csrfToken)
 	if err != nil {
+		unifiClearCache()
+
 		return
 	}
 
 	exists, err := unifiHasPort(client, csrfToken, ports, source, "500",
 		forward, "500", proto)
 	if err != nil {
+		unifiClearCache()
+
 		return
 	}
 
@@ -913,6 +979,8 @@ func UnifiAddPorts() (err error) {
 		err = unifiAddPort(client, csrfToken, source, "500",
 			forward, "500", proto)
 		if err != nil {
+			unifiClearCache()
+
 			return
 		}
 	}
@@ -920,6 +988,8 @@ func UnifiAddPorts() (err error) {
 	exists, err = unifiHasPort(client, csrfToken, ports, source, "4500",
 		forward, "4500", proto)
 	if err != nil {
+		unifiClearCache()
+
 		return
 	}
 
@@ -927,6 +997,8 @@ func UnifiAddPorts() (err error) {
 		err = unifiAddPort(client, csrfToken, source, "4500",
 			forward, "4500", proto)
 		if err != nil {
+			unifiClearCache()
+
 			return
 		}
 	}
@@ -934,6 +1006,8 @@ func UnifiAddPorts() (err error) {
 	exists, err = unifiHasPort(client, csrfToken, ports, source, "9790",
 		forward, "9790", "tcp")
 	if err != nil {
+		unifiClearCache()
+
 		return
 	}
 
@@ -941,6 +1015,8 @@ func UnifiAddPorts() (err error) {
 		err = unifiAddPort(client, csrfToken, source, "9790",
 			forward, "9790", "tcp")
 		if err != nil {
+			unifiClearCache()
+
 			return
 		}
 	}
