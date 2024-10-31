@@ -85,6 +85,7 @@ type ConfigData struct {
 	DisconnectedTimeout        int         `json:"disconnected_timeout"`
 	DisableAdvertiseUpdate     bool        `json:"disable_advertise_update"`
 	DisableDisconnectedRestart bool        `json:"disable_disconnected_restart"`
+	CustomOptions              []string    `json:"custom_options"`
 	Aws                        AwsData     `json:"aws"`
 	Google                     GoogleData  `json:"google"`
 	Hetzner                    HetznerData `json:"hetzner"`
