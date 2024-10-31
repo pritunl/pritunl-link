@@ -38,6 +38,8 @@ Commands:
   disconnected-timeout-off  Disable restart when disconnected for duration of timeout
   advertise-update-on       Enable recurring checks and updates of routing table and port forwarding
   advertise-update-off      Disable recurring checks and updates of routing table and port forwarding
+  custom-option-add         Add custom ipsec option
+  custom-option-clear       Clear custom ipsec options
   provider                  Manually set network provider
   oracle-user-ocid          Set Oracle user ocid
   oracle-private-key        Set Oracle base64 private key
@@ -240,6 +242,20 @@ func main() {
 	case "advertise-update-off":
 		Init()
 		err := cmd.AdvertiseUpdateOff()
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "custom-option-add":
+		Init()
+		err := cmd.AddCustomOption(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "custom-option-clear":
+		Init()
+		err := cmd.ClearCustomOptions()
 		if err != nil {
 			panic(err)
 		}

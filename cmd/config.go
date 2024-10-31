@@ -209,3 +209,33 @@ func FirewallOff() (err error) {
 
 	return
 }
+
+func AddCustomOption(opt string) (err error) {
+	config.Config.CustomOptions = append(config.Config.CustomOptions, opt)
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"custom_options": config.Config.CustomOptions,
+	}).Info("cmd.config: Added custom option")
+
+	return
+}
+
+func ClearCustomOptions() (err error) {
+	config.Config.CustomOptions = []string{}
+
+	err = config.Save()
+	if err != nil {
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"custom_options": config.Config.CustomOptions,
+	}).Info("cmd.config: Cleared custom options")
+
+	return
+}
