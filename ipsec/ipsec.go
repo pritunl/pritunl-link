@@ -372,6 +372,19 @@ func writeTemplates(states []*state.State) (err error) {
 				return
 			}
 
+			if config.Config.CustomOptions != nil {
+				for _, opt := range config.Config.CustomOptions {
+					_, err = confBuf.WriteString("	" + opt + "\n")
+					if err != nil {
+						err = &errortypes.WriteError{
+							errors.Wrap(err, "ipsec: Failed to "+
+								"write custom option"),
+						}
+						return
+					}
+				}
+			}
+
 			if link.Static && (len(link.LeftSubnets) > 1 ||
 				len(link.RightSubnets) > 1) {
 
@@ -397,6 +410,19 @@ func writeTemplates(states []*state.State) (err error) {
 									"ipsec: Failed to execute conf template"),
 							}
 							return
+						}
+
+						if config.Config.CustomOptions != nil {
+							for _, opt := range config.Config.CustomOptions {
+								_, err = confBuf.WriteString("	" + opt + "\n")
+								if err != nil {
+									err = &errortypes.WriteError{
+										errors.Wrap(err, "ipsec: Failed to "+
+											"write custom option"),
+									}
+									return
+								}
+							}
 						}
 					}
 				}
