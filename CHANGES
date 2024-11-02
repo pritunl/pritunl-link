@@ -1,7 +1,8 @@
 pritunl-link changelog
 ======================
 
-<%= version %>
+Version 1.0.3266.83 2024-11-02
+------------------------------
 
 Add support for custom options
 
