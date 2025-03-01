@@ -39,6 +39,8 @@ type ociMeta struct {
 func GetMetadata() (mdata *Metadata, err error) {
 	userOcid := config.Config.Oracle.UserOcid
 	privateKey := config.Config.Oracle.PrivateKey
+	tenancyOcid := config.Config.Oracle.TenancyOcid
+	compartmentOcid := config.Config.Oracle.CompartmentOcid
 
 	output, err := utils.ExecOutput("", "oci-metadata", "--json")
 	if err != nil {
@@ -53,6 +55,14 @@ func GetMetadata() (mdata *Metadata, err error) {
 			errors.Wrap(err, "oracle: Failed to parse metadata"),
 		}
 		return
+	}
+
+	if tenancyOcid == "" {
+		tenancyOcid = data.Instance.CompartmentId
+	}
+
+	if compartmentOcid == "" {
+		compartmentOcid = data.Instance.CompartmentId
 	}
 
 	vnicOcid := ""
@@ -74,8 +84,8 @@ func GetMetadata() (mdata *Metadata, err error) {
 		UserOcid:        userOcid,
 		PrivateKey:      privateKey,
 		RegionName:      data.Instance.RegionName,
-		TenancyOcid:     data.Instance.CompartmentId,
-		CompartmentOcid: data.Instance.CompartmentId,
+		TenancyOcid:     tenancyOcid,
+		CompartmentOcid: compartmentOcid,
 		VnicOcid:        vnicOcid,
 	}
 
