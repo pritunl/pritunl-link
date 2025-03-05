@@ -1,6 +1,10 @@
 pritunl-link changelog
 ======================
 
+<%= version %>
+
+Allow link state updates during route advertise errors
+
 Version 1.0.3266.83 2024-11-02
 ------------------------------
 
