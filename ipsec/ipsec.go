@@ -541,7 +541,10 @@ func deploy(states []*state.State, restart bool) (err error) {
 
 	err = advertise.Ports(states)
 	if err != nil {
-		return
+		logrus.WithFields(logrus.Fields{
+			"error": err,
+		}).Error("state: Failed to advertise ports")
+		err = nil
 	}
 
 	time.Sleep(200 * time.Millisecond)
@@ -589,7 +592,10 @@ func deploy(states []*state.State, restart bool) (err error) {
 
 	err = advertise.Routes(states)
 	if err != nil {
-		return
+		logrus.WithFields(logrus.Fields{
+			"error": err,
+		}).Error("state: Failed to advertise routes")
+		err = nil
 	}
 
 	isDirectClient := false
