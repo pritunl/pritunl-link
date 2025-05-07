@@ -9,6 +9,7 @@ import (
 	"github.com/pritunl/pritunl-link/clean"
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/interlink"
+	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/sync"
 	"github.com/pritunl/pritunl-link/watch"
 	"github.com/sirupsen/logrus"
@@ -18,6 +19,11 @@ func Start() (err error) {
 	logrus.WithFields(logrus.Fields{
 		"version": constants.Version,
 	}).Info("cmd.start: Starting link")
+
+	err = state.Init()
+	if err != nil {
+		return
+	}
 
 	sync.Init()
 	watch.Init()
