@@ -182,6 +182,10 @@ func InitAcceptIpTables() (err error) {
 	if err != nil {
 		return
 	}
+	err = DropPort("8273", "udp")
+	if err != nil {
+		return
+	}
 	err = DropPort("9790", "tcp")
 	if err != nil {
 		return
