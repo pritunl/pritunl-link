@@ -55,6 +55,10 @@ func SetHosts(hosts []string) (err error) {
 		if err != nil {
 			return
 		}
+		err = DisallowPort(host, "8273", "udp")
+		if err != nil {
+			return
+		}
 		err = DisallowPort(host, "9790", "tcp")
 		if err != nil {
 			return
@@ -72,6 +76,10 @@ func SetHosts(hosts []string) (err error) {
 		if err != nil {
 			return
 		}
+		err = AllowPort(host, "8273", "udp")
+		if err != nil {
+			return
+		}
 		err = AllowPort(host, "9790", "tcp")
 		if err != nil {
 			return
@@ -83,6 +91,10 @@ func SetHosts(hosts []string) (err error) {
 		return
 	}
 	err = DropPort("4500", "udp")
+	if err != nil {
+		return
+	}
+	err = DropPort("8273", "udp")
 	if err != nil {
 		return
 	}
