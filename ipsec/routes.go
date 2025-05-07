@@ -2,12 +2,13 @@ package ipsec
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
+	"time"
+
 	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/status"
 	"github.com/pritunl/pritunl-link/utils"
-	"time"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -17,27 +18,52 @@ var (
 )
 
 func getDirectStatus(stat *state.State) (directStatus bool, err error) {
-	stats, err := status.Get()
-	if err != nil {
-		return
-	}
-
 	if stat == nil {
 		return
 	}
 
-	if stat.Links == nil || len(stat.Links) == 0 {
+	if len(stat.Links) == 0 {
 		return
 	}
 
-	linkId := fmt.Sprintf("%s-0-%s", stat.Id, stat.Links[0].Hash)
+	var stats status.Status
+	if stat.Protocol == "wg" {
+		linkId := fmt.Sprintf("%s-%s", stat.Id, stat.Links[0].Id)
 
-	linkStatus, ok := stats[linkId]
-	if !ok {
-		return
+		wgKeyMap := map[string]string{}
+		for _, lnk := range stat.Links {
+			if stat.Protocol == "wg" {
+				wgKeyMap[lnk.WgPublicKey] = fmt.Sprintf(
+					"%s-%s", stat.Id, lnk.Id)
+			}
+		}
+
+		stats, err = status.GetWg(wgKeyMap)
+		if err != nil {
+			return
+		}
+
+		linkStatus, ok := stats[linkId]
+		if !ok {
+			return
+		}
+
+		directStatus = linkStatus == "connected"
+	} else {
+		linkId := fmt.Sprintf("%s-0-%s", stat.Id, stat.Links[0].Hash)
+
+		stats, err = status.Get()
+		if err != nil {
+			return
+		}
+
+		linkStatus, ok := stats[linkId]
+		if !ok {
+			return
+		}
+
+		directStatus = linkStatus == "connected"
 	}
-
-	directStatus = linkStatus == "connected"
 
 	return
 }
