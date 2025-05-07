@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/subtle"
@@ -29,6 +30,7 @@ import (
 	"github.com/pritunl/pritunl-link/iptables"
 	"github.com/pritunl/pritunl-link/utils"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/curve25519"
 )
 
 var (
@@ -67,6 +69,7 @@ type stateData struct {
 	PublicAddress string                `json:"public_address"`
 	LocalAddress  string                `json:"local_address"`
 	Address6      string                `json:"address6"`
+	WgPublicKey   string                `json:"wg_public_key"`
 	Status        map[string]string     `json:"status"`
 	Hosts         map[string]*hostState `json:"hosts"`
 	Errors        []string              `json:"errors"`
@@ -340,6 +343,7 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 		PublicAddress: GetPublicAddress(),
 		LocalAddress:  GetLocalAddress(),
 		Address6:      GetAddress6(),
+		WgPublicKey:   WgPublicKey,
 		Status:        stateStatus,
 		Hosts:         hostsStatus,
 	}
@@ -537,5 +541,62 @@ func GetStates() (states []*State) {
 	}
 	stateCachesLock.Unlock()
 
+	return
+}
+
+const KeyLen = 32
+
+type Key [KeyLen]byte
+
+func (k Key) PublicKey() (key Key) {
+	var pub [KeyLen]byte
+	var priv = [KeyLen]byte(k)
+
+	curve25519.ScalarBaseMult(&pub, &priv)
+
+	key = Key(pub)
+	return
+}
+
+func (k Key) String() string {
+	return base64.StdEncoding.EncodeToString(k[:])
+}
+
+func GeneratePrivateKey() (Key, error) {
+	key, err := GenerateKey()
+	if err != nil {
+		return Key{}, err
+	}
+
+	key[0] &= 248
+	key[31] &= 127
+	key[31] |= 64
+
+	return key, nil
+}
+
+func GenerateKey() (key Key, err error) {
+	b := make([]byte, 32)
+
+	_, err = rand.Read(b)
+	if err != nil {
+		err = &errortypes.ParseError{
+			errors.Wrap(err, "link: Failed to read random bytes"),
+		}
+		return
+	}
+
+	return NewKey(b)
+}
+
+func NewKey(b []byte) (key Key, err error) {
+	if len(b) != KeyLen {
+		err = &errortypes.ParseError{
+			errors.Newf("link: incorrect key size: %d", len(b)),
+		}
+		return
+	}
+
+	copy(key[:], b)
 	return
 }
