@@ -1,6 +1,7 @@
 package state
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/dropbox/godropbox/container/set"
@@ -57,20 +58,43 @@ func Update(states []*State) (hasConnected bool,
 	resetLinks = []string{}
 
 	names := set.NewSet()
+	hasIpsec := false
+	hasWg := false
+	wgKeyMap := map[string]string{}
 	for _, stat := range states {
+		if stat.Protocol == "wg" {
+			hasWg = true
+		} else {
+			hasIpsec = true
+		}
 		for _, lnk := range stat.Links {
-			names.Add(GetLinkId(stat.Id, lnk.Id, lnk.Hash))
+			if stat.Protocol == "wg" {
+				wgKeyMap[lnk.WgPublicKey] = fmt.Sprintf(
+					"%s-%s-%s", stat.Id, lnk.Id, lnk.Hash)
+			} else {
+				names.Add(GetLinkId(stat.Id, lnk.Id, lnk.Hash))
+			}
 		}
 	}
 
-	stats, err := status.Get()
-	if err != nil {
-		return
+	ipsecStats := status.Status{}
+	wgStats := status.Status{}
+	if hasIpsec {
+		ipsecStats, err = status.Get()
+		if err != nil {
+			return
+		}
+	}
+	if hasWg {
+		wgStats, err = status.GetWg(wgKeyMap)
+		if err != nil {
+			return
+		}
 	}
 
-	Status = stats
+	Status = ipsecStats.Merge(wgStats)
 
-	for connId, connStatus := range stats {
+	for connId, connStatus := range ipsecStats {
 		if connStatus == "connected" {
 			if names.Contains(connId) {
 				hasConnected = true

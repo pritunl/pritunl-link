@@ -28,13 +28,13 @@ func getDirectStatus(stat *state.State) (directStatus bool, err error) {
 
 	var stats status.Status
 	if stat.Protocol == "wg" {
-		linkId := fmt.Sprintf("%s-%s", stat.Id, stat.Links[0].Id)
+		linkId := fmt.Sprintf("%s-%s-%s", stat.Id, stat.Links[0].Id, stat.Hash)
 
 		wgKeyMap := map[string]string{}
 		for _, lnk := range stat.Links {
 			if stat.Protocol == "wg" {
 				wgKeyMap[lnk.WgPublicKey] = fmt.Sprintf(
-					"%s-%s", stat.Id, lnk.Id)
+					"%s-%s", stat.Id, lnk.Id, stat.Hash)
 			}
 		}
 
