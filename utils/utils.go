@@ -2,11 +2,13 @@
 package utils
 
 import (
+	"net"
+	"os"
+	"strings"
+
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/errortypes"
-	"net"
-	"os"
 )
 
 func GetLocalAddress() (addr string, err error) {
@@ -48,4 +50,11 @@ func IncIpAddress(ip net.IP) {
 			break
 		}
 	}
+}
+
+func FormatHost(host string) string {
+	if strings.Contains(host, ":") {
+		return "[" + host + "]"
+	}
+	return host
 }
