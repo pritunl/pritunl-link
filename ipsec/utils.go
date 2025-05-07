@@ -1,14 +1,47 @@
 package ipsec
 
 import (
+	"crypto/md5"
+	"crypto/sha256"
+	"encoding/base32"
+	"encoding/base64"
+	"fmt"
+	"net"
+	"strings"
+	"time"
+
+	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/utils"
-	"net"
-	"strings"
-	"time"
 )
+
+func GetWgIfaces() (ifacesSet set.Set, err error) {
+	ifacesSet = set.NewSet()
+
+	output, err := utils.ExecOutput("", "wg", "show", "all", "dump")
+	if err != nil {
+		err = nil
+		return
+	}
+
+	for _, line := range strings.Split(output, "\n") {
+		fields := strings.Split(line, "\t")
+		if len(fields) < 4 {
+			continue
+		}
+
+		iface := fields[0]
+		if !strings.HasPrefix(iface, "wgp") || len(iface) < 10 {
+			continue
+		}
+
+		ifacesSet.Add(iface)
+	}
+
+	return
+}
 
 func GetDirectSubnet() (network *net.IPNet, err error) {
 	networkStr := config.Config.DirectSubnet
@@ -76,4 +109,16 @@ func Shutdown(connId string) {
 		_ = utils.Exec("", "ipsec", "down", connId)
 		time.Sleep(50 * time.Millisecond)
 	}
+}
+
+func PreSharedKeyToWg(psk string) string {
+	hash := sha256.Sum256([]byte(psk))
+	return base64.StdEncoding.EncodeToString(hash[:])
+}
+
+func GetWgIface(id string) string {
+	hash := md5.New()
+	hash.Write([]byte(id))
+	hashSum := base32.StdEncoding.EncodeToString(hash.Sum(nil))[:11]
+	return fmt.Sprintf("wgp%s", strings.ToLower(hashSum))
 }
