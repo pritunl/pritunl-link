@@ -1,7 +1,9 @@
 package status
 
 import (
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/pritunl/pritunl-link/utils"
@@ -9,6 +11,26 @@ import (
 )
 
 type Status map[string]string
+
+func (s Status) Merge(other Status) Status {
+	if s == nil {
+		return other
+	}
+	if other == nil {
+		return s
+	}
+
+	result := Status{}
+	for key, value := range s {
+		result[key] = value
+	}
+
+	for key, value := range other {
+		result[key] = value
+	}
+
+	return result
+}
 
 func Get() (status Status, err error) {
 	status = Status{}
@@ -67,6 +89,48 @@ func Get() (status Status, err error) {
 				status[connId] = connState
 			}
 		}
+	}
+
+	return
+}
+
+func GetWg(wgKeyMap map[string]string) (status Status, err error) {
+	status = Status{}
+
+	output, err := utils.ExecOutput("", "wg", "show", "all", "dump")
+	if err != nil {
+		err = nil
+		return
+	}
+
+	now := time.Now()
+
+	for _, line := range strings.Split(output, "\n") {
+		fields := strings.Split(line, "\t")
+		if len(fields) < 8 {
+			continue
+		}
+
+		pubKey := fields[1]
+		connId := wgKeyMap[pubKey]
+		if connId == "" {
+			continue
+		}
+
+		handshakeUnix, _ := strconv.ParseInt(fields[5], 10, 64)
+		var handshakeTime time.Time
+		if handshakeUnix > 0 {
+			handshakeTime = time.Unix(handshakeUnix, 0)
+		}
+
+		connState := ""
+		if now.Sub(handshakeTime) < 3*time.Minute {
+			connState = "connected"
+		} else {
+			connState = "disconnected"
+		}
+
+		status[connId] = connState
 	}
 
 	return
