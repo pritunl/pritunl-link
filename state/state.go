@@ -10,6 +10,8 @@ var (
 	LocalAddress     = ""
 	PublicAddress    = ""
 	Address6         = ""
+	WgPrivateKey     = ""
+	WgPublicKey      = ""
 	Status           = map[string]string{}
 	IsDirectClient   = false
 	DirectIpsecState *State
@@ -18,6 +20,8 @@ var (
 type State struct {
 	Id             string            `json:"id"`
 	Mode           string            `json:"mode"`
+	Protocol       string            `json:"protocol"`
+	WgPort         int               `json:"wg_port"`
 	Ipv6           bool              `json:"ipv6"`
 	Action         string            `json:"action"`
 	Type           string            `json:"type"`
@@ -35,6 +39,8 @@ func (s *State) Copy() *State {
 	return &State{
 		Id:             s.Id,
 		Mode:           s.Mode,
+		Protocol:       s.Protocol,
+		WgPort:         s.WgPort,
 		Ipv6:           s.Ipv6,
 		Action:         s.Action,
 		Type:           s.Type,
@@ -55,6 +61,7 @@ type Link struct {
 	Hash         string   `json:"hash"`
 	PreSharedKey string   `json:"pre_shared_key"`
 	Right        string   `json:"right"`
+	WgPublicKey  string   `json:"wg_public_key"`
 	LeftSubnets  []string `json:"left_subnets"`
 	RightSubnets []string `json:"right_subnets"`
 }
@@ -106,4 +113,17 @@ func GetAddress6() string {
 		return addr
 	}
 	return Address6
+}
+
+func Init() (err error) {
+	privateKey, err := GeneratePrivateKey()
+	if err != nil {
+		return
+	}
+	publicKey := privateKey.PublicKey()
+
+	WgPrivateKey = privateKey.String()
+	WgPublicKey = publicKey.String()
+
+	return
 }
