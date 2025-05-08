@@ -1,18 +1,21 @@
 package iptables
 
 import (
+	"strconv"
 	"sync"
 
 	"github.com/dropbox/godropbox/container/set"
+	"github.com/pritunl/pritunl-link/utils"
 )
 
 var (
 	initialize   = true
 	curHosts     = []string{}
+	curWgPorts   = set.NewSet()
 	iptablesLock = sync.Mutex{}
 )
 
-func SetHosts(hosts []string) (err error) {
+func SetHosts(hosts []string, ports []int) (err error) {
 	iptablesLock.Lock()
 	defer iptablesLock.Unlock()
 
@@ -44,6 +47,8 @@ func SetHosts(hosts []string) (err error) {
 		initialize = false
 	}
 
+	InitWgIpset()
+
 	for hostInf := range removeHosts.Iter() {
 		host := hostInf.(string)
 
@@ -55,11 +60,11 @@ func SetHosts(hosts []string) (err error) {
 		if err != nil {
 			return
 		}
-		err = DisallowPort(host, "8273", "udp")
+		err = DisallowPort(host, "9790", "tcp")
 		if err != nil {
 			return
 		}
-		err = DisallowPort(host, "9790", "tcp")
+		err = DisallowPortSet(host, "wgp", "udp")
 		if err != nil {
 			return
 		}
@@ -76,11 +81,11 @@ func SetHosts(hosts []string) (err error) {
 		if err != nil {
 			return
 		}
-		err = AllowPort(host, "8273", "udp")
+		err = AllowPort(host, "9790", "tcp")
 		if err != nil {
 			return
 		}
-		err = AllowPort(host, "9790", "tcp")
+		err = AllowPortSet(host, "wgp", "udp")
 		if err != nil {
 			return
 		}
@@ -94,16 +99,49 @@ func SetHosts(hosts []string) (err error) {
 	if err != nil {
 		return
 	}
-	err = DropPort("8273", "udp")
+	err = DropPort("9790", "tcp")
 	if err != nil {
 		return
 	}
-	err = DropPort("9790", "tcp")
+	err = DropPortSet("wgp", "udp")
 	if err != nil {
 		return
 	}
 
 	curHosts = hosts
+
+	curPorts := curWgPorts.Copy()
+
+	newPorts := set.NewSet()
+	for _, port := range ports {
+		newPorts.Add(port)
+	}
+
+	addPorts := newPorts.Copy()
+	addPorts.Subtract(curPorts)
+
+	delPorts := curPorts.Copy()
+	delPorts.Subtract(addPorts)
+
+	for addPortInf := range addPorts.Iter() {
+		addPort := addPortInf.(int)
+
+		err = utils.Exec("", "ipset", "add", "wgp", strconv.Itoa(addPort))
+		if err != nil {
+			return
+		}
+	}
+
+	for delPortInf := range delPorts.Iter() {
+		delPort := delPortInf.(int)
+
+		err = utils.Exec("", "ipset", "del", "wgp", strconv.Itoa(delPort))
+		if err != nil {
+			return
+		}
+	}
+
+	curPorts = newPorts
 
 	return
 }
