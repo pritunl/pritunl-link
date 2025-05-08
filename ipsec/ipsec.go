@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -31,6 +32,7 @@ var (
 	deployLock      sync.Mutex
 	updateSleepLock sync.Mutex
 	updateSleep     = constants.UpdateAdvertiseRate
+	wgHash          = ""
 )
 
 type templateData struct {
@@ -43,6 +45,8 @@ type templateData struct {
 	RightSubnets   string
 	RightWg        string
 	PreSharedKey   string
+	WgHash         string
+	WgPort         int
 	WgPreSharedKey string
 	WgPublicKey    string
 	WgPrivateKey   string
@@ -110,19 +114,21 @@ func putIpTables(stat *state.State) (err error) {
 	if err != nil {
 		return
 	}
-	err = iptables.UpsertRule(
-		"nat",
-		"PREROUTING",
-		"-d", localAddress,
-		"-p", "udp",
-		"-m", "udp",
-		"--dport", "8273",
-		"-j", "ACCEPT",
-		"-m", "comment",
-		"--comment", "pritunl-link-direct",
-	)
-	if err != nil {
-		return
+	if stat.Protocol == "wg" && stat.WgPort != 0 {
+		err = iptables.UpsertRule(
+			"nat",
+			"PREROUTING",
+			"-d", localAddress,
+			"-p", "udp",
+			"-m", "udp",
+			"--dport", strconv.Itoa(stat.WgPort),
+			"-j", "ACCEPT",
+			"-m", "comment",
+			"--comment", "pritunl-link-direct",
+		)
+		if err != nil {
+			return
+		}
 	}
 	err = iptables.UpsertRule(
 		"nat",
@@ -152,21 +158,22 @@ func putIpTables(stat *state.State) (err error) {
 	if err != nil {
 		return
 	}
-	err = iptables.UpsertRule(
-		"nat",
-		"PREROUTING",
-		"-d", publicAddress,
-		"-p", "udp",
-		"-m", "udp",
-		"--dport", "8273",
-		"-j", "ACCEPT",
-		"-m", "comment",
-		"--comment", "pritunl-link-direct",
-	)
-	if err != nil {
-		return
+	if stat.Protocol == "wg" && stat.WgPort != 0 {
+		err = iptables.UpsertRule(
+			"nat",
+			"PREROUTING",
+			"-d", publicAddress,
+			"-p", "udp",
+			"-m", "udp",
+			"--dport", strconv.Itoa(stat.WgPort),
+			"-j", "ACCEPT",
+			"-m", "comment",
+			"--comment", "pritunl-link-direct",
+		)
+		if err != nil {
+			return
+		}
 	}
-
 	if config.Config.DirectSsh {
 		err = iptables.UpsertRule(
 			"nat",
@@ -517,7 +524,7 @@ func writeTemplates(states []*state.State) (iptablesState bool, err error) {
 	return
 }
 
-func writeWgTemplates(states []*state.State) (wgIfaces []string,
+func writeWgTemplates(states []*state.State) (wgIfaces, modWgIfaces []string,
 	iptablesState bool, err error) {
 
 	publicAddr := state.GetPublicAddress()
@@ -532,8 +539,16 @@ func writeWgTemplates(states []*state.State) (wgIfaces []string,
 
 		confBuf := &bytes.Buffer{}
 
+		privKey, e := config.State.GetPrivateKey(stat.Id)
+		if e != nil {
+			err = e
+			return
+		}
+
 		data := &templateData{
-			WgPrivateKey: state.WgPrivateKey,
+			WgHash:       wgHash,
+			WgPort:       stat.WgPort,
+			WgPrivateKey: privKey,
 		}
 
 		err = confWgTemplate.Execute(confBuf, data)
@@ -576,6 +591,7 @@ func writeWgTemplates(states []*state.State) (wgIfaces []string,
 				Right:          link.Right,
 				RightWg:        utils.FormatHost(link.Right),
 				RightSubnets:   rightSubnets,
+				WgPort:         stat.WgPort,
 				WgPublicKey:    link.WgPublicKey,
 				WgPreSharedKey: PreSharedKeyToWg(link.PreSharedKey),
 			}
@@ -600,18 +616,25 @@ func writeWgTemplates(states []*state.State) (wgIfaces []string,
 		}
 
 		iface := GetWgIface(stat.Id)
-		pth := path.Join(constants.WgDirPath, fmt.Sprintf("%s.conf", iface))
 		wgIfaces = append(wgIfaces, iface)
-		confs[pth] = confBuf
+		confs[iface] = confBuf
 	}
 
-	for pth, confBuf := range confs {
-		err = ioutil.WriteFile(pth, confBuf.Bytes(), 0644)
-		if err != nil {
-			err = &errortypes.WriteError{
-				errors.Wrap(err, "ipsec: Failed to write state conf"),
+	for iface, confBuf := range confs {
+		pth := path.Join(constants.WgDirPath, fmt.Sprintf("%s.conf", iface))
+
+		curData, _ := ioutil.ReadFile(pth)
+		newData := confBuf.Bytes()
+
+		if !bytes.Equal(curData, newData) {
+			modWgIfaces = append(modWgIfaces, iface)
+			err = ioutil.WriteFile(pth, confBuf.Bytes(), 0600)
+			if err != nil {
+				err = &errortypes.WriteError{
+					errors.Wrap(err, "ipsec: Failed to write state conf"),
+				}
+				return
 			}
-			return
 		}
 	}
 
@@ -676,7 +699,7 @@ func deploy(states []*state.State, restart bool) (err error) {
 		return
 	}
 
-	wgIfaces, iptablesWgState, err := writeWgTemplates(states)
+	wgIfaces, modWgIfaces, iptablesWgState, err := writeWgTemplates(states)
 	if err != nil {
 		return
 	}
@@ -698,7 +721,7 @@ func deploy(states []*state.State, restart bool) (err error) {
 
 	time.Sleep(200 * time.Millisecond)
 
-	curWgIfaces, err := GetWgIfaces()
+	curWgIfaces, activeWgIface, err := GetWgIfaces()
 	if err != nil {
 		return
 	}
@@ -706,29 +729,21 @@ func deploy(states []*state.State, restart bool) (err error) {
 	newWgIfaces := set.NewSet()
 	for _, wgIface := range wgIfaces {
 		newWgIfaces.Add(wgIface)
+	}
 
+	for _, wgIface := range modWgIfaces {
 		confPth := path.Join(constants.WgDirPath,
 			fmt.Sprintf("%s.conf", wgIface))
-		if curWgIfaces.Contains(wgIface) {
-			err = utils.Exec("", "wg", "syncconf", wgIface, confPth)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"wg_iface": wgIface,
-					"wg_conf":  confPth,
-					"error":    err,
-				}).Error("state: Error syncing wg conf")
-				err = nil
-			}
-		} else {
-			err = utils.Exec("", "wg-quick", "up", wgIface)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"wg_iface": wgIface,
-					"wg_conf":  confPth,
-					"error":    err,
-				}).Error("state: Error bringing up wg conf")
-				err = nil
-			}
+
+		_ = utils.Exec("", "wg-quick", "down", wgIface)
+		err = utils.Exec("", "wg-quick", "up", wgIface)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{
+				"wg_iface": wgIface,
+				"wg_conf":  confPth,
+				"error":    err,
+			}).Error("state: Error bringing up wg conf")
+			err = nil
 		}
 	}
 
@@ -736,15 +751,21 @@ func deploy(states []*state.State, restart bool) (err error) {
 	delWgIfaces.Subtract(newWgIfaces)
 	for ifaceInf := range delWgIfaces.Iter() {
 		iface := ifaceInf.(string)
+		confPth := path.Join(constants.WgDirPath,
+			fmt.Sprintf("%s.conf", iface))
 
 		err = utils.Exec("", "wg-quick", "down", iface)
 		if err != nil {
-			logrus.WithFields(logrus.Fields{
-				"wg_iface": iface,
-				"error":    err,
-			}).Error("state: Error bringing down wg conf")
+			if activeWgIface.Contains(iface) {
+				logrus.WithFields(logrus.Fields{
+					"wg_iface": iface,
+					"error":    err,
+				}).Error("state: Error bringing down wg conf")
+			}
 			err = nil
 		}
+
+		os.Remove(confPth)
 	}
 
 	if restart {
@@ -981,6 +1002,11 @@ func init() {
 	module.After("logger")
 
 	module.Handler = func() (err error) {
+		wgHash, err = utils.RandStr(32)
+		if err != nil {
+			return
+		}
+
 		go runDeploy()
 		go runUpdateAdvertise()
 		go runRoutes()
