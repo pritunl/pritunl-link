@@ -1,13 +1,18 @@
 package ipsec
 
 import (
-	"github.com/sirupsen/logrus"
+	"fmt"
+	"net"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/dropbox/godropbox/errors"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/state"
 	"github.com/pritunl/pritunl-link/utils"
-	"net"
-	"strings"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -110,4 +115,30 @@ func StopTunnel() {
 	)
 	tunnelLocal = ""
 	tunnelRemote = ""
+}
+
+func StopWg() {
+	curWgIfaces, activeWgIfaces, err := GetWgIfaces()
+	if err != nil {
+		return
+	}
+
+	for ifaceInf := range curWgIfaces.Iter() {
+		iface := ifaceInf.(string)
+		confPth := path.Join(constants.WgDirPath,
+			fmt.Sprintf("%s.conf", iface))
+
+		err = utils.Exec("", "wg-quick", "down", iface)
+		if err != nil {
+			if activeWgIfaces.Contains(iface) {
+				logrus.WithFields(logrus.Fields{
+					"wg_iface": iface,
+					"error":    err,
+				}).Error("state: Error bringing down wg conf")
+			}
+			err = nil
+		}
+
+		os.Remove(confPth)
+	}
 }
