@@ -5,7 +5,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
-	"crypto/rand"
 	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/subtle"
@@ -30,7 +29,6 @@ import (
 	"github.com/pritunl/pritunl-link/iptables"
 	"github.com/pritunl/pritunl-link/utils"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/curve25519"
 )
 
 var (
@@ -296,6 +294,11 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 		}
 	}
 
+	pubKey, err := config.State.GetPublicKey(stateId)
+	if err != nil {
+		return
+	}
+
 	hosts = []string{}
 	hostsMap := stateHosts[uri]
 	hostsStatus := map[string]*hostState{}
@@ -343,7 +346,7 @@ func GetState(uri string) (state *State, hosts []string, err error) {
 		PublicAddress: GetPublicAddress(),
 		LocalAddress:  GetLocalAddress(),
 		Address6:      GetAddress6(),
-		WgPublicKey:   WgPublicKey,
+		WgPublicKey:   pubKey,
 		Status:        stateStatus,
 		Hosts:         hostsStatus,
 	}
@@ -484,8 +487,10 @@ func GetStates() (states []*State) {
 	statesMapLock := sync.Mutex{}
 	uris := config.Config.Uris
 	urisSet := set.NewSet()
-	allHosts := []string{}
 	waiter := sync.WaitGroup{}
+	hostLock := sync.Mutex{}
+	allHosts := []string{}
+	wgPorts := []int{}
 
 	for i, uri := range uris {
 		urisSet.Add(uri)
@@ -507,7 +512,12 @@ func GetStates() (states []*State) {
 				statesMapLock.Unlock()
 			}
 
+			hostLock.Lock()
 			allHosts = append(allHosts, hosts...)
+			if state.Protocol == "wg" && state.WgPort != 0 {
+				wgPorts = append(wgPorts, state.WgPort)
+			}
+			hostLock.Unlock()
 
 			waiter.Done()
 		}(i, uri)
@@ -516,7 +526,7 @@ func GetStates() (states []*State) {
 	waiter.Wait()
 
 	if config.Config.Firewall {
-		err := iptables.SetHosts(allHosts)
+		err := iptables.SetHosts(allHosts, wgPorts)
 		if err != nil {
 			logrus.WithFields(logrus.Fields{
 				"hosts": allHosts,
@@ -541,62 +551,5 @@ func GetStates() (states []*State) {
 	}
 	stateCachesLock.Unlock()
 
-	return
-}
-
-const KeyLen = 32
-
-type Key [KeyLen]byte
-
-func (k Key) PublicKey() (key Key) {
-	var pub [KeyLen]byte
-	var priv = [KeyLen]byte(k)
-
-	curve25519.ScalarBaseMult(&pub, &priv)
-
-	key = Key(pub)
-	return
-}
-
-func (k Key) String() string {
-	return base64.StdEncoding.EncodeToString(k[:])
-}
-
-func GeneratePrivateKey() (Key, error) {
-	key, err := GenerateKey()
-	if err != nil {
-		return Key{}, err
-	}
-
-	key[0] &= 248
-	key[31] &= 127
-	key[31] |= 64
-
-	return key, nil
-}
-
-func GenerateKey() (key Key, err error) {
-	b := make([]byte, 32)
-
-	_, err = rand.Read(b)
-	if err != nil {
-		err = &errortypes.ParseError{
-			errors.Wrap(err, "link: Failed to read random bytes"),
-		}
-		return
-	}
-
-	return NewKey(b)
-}
-
-func NewKey(b []byte) (key Key, err error) {
-	if len(b) != KeyLen {
-		err = &errortypes.ParseError{
-			errors.Newf("link: incorrect key size: %d", len(b)),
-		}
-		return
-	}
-
-	copy(key[:], b)
 	return
 }
