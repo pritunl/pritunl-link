@@ -7,37 +7,55 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/dropbox/godropbox/container/set"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/pritunl/pritunl-link/config"
+	"github.com/pritunl/pritunl-link/constants"
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/utils"
 )
 
-func GetWgIfaces() (ifacesSet set.Set, err error) {
+func GetWgIfaces() (ifacesSet set.Set, activeIfacesSet set.Set, err error) {
 	ifacesSet = set.NewSet()
+	activeIfacesSet = set.NewSet()
 
 	output, err := utils.ExecOutput("", "wg", "show", "all", "dump")
 	if err != nil {
 		err = nil
-		return
+	} else {
+		for _, line := range strings.Split(output, "\n") {
+			fields := strings.Split(line, "\t")
+			if len(fields) < 4 {
+				continue
+			}
+
+			iface := fields[0]
+			if !strings.HasPrefix(iface, "wgp") || len(iface) < 10 {
+				continue
+			}
+
+			ifacesSet.Add(iface)
+			activeIfacesSet.Add(iface)
+		}
 	}
 
-	for _, line := range strings.Split(output, "\n") {
-		fields := strings.Split(line, "\t")
-		if len(fields) < 4 {
-			continue
-		}
+	files, err := os.ReadDir(constants.WgDirPath)
+	if err != nil {
+		err = nil
+	} else {
+		for _, file := range files {
+			filename := file.Name()
+			if strings.HasPrefix(filename, "wgp") &&
+				strings.HasSuffix(filename, ".conf") {
 
-		iface := fields[0]
-		if !strings.HasPrefix(iface, "wgp") || len(iface) < 10 {
-			continue
+				ifaceName := strings.TrimSuffix(filename, ".conf")
+				ifacesSet.Add(ifaceName)
+			}
 		}
-
-		ifacesSet.Add(iface)
 	}
 
 	return
