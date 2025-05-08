@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/dropbox/godropbox/errors"
@@ -13,7 +14,10 @@ import (
 	"github.com/pritunl/pritunl-link/utils"
 )
 
-var Config = &ConfigData{}
+var (
+	Config   = &ConfigData{}
+	saveLock = sync.Mutex{}
+)
 
 type AwsData struct {
 	Region      string `json:"region"`
@@ -96,6 +100,9 @@ type ConfigData struct {
 }
 
 func (c *ConfigData) Save() (err error) {
+	saveLock.Lock()
+	defer saveLock.Unlock()
+
 	if !c.loaded {
 		err = &errortypes.WriteError{
 			errors.New("config: Config file has not been loaded"),
@@ -133,38 +140,79 @@ func Load() (err error) {
 	if !exists {
 		data.loaded = true
 		Config = data
-		return
-	}
-
-	file, err := ioutil.ReadFile(constants.ConfPath)
-	if err != nil {
-		err = &errortypes.ReadError{
-			errors.Wrap(err, "config: File read error"),
+	} else {
+		file, e := ioutil.ReadFile(constants.ConfPath)
+		if e != nil {
+			err = &errortypes.ReadError{
+				errors.Wrap(e, "config: File read error"),
+			}
+			return
 		}
-		return
-	}
 
-	err = json.Unmarshal(file, data)
-	if err != nil {
-		err = &errortypes.ReadError{
-			errors.Wrap(err, "config: File unmarshal error"),
+		err = json.Unmarshal(file, data)
+		if err != nil {
+			err = &errortypes.ReadError{
+				errors.Wrap(err, "config: File unmarshal error"),
+			}
+			return
 		}
+
+		if data.Uris == nil {
+			data.Uris = []string{}
+		}
+
+		data.loaded = true
+
+		Config = data
+	}
+
+	stateData := &StateData{}
+
+	exists, err = utils.Exists(constants.StatePath)
+	if err != nil {
 		return
 	}
 
-	if data.Uris == nil {
-		data.Uris = []string{}
+	if !exists {
+		stateData.loaded = true
+		stateData.Links = map[string]Link{}
+		State = stateData
+	} else {
+		file, e := ioutil.ReadFile(constants.StatePath)
+		if e != nil {
+			err = &errortypes.ReadError{
+				errors.Wrap(e, "config: State file read error"),
+			}
+			return
+		}
+
+		err = json.Unmarshal(file, stateData)
+		if err != nil {
+			err = &errortypes.ReadError{
+				errors.Wrap(err, "config: State file unmarshal error"),
+			}
+			return
+		}
+
+		if stateData.Links == nil {
+			stateData.Links = map[string]Link{}
+		}
+
+		stateData.loaded = true
+
+		State = stateData
 	}
-
-	data.loaded = true
-
-	Config = data
 
 	return
 }
 
 func Save() (err error) {
 	err = Config.Save()
+	if err != nil {
+		return
+	}
+
+	err = State.Save()
 	if err != nil {
 		return
 	}
@@ -180,8 +228,24 @@ func GetModTime() (mod time.Time, err error) {
 		}
 		return
 	}
-
 	mod = stat.ModTime()
+
+	stat, err = os.Stat(constants.StatePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = nil
+		} else {
+			err = &errortypes.ReadError{
+				errors.Wrap(err, "config: Failed to stat state file"),
+			}
+			return
+		}
+	} else {
+		stateMod := stat.ModTime()
+		if stateMod.After(mod) {
+			mod = stateMod
+		}
+	}
 
 	return
 }
@@ -200,11 +264,7 @@ func init() {
 			return
 		}
 
-		exists, err := utils.Exists(constants.ConfPath)
-		if err != nil {
-			panic(err)
-		}
-
+		exists, _ := utils.Exists(constants.ConfPath)
 		if !exists {
 			err = Save()
 			if err != nil {
