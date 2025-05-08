@@ -10,8 +10,6 @@ var (
 	LocalAddress     = ""
 	PublicAddress    = ""
 	Address6         = ""
-	WgPrivateKey     = ""
-	WgPublicKey      = ""
 	Status           = map[string]string{}
 	IsDirectClient   = false
 	DirectIpsecState *State
@@ -113,17 +111,4 @@ func GetAddress6() string {
 		return addr
 	}
 	return Address6
-}
-
-func Init() (err error) {
-	privateKey, err := GeneratePrivateKey()
-	if err != nil {
-		return
-	}
-	publicKey := privateKey.PublicKey()
-
-	WgPrivateKey = privateKey.String()
-	WgPublicKey = publicKey.String()
-
-	return
 }

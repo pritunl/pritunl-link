@@ -18,6 +18,10 @@ var (
 func Unknown(states []*State) (unknownIds []string, err error) {
 	connIds := set.NewSet()
 	for _, stat := range states {
+		if stat.Protocol == "wg" {
+			continue
+		}
+
 		for _, lnk := range stat.Links {
 			connIds.Add(GetLinkId(stat.Id, lnk.Id, lnk.Hash))
 
