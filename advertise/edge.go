@@ -521,7 +521,6 @@ func edgeAddPorts() (err error) {
 
 	port500 := false
 	port4500 := false
-	port8273 := false
 	port9790 := false
 	oldRules := []edgeFeatureRule{}
 	newRules := []edgeFeatureRule{}
@@ -549,16 +548,6 @@ func edgeAddPorts() (err error) {
 			} else {
 				continue
 			}
-		} else if rule.OriginalPort == "8273" {
-			if rule.Protocol == "udp" &&
-				rule.ForwardToPort == "8273" &&
-				rule.Description == "pritunl-zero" &&
-				rule.ForwardToAddress == nexthop {
-
-				port8273 = true
-			} else {
-				continue
-			}
 		} else if rule.OriginalPort == "9790" {
 			if rule.Protocol == "tcp" &&
 				rule.ForwardToPort == "9790" &&
@@ -572,7 +561,7 @@ func edgeAddPorts() (err error) {
 		}
 	}
 
-	if port500 && port4500 && port8273 && port9790 {
+	if port500 && port4500 && port9790 {
 		return
 	}
 
@@ -593,17 +582,6 @@ func edgeAddPorts() (err error) {
 			ForwardToAddress: nexthop,
 			ForwardToPort:    "4500",
 			OriginalPort:     "4500",
-			Protocol:         "udp",
-		}
-
-		newRules = append(newRules, rule)
-	}
-	if !port8273 {
-		rule := edgeFeatureRule{
-			Description:      "pritunl-zero",
-			ForwardToAddress: nexthop,
-			ForwardToPort:    "8273",
-			OriginalPort:     "8273",
 			Protocol:         "udp",
 		}
 

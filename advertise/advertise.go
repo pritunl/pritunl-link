@@ -2,7 +2,6 @@ package advertise
 
 import (
 	"io/ioutil"
-	"os"
 	"sort"
 	"strings"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/pritunl/pritunl-link/errortypes"
 	"github.com/pritunl/pritunl-link/routes"
 	"github.com/pritunl/pritunl-link/state"
+	"github.com/pritunl/pritunl-link/utils"
 )
 
 func Routes(states []*state.State) (err error) {
@@ -184,7 +184,7 @@ func Routes(states []*state.State) (err error) {
 		}
 	}
 
-	err = os.MkdirAll(constants.VarDir, 0755)
+	err = utils.ExistsMkdir(constants.VarDir, 0755)
 	if err != nil {
 		err = &errortypes.WriteError{
 			errors.Wrap(err, "advertise: Failed to create var directory"),

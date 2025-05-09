@@ -87,7 +87,7 @@ func pritunlGetRoutes(hostname, orgId, vpcId, token, secret string) (
 
 	if res.StatusCode != 200 {
 		err = &errortypes.RequestError{
-			errors.Wrapf(err, "cloud: Bad status %n code from server",
+			errors.Wrapf(err, "cloud: Bad status %d code from server",
 				res.StatusCode),
 		}
 		return
@@ -169,7 +169,7 @@ func pritunlUpdateRoutes(hostname, orgId, vpcId, token, secret string,
 
 	if res.StatusCode != 200 {
 		err = &errortypes.RequestError{
-			errors.Wrapf(err, "cloud: Bad status %n code from server",
+			errors.Wrapf(err, "cloud: Bad status %d code from server",
 				res.StatusCode),
 		}
 		return
