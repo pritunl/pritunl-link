@@ -13,6 +13,7 @@ const (
 	IpsecConfPath             = "/etc/ipsec.conf"
 	IpsecSecretsPath          = "/etc/ipsec.secrets"
 	IpsecDirPath              = "/etc/ipsec.pritunl"
+	WgDirPath                 = "/etc/wireguard"
 	PublicIpServer            = "https://app4.pritunl.com/ip"
 	PublicIp6Server           = "https://app6.pritunl.com/ip"
 	DefaultDiconnectedTimeout = 30 * time.Second
@@ -25,4 +26,5 @@ var (
 	Interrupt     = false
 	RoutesPath    = path.Join(VarDir, "routes")
 	CurRoutesPath = path.Join(VarDir, "cur_routes")
+	StatePath     = path.Join(VarDir, "state.json")
 )
