@@ -93,6 +93,7 @@ func CleanUp() {
 	iptables.ClearIpTables()
 	ipsec.DelDirectRoute()
 	ipsec.StopTunnel()
+	ipsec.StopWg()
 
 	for _, uri := range uris {
 		go cleanup(uri)
