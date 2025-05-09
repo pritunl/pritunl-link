@@ -269,7 +269,7 @@ func SyncPublicAddress(redeploy bool) (err error) {
 
 	if res.StatusCode != 200 {
 		err = &errortypes.RequestError{
-			errors.Wrapf(err, "sync: Bad status %n code from server",
+			errors.Wrapf(err, "sync: Bad status %d code from server",
 				res.StatusCode),
 		}
 		return
@@ -346,7 +346,7 @@ func SyncPublicAddress6(redeploy bool) (err error) {
 
 	if res.StatusCode != 200 {
 		err = &errortypes.RequestError{
-			errors.Wrapf(err, "sync: Bad status %n code from server",
+			errors.Wrapf(err, "sync: Bad status %d code from server",
 				res.StatusCode),
 		}
 		return
@@ -439,10 +439,12 @@ func runSyncConfig() {
 			curFirewall = config.Config.Firewall
 			if config.Config.Firewall {
 				iptables.ClearAcceptIpTables()
+				iptables.ClearWgIpset()
 				iptables.ResetFirewall()
 			} else {
 				iptables.ClearAcceptIpTables()
 				iptables.ClearDropIpTables()
+				iptables.RemoveWgIpset()
 			}
 		}
 	}
@@ -475,6 +477,7 @@ func Init() {
 	if !config.Config.Firewall {
 		iptables.ClearAcceptIpTables()
 		iptables.ClearDropIpTables()
+		iptables.RemoveWgIpset()
 	}
 
 	SyncStates()
