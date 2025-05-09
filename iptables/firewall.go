@@ -10,7 +10,7 @@ import (
 
 var (
 	initialize   = true
-	curHosts     = []string{}
+	curHosts     = set.NewSet()
 	curWgPorts   = set.NewSet()
 	iptablesLock = sync.Mutex{}
 )
@@ -27,10 +27,7 @@ func SetHosts(hosts []string, ports []int) (err error) {
 		newHostsSet.Add(host)
 	}
 
-	curHostsSet := set.NewSet()
-	for _, host := range curHosts {
-		curHostsSet.Add(host)
-	}
+	curHostsSet := curHosts.Copy()
 
 	removeHosts := curHostsSet.Copy()
 	removeHosts.Subtract(newHostsSet)
@@ -38,16 +35,32 @@ func SetHosts(hosts []string, ports []int) (err error) {
 	addHosts := newHostsSet.Copy()
 	addHosts.Subtract(curHostsSet)
 
-	if removeHosts.Len() == 0 && addHosts.Len() == 0 {
+	curPorts := curWgPorts.Copy()
+
+	newPorts := set.NewSet()
+	for _, port := range ports {
+		newPorts.Add(port)
+	}
+
+	addPorts := newPorts.Copy()
+	addPorts.Subtract(curPorts)
+
+	delPorts := curPorts.Copy()
+	delPorts.Subtract(newPorts)
+
+	if removeHosts.Len() == 0 && addHosts.Len() == 0 &&
+		addPorts.Len() == 0 && delPorts.Len() == 0 {
+
 		return
 	}
 
+	InitWgIpset()
+
 	if initialize {
+		ClearWgIpset()
 		ClearAcceptIpTables()
 		initialize = false
 	}
-
-	InitWgIpset()
 
 	for hostInf := range removeHosts.Iter() {
 		host := hostInf.(string)
@@ -108,20 +121,7 @@ func SetHosts(hosts []string, ports []int) (err error) {
 		return
 	}
 
-	curHosts = hosts
-
-	curPorts := curWgPorts.Copy()
-
-	newPorts := set.NewSet()
-	for _, port := range ports {
-		newPorts.Add(port)
-	}
-
-	addPorts := newPorts.Copy()
-	addPorts.Subtract(curPorts)
-
-	delPorts := curPorts.Copy()
-	delPorts.Subtract(addPorts)
+	curHosts = newHostsSet
 
 	for addPortInf := range addPorts.Iter() {
 		addPort := addPortInf.(int)
@@ -141,7 +141,7 @@ func SetHosts(hosts []string, ports []int) (err error) {
 		}
 	}
 
-	curPorts = newPorts
+	curWgPorts = newPorts
 
 	return
 }
@@ -151,5 +151,6 @@ func ResetFirewall() {
 	defer iptablesLock.Unlock()
 
 	initialize = true
-	curHosts = []string{}
+	curHosts = set.NewSet()
+	curWgPorts = set.NewSet()
 }

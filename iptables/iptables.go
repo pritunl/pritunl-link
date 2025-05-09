@@ -321,6 +321,24 @@ func InitAcceptIpTables() (err error) {
 	return
 }
 
+func ClearWgIpset() (err error) {
+	err = utils.Exec("", "ipset", "flush", "wgp")
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func RemoveWgIpset() (err error) {
+	err = utils.Exec("", "ipset", "destroy", "wgp")
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func ClearAcceptIpTables() (err error) {
 	err = clearIpTables("--comment pritunl-link-accept", false)
 	if err != nil {
