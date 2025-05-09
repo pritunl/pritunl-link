@@ -49,7 +49,7 @@ func getDirectStatus(stat *state.State) (directStatus bool, err error) {
 		}
 
 		directStatus = linkStatus == "connected"
-	} else {
+	} else if stat.Protocol == "" || stat.Protocol == "ipsec" {
 		linkId := fmt.Sprintf("%s-0-%s", stat.Id, stat.Links[0].Hash)
 
 		stats, err = status.Get()

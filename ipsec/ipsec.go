@@ -342,7 +342,7 @@ func writeTemplates(states []*state.State) (iptablesState bool, err error) {
 	confs := map[string]*bytes.Buffer{}
 
 	for _, stat := range states {
-		if stat.Protocol == "wg" {
+		if stat.Protocol != "" && stat.Protocol != "ipsec" {
 			continue
 		}
 

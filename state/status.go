@@ -18,7 +18,7 @@ var (
 func Unknown(states []*State) (unknownIds []string, err error) {
 	connIds := set.NewSet()
 	for _, stat := range states {
-		if stat.Protocol == "wg" {
+		if stat.Protocol != "" && stat.Protocol != "ipsec" {
 			continue
 		}
 
@@ -68,14 +68,14 @@ func Update(states []*State) (hasConnected bool,
 	for _, stat := range states {
 		if stat.Protocol == "wg" {
 			hasWg = true
-		} else {
+		} else if stat.Protocol == "" || stat.Protocol == "ipsec" {
 			hasIpsec = true
 		}
 		for _, lnk := range stat.Links {
 			if stat.Protocol == "wg" {
 				wgKeyMap[lnk.WgPublicKey] = fmt.Sprintf(
 					"%s-%s-%s", stat.Id, lnk.Id, lnk.Hash)
-			} else {
+			} else if stat.Protocol == "" || stat.Protocol == "ipsec" {
 				names.Add(GetLinkId(stat.Id, lnk.Id, lnk.Hash))
 			}
 		}
