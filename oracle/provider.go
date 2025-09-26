@@ -4,8 +4,8 @@ import (
 	"crypto/rsa"
 	"fmt"
 
-	"github.com/oracle/oci-go-sdk/v55/common"
-	"github.com/oracle/oci-go-sdk/v55/core"
+	"github.com/oracle/oci-go-sdk/v65/common"
+	"github.com/oracle/oci-go-sdk/v65/core"
 )
 
 type Provider struct {
