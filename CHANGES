@@ -1,6 +1,10 @@
 pritunl-link changelog
 ======================
 
+<%= version %>
+
+Add support for new Oracle Cloud regions
+
 Version 1.0.3454.46 2025-05-09
 ------------------------------
 
