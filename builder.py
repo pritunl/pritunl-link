@@ -49,7 +49,6 @@ def post_git_asset(release_id, file_name, file_path):
     response = requests.post(
         'https://uploads.github.com/repos/%s/%s/releases/%s/assets' % (
             github_owner, REPO_NAME, release_id),
-        verify=False,
         headers={
             'Authorization': 'token %s' % github_token,
             'Content-Type': 'application/octet-stream',
@@ -211,10 +210,8 @@ with open(BUILD_KEYS_PATH, 'r') as build_keys_file:
     build_keys = json.loads(data.strip())
     github_owner = build_keys['github_owner']
     github_token = build_keys['github_token']
-    gitlab_token = build_keys['gitlab_token']
     gitlab_host = build_keys['gitlab_host']
-    mirror_url = build_keys['mirror_url']
-    test_mirror_url = build_keys['test_mirror_url']
+    gitlab_token = build_keys['gitlab_token']
 
 
 # Get package info
@@ -270,10 +267,9 @@ if cmd == 'sync-releases':
 
             # Create gitlab release
             resp = requests.post(
-                ('https://%s/api/v4/projects' +
-                 '/%s%%2F%s/repository/tags/%s/release') % (
-                    gitlab_host, github_owner, REPO_NAME,
-                    release['tag_name']),
+                'https://' + gitlab_host + '/api/v4/projects' + \
+                '/%s%%2F%s/repository/tags/%s/release' % (
+                    github_owner, REPO_NAME, release['tag_name']),
                 headers={
                     'Private-Token': gitlab_token,
                     'Content-type': 'application/json',
@@ -294,10 +290,6 @@ if cmd == 'sync-releases':
             break
         next_url = response.headers['Link'].split(';')[0][1:-1]
 
-if cmd == 'get-version':
-    new_version_orig = args[1]
-    new_version = get_ver(new_version_orig)
-    print(new_version)
 
 if cmd == 'set-version':
     new_version_orig = args[1]
@@ -396,6 +388,11 @@ if cmd == 'set-version':
         subprocess.check_call(['git', 'branch', new_version])
         subprocess.check_call(['git', 'push', '-u', 'origin', new_version])
     time.sleep(6)
+
+    # Create tag
+    subprocess.check_call(['git', 'tag', new_version])
+    subprocess.check_call(['git', 'push', '--tags'])
+    time.sleep(1)
 
 
     # Create release
@@ -529,16 +526,16 @@ if cmd == 'upload' or cmd == 'build-upload':
     )
 
 
+    # Add to github
+    for name, path in iter_packages():
+        post_git_asset(release_id, name, path)
+
+
     # Sync mirror
     subprocess.check_call([
         'sh',
         'upload-unstable.sh',
     ], cwd=pacur_path)
-
-
-    # Add to github
-    for name, path in iter_packages():
-        post_git_asset(release_id, name, path)
 
 
 if cmd == 'upload-github':
