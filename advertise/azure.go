@@ -26,12 +26,13 @@ var (
 )
 
 type azureMetadata struct {
-	SubscriptionId string
-	ResourceGroup  string
-	InstanceName   string
-	Location       string
-	PublicIp       string
-	PrivateIp      string
+	SubscriptionId       string
+	ResourceGroup        string
+	NetworkResourceGroup string
+	InstanceName         string
+	Location             string
+	PublicIp             string
+	PrivateIp            string
 }
 
 type azureAddress struct {
@@ -124,12 +125,18 @@ func azureGetMetaData() (mdata *azureMetadata, err error) {
 	}
 
 	mdata = &azureMetadata{
-		SubscriptionId: data.Compute.SubscriptionId,
-		ResourceGroup:  data.Compute.ResourceGroupName,
-		InstanceName:   data.Compute.Name,
-		Location:       data.Compute.Location,
-		PublicIp:       publicIp,
-		PrivateIp:      privateIp,
+		SubscriptionId:       data.Compute.SubscriptionId,
+		ResourceGroup:        data.Compute.ResourceGroupName,
+		NetworkResourceGroup: data.Compute.ResourceGroupName,
+		InstanceName:         data.Compute.Name,
+		Location:             data.Compute.Location,
+		PublicIp:             publicIp,
+		PrivateIp:            privateIp,
+	}
+
+	confNetResourceGroup := config.Config.Azure.NetworkResourceGroup
+	if confNetResourceGroup != "" {
+		mdata.NetworkResourceGroup = confNetResourceGroup
 	}
 
 	return
@@ -167,7 +174,7 @@ func (n *azureNetwork) TableExists() (exists bool, err error) {
 	tableClient.Authorizer = n.authr
 
 	res, err := tableClient.Get(context.Background(),
-		n.mdata.ResourceGroup, n.Name, "")
+		n.mdata.NetworkResourceGroup, n.Name, "")
 	if err != nil {
 		if res.StatusCode == 404 {
 			exists = false
@@ -220,7 +227,7 @@ func (n *azureNetwork) UpsertTable() (err error) {
 	}
 
 	res, err := tableClient.CreateOrUpdate(context.Background(),
-		n.mdata.ResourceGroup, tableName, params)
+		n.mdata.NetworkResourceGroup, tableName, params)
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "azure: Azure route table update error"),
@@ -238,7 +245,7 @@ func (n *azureNetwork) UpsertTable() (err error) {
 	}
 
 	tableRes, err := tableClient.Get(context.Background(),
-		n.mdata.ResourceGroup, n.Name, "")
+		n.mdata.NetworkResourceGroup, n.Name, "")
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "azure: Azure route table update error"),
@@ -278,7 +285,7 @@ func (n *azureNetwork) AttachTables() (err error) {
 		}
 
 		subnetRes, e := subnetClient.Get(context.Background(),
-			n.mdata.ResourceGroup, n.Name, subnet.Name, "")
+			n.mdata.NetworkResourceGroup, n.Name, subnet.Name, "")
 		if e != nil {
 			if subnetRes.StatusCode == 404 {
 				continue
@@ -295,7 +302,7 @@ func (n *azureNetwork) AttachTables() (err error) {
 		}
 
 		res, e := subnetClient.CreateOrUpdate(context.Background(),
-			n.mdata.ResourceGroup, n.Name, subnet.Name, subnetRes)
+			n.mdata.NetworkResourceGroup, n.Name, subnet.Name, subnetRes)
 		if e != nil {
 			err = &errortypes.RequestError{
 				errors.Wrap(e, "azure: Azure subnet table update error"),
@@ -339,7 +346,7 @@ func (n *azureNetwork) AddRoute(destination string) (
 		tableName := tableIds[len(tableIds)-1]
 
 		tableRes, e := tableClient.Get(context.Background(),
-			n.mdata.ResourceGroup, tableName, "")
+			n.mdata.NetworkResourceGroup, tableName, "")
 		if e != nil {
 			err = &errortypes.RequestError{
 				errors.Wrap(e, "azure: Azure table get error"),
@@ -409,7 +416,7 @@ func (n *azureNetwork) AddRoute(destination string) (
 			tableRes.Routes = &newRoutes
 
 			res, e := tableClient.CreateOrUpdate(context.Background(),
-				n.mdata.ResourceGroup, tableName, tableRes)
+				n.mdata.NetworkResourceGroup, tableName, tableRes)
 			if e != nil {
 				err = &errortypes.RequestError{
 					errors.Wrap(e, "azure: Azure table update error"),
@@ -446,7 +453,7 @@ func (n *azureNetwork) RemoveRoute(rte *routes.AzureRoute) (
 		tableName := tableIds[len(tableIds)-1]
 
 		tableRes, e := tableClient.Get(context.Background(),
-			n.mdata.ResourceGroup, tableName, "")
+			n.mdata.NetworkResourceGroup, tableName, "")
 		if e != nil {
 			err = &errortypes.RequestError{
 				errors.Wrap(e, "azure: Azure table get error"),
@@ -481,7 +488,7 @@ func (n *azureNetwork) RemoveRoute(rte *routes.AzureRoute) (
 			tableRes.Routes = &newRoutes
 
 			res, e := tableClient.CreateOrUpdate(context.Background(),
-				n.mdata.ResourceGroup, tableName, tableRes)
+				n.mdata.NetworkResourceGroup, tableName, tableRes)
 			if e != nil {
 				err = &errortypes.RequestError{
 					errors.Wrap(e, "azure: Azure table update error"),
@@ -618,7 +625,7 @@ func azureGetInstanceNetwork(mdata *azureMetadata) (
 	vnetClient.Authorizer = authr
 
 	res, err := vnetClient.Get(context.Background(),
-		mdata.ResourceGroup, networkName, "")
+		mdata.NetworkResourceGroup, networkName, "")
 	if err != nil {
 		err = &errortypes.RequestError{
 			errors.Wrap(err, "azure: Azure networks request error"),
