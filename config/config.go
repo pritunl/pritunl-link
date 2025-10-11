@@ -26,6 +26,10 @@ type AwsData struct {
 	InterfaceId string `json:"interface_id"`
 }
 
+type AzureData struct {
+	NetworkResourceGroup string `json:"resource_group"`
+}
+
 type GoogleData struct {
 	Project  string `json:"project"`
 	Network  string `json:"network"`
@@ -91,6 +95,7 @@ type ConfigData struct {
 	DisableDisconnectedRestart bool        `json:"disable_disconnected_restart"`
 	CustomOptions              []string    `json:"custom_options"`
 	Aws                        AwsData     `json:"aws"`
+	Azure                      AzureData   `json:"aqzure"`
 	Google                     GoogleData  `json:"google"`
 	Hetzner                    HetznerData `json:"hetzner"`
 	Oracle                     OracleData  `json:"oracle"`
