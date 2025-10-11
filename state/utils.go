@@ -510,14 +510,14 @@ func GetStates() (states []*State) {
 				statesMapLock.Lock()
 				statesMap[i] = state
 				statesMapLock.Unlock()
-			}
 
-			hostLock.Lock()
-			allHosts = append(allHosts, hosts...)
-			if state.Protocol == "wg" && state.WgPort != 0 {
-				wgPorts = append(wgPorts, state.WgPort)
+				hostLock.Lock()
+				allHosts = append(allHosts, hosts...)
+				if state.Protocol == "wg" && state.WgPort != 0 {
+					wgPorts = append(wgPorts, state.WgPort)
+				}
+				hostLock.Unlock()
 			}
-			hostLock.Unlock()
 
 			waiter.Done()
 		}(i, uri)
