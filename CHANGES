@@ -1,6 +1,10 @@
 pritunl-link changelog
 ======================
 
+<%= version %>
+
+Add support for Azure virtual network resource group
+
 Version 1.0.3594.50 2025-09-26
 ------------------------------
 
