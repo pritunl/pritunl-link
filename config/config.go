@@ -95,7 +95,7 @@ type ConfigData struct {
 	DisableDisconnectedRestart bool        `json:"disable_disconnected_restart"`
 	CustomOptions              []string    `json:"custom_options"`
 	Aws                        AwsData     `json:"aws"`
-	Azure                      AzureData   `json:"aqzure"`
+	Azure                      AzureData   `json:"azure"`
 	Google                     GoogleData  `json:"google"`
 	Hetzner                    HetznerData `json:"hetzner"`
 	Oracle                     OracleData  `json:"oracle"`
