@@ -41,6 +41,7 @@ Commands:
   custom-option-add         Add custom ipsec option
   custom-option-clear       Clear custom ipsec options
   provider                  Manually set network provider
+  azure-net-resource-group  Set Azure virtual network resource group
   oracle-user-ocid          Set Oracle user ocid
   oracle-private-key        Set Oracle base64 private key
   oracle-region             Set Oracle region
@@ -263,6 +264,13 @@ func main() {
 	case "provider":
 		Init()
 		err := cmd.Provider(flag.Arg(1))
+		if err != nil {
+			panic(err)
+		}
+		break
+	case "azure-net-resource-group":
+		Init()
+		err := cmd.AzureNetResourceGroup(flag.Arg(1))
 		if err != nil {
 			panic(err)
 		}
