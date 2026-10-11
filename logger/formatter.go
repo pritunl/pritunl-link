@@ -2,15 +2,54 @@ package logger
 
 import (
 	"fmt"
-	"github.com/pritunl/pritunl-link/colorize"
-	"github.com/sirupsen/logrus"
+	"reflect"
+	"sort"
 	"time"
+
+	"github.com/pritunl/pritunl-link/colorize"
+	"github.com/pritunl/pritunl-link/errortypes"
+	"github.com/sirupsen/logrus"
 )
 
 var (
 	blueArrow    = colorize.ColorString("▶", colorize.BlueBold, colorize.None)
 	whiteDiamond = colorize.ColorString("◆", colorize.WhiteBold, colorize.None)
 )
+
+func entryFields(entry *logrus.Entry) (keys []string,
+	fields map[string]interface{}, errStr string) {
+
+	fields = make(map[string]interface{}, len(entry.Data)+2)
+
+	var errData *errortypes.ErrorData
+	for key, val := range entry.Data {
+		switch key {
+		case "error":
+			if !isNil(val) {
+				errStr = fmt.Sprintf("%s", val)
+			}
+		case "error_data":
+			if data, ok := val.(*errortypes.ErrorData); ok && data != nil {
+				errData = data
+			}
+		default:
+			fields[key] = val
+		}
+	}
+
+	if errData != nil {
+		fields["error_key"] = errData.Error
+		fields["error_msg"] = errData.Message
+	}
+
+	keys = make([]string, 0, len(fields))
+	for key := range fields {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	return
+}
 
 func format(entry *logrus.Entry) (output []byte) {
 	msg := fmt.Sprintf("%s%s %s %s",
@@ -20,16 +59,12 @@ func format(entry *logrus.Entry) (output []byte) {
 		entry.Message,
 	)
 
-	var errStr string
-	for key, val := range entry.Data {
-		if key == "error" {
-			errStr = fmt.Sprintf("%s", val)
-			continue
-		}
+	keys, fields, errStr := entryFields(entry)
 
+	for _, key := range keys {
 		msg += fmt.Sprintf(" %s %s=%v", whiteDiamond,
 			colorize.ColorString(key, colorize.CyanBold, colorize.None),
-			colorize.ColorString(fmt.Sprintf("%#v", val),
+			colorize.ColorString(fmt.Sprintf("%#v", fields[key]),
 				colorize.GreenBold, colorize.None))
 	}
 
@@ -53,14 +88,11 @@ func formatPlain(entry *logrus.Entry) (output []byte) {
 		entry.Message,
 	)
 
-	var errStr string
-	for key, val := range entry.Data {
-		if key == "error" {
-			errStr = fmt.Sprintf("%s", val)
-			continue
-		}
+	keys, fields, errStr := entryFields(entry)
 
-		msg += fmt.Sprintf(" ◆ %s=%v", key, fmt.Sprintf("%#v", val))
+	for _, key := range keys {
+		msg += fmt.Sprintf(" ◆ %s=%v", key,
+			fmt.Sprintf("%#v", fields[key]))
 	}
 
 	if errStr != "" {
@@ -130,8 +162,23 @@ func formatLevelPlain(lvl logrus.Level) string {
 	return ""
 }
 
+func isNil(val interface{}) bool {
+	if val == nil {
+		return true
+	}
+
+	switch reflect.TypeOf(val).Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Slice, reflect.Interface,
+		reflect.Func, reflect.Chan:
+
+		return reflect.ValueOf(val).IsNil()
+	}
+
+	return false
+}
+
 type formatter struct{}
 
 func (f *formatter) Format(entry *logrus.Entry) ([]byte, error) {
-	return formatPlain(entry), nil
+	return format(entry), nil
 }
